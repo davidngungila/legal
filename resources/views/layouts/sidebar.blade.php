@@ -3,12 +3,12 @@
     <!-- Logo Section -->
     <div class="p-6 border-b border-[#1a1a3a] flex-shrink-0">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                <i data-feather="briefcase" class="w-6 h-6"></i>
+            <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
+                <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-10 h-10 object-contain">
             </div>
             <div>
-                <h1 class="text-xl font-bold font-manrope">LegalHR</h1>
-                <p class="text-xs text-[#a0a0c0]">Tanzania HR System</p>
+                <h1 class="text-xl font-bold font-manrope">Orvion</h1>
+                <p class="text-xs text-[#a0a0c0]">HR Management System</p>
             </div>
         </div>
     </div>
