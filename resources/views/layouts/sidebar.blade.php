@@ -11,20 +11,18 @@
                 <p class="text-xs text-[#a0a0c0]">HR Management System</p>
             </div>
         </div>
+        
+        <!-- Client Selector -->
+        <div class="mt-4">
+            <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
+            <select class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
+                <option value="1">ABC Manufacturing Ltd</option>
+                <option value="2">XYZ Construction Co</option>
+                <option value="3">Tanzania Mining Corp</option>
+                <option value="4">East Africa Logistics</option>
+            </select>
+        </div>
     </div>
-    
-    <!-- Client Selector (for Super Admin and HR Admin) -->
-    @if(isset($currentUser) && ((is_object($currentUser) && ($currentUser->role === 'super_admin' || $currentUser->role === 'hr_admin')) || (is_array($currentUser) && ($currentUser['role'] === 'super_admin' || $currentUser['role'] === 'hr_admin'))))
-    <div class="p-4 border-b border-indigo-700 flex-shrink-0">
-        <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
-        <select class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
-            <option value="1">ABC Manufacturing Ltd</option>
-            <option value="2">XYZ Construction Co</option>
-            <option value="3">Tanzania Mining Corp</option>
-            <option value="4">East Africa Logistics</option>
-        </select>
-    </div>
-    @endif
     
     <!-- Navigation Menu -->
     <nav class="flex-1 p-4 overflow-y-auto">

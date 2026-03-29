@@ -271,7 +271,11 @@ function updateNotificationBadge() {
                     </div>
                 </td>
             `;
-      // Initialize page
+            tbody.appendChild(row);
+        });
+    }
+
+    // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
         console.log('=== USERS PAGE INITIALIZED ===');
         console.log('API_BASE:', API_BASE);
@@ -284,6 +288,12 @@ function updateNotificationBadge() {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+        
+        // Setup event listeners
+        document.getElementById('userSearch').addEventListener('input', filterUsers);
+        document.getElementById('roleFilter').addEventListener('change', filterUsers);
+        document.getElementById('statusFilter').addEventListener('change', filterUsers);
+        document.getElementById('selectAllUsers').addEventListener('change', toggleSelectAll);
     });
 
     // Helper functions
@@ -312,46 +322,113 @@ function updateNotificationBadge() {
         });
     }
 
-    // Form submissions
-document.getElementById('createUserForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch(API_BASE, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(Object.fromEntries(formData))
+    // Filter functions
+    function filterUsers() {
+        const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        filteredUsers = users.filter(user => {
+            const matchesSearch = !searchTerm || 
+                user.first_name.toLowerCase().includes(searchTerm) ||
+                user.last_name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm);
+            
+            const matchesRole = !roleFilter || user.role === roleFilter;
+            const matchesStatus = !statusFilter || user.is_active.toString() === statusFilter;
+            
+            return matchesSearch && matchesRole && matchesStatus;
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            closeCreateUserModal();
-            showNotification('User created successfully', 'success');
-            loadUsers(); // Reload users
-        } else {
-            showNotification(data.message || 'Failed to create user', 'error');
-            if (data.errors) {
-                Object.keys(data.errors).forEach(field => {
-                    showNotification(`${field}: ${data.errors[field].join(', ')}`, 'error');
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error creating user:', error);
-        showNotification('Error creating user', 'error');
+        renderUsers();
     }
-}
 
-async function deleteUser(userId) {
-    document.getElementById('deleteUserId').value = userId;
-    showDeleteUserModal();
-}
-});
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAllUsers');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+    }
+
+    function updateStats() {
+        const totalUsers = users.length;
+        const activeUsers = users.filter(user => user.is_active).length;
+        const inactiveUsers = totalUsers - activeUsers;
+        const adminUsers = users.filter(user => user.role.includes('admin')).length;
+        
+        document.getElementById('totalUsersCount').textContent = totalUsers;
+        document.getElementById('activeUsersCount').textContent = activeUsers;
+        document.getElementById('inactiveUsersCount').textContent = inactiveUsers;
+        document.getElementById('adminUsersCount').textContent = adminUsers;
+    }
+
+    function resetFilters() {
+        document.getElementById('userSearch').value = '';
+        document.getElementById('roleFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('selectAllUsers').checked = false;
+        
+        filteredUsers = [...users];
+        renderUsers();
+    }
+
+    function exportUsers() {
+        // Export functionality
+        showNotification('Export feature coming soon', 'info');
+    }
+
+    function editUser(userId) {
+        // Edit user functionality
+        showNotification('Edit feature coming soon', 'info');
+    }
+
+    // Form submissions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if create user form exists before adding listener
+        const createUserForm = document.getElementById('createUserForm');
+        if (createUserForm) {
+            createUserForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(Object.fromEntries(formData))
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        closeCreateUserModal();
+                        showNotification('User created successfully', 'success');
+                        loadUsers(); // Reload users
+                    } else {
+                        showNotification(data.message || 'Failed to create user', 'error');
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(field => {
+                                showNotification(`${field}: ${data.errors[field].join(', ')}`, 'error');
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                    showNotification('Error creating user', 'error');
+                }
+            });
+        }
+    });
+
+    async function deleteUser(userId) {
+        document.getElementById('deleteUserId').value = userId;
+        showDeleteUserModal();
+    }
 </script>
