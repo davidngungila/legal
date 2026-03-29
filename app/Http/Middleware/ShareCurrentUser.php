@@ -3,7 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use App\Http\Controllers\AuthController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ShareCurrentUser
 {
@@ -16,11 +17,8 @@ class ShareCurrentUser
      */
     public function handle($request, Closure $next)
     {
-        // Get current authenticated user
-        $user = AuthController::getCurrentUser();
-        
-        // Share user data with all views
-        view()->share('currentUser', $user);
+        // Share current authenticated user with all views
+        view()->share('currentUser', Auth::user());
         
         return $next($request);
     }
