@@ -64,7 +64,7 @@
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">Apply for Leave</h3>
             <p class="text-sm text-gray-600 mb-4">Request annual, sick, or emergency leave</p>
-            <button class="text-green-600 hover:text-green-800 text-sm font-medium">Apply Now →</button>
+            <a href="{{ route('selfservice.leave') }}" class="text-green-600 hover:text-green-800 text-sm font-medium">Apply Now →</a>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
@@ -73,7 +73,7 @@
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">Download Payslip</h3>
             <p class="text-sm text-gray-600 mb-4">Access your monthly salary statements</p>
-            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Download →</button>
+            <a href="{{ route('selfservice.payslip') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Download →</a>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
@@ -82,7 +82,7 @@
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">View Contract</h3>
             <p class="text-sm text-gray-600 mb-4">Review your employment contract details</p>
-            <button class="text-purple-600 hover:text-purple-800 text-sm font-medium">View →</button>
+            <a href="{{ route('selfservice.contract') }}" class="text-purple-600 hover:text-purple-800 text-sm font-medium">View →</a>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
@@ -91,7 +91,7 @@
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">File Complaint</h3>
             <p class="text-sm text-gray-600 mb-4">Submit grievances or concerns</p>
-            <button class="text-orange-600 hover:text-orange-800 text-sm font-medium">File Now →</button>
+            <a href="{{ route('selfservice.complaint') }}" class="text-orange-600 hover:text-orange-800 text-sm font-medium">File Now →</a>
         </div>
     </div>
 
@@ -399,4 +399,504 @@
         </div>
     </div>
 </div>
+
+<!-- Leave Application Modal -->
+<div id="leaveModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Apply for Leave</h2>
+            <button onclick="closeLeaveModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <form id="leaveForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Leave Type</label>
+                <select name="leave_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select Leave Type</option>
+                    <option value="annual">Annual Leave</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="emergency">Emergency Leave</option>
+                    <option value="maternity">Maternity Leave</option>
+                    <option value="paternity">Paternity Leave</option>
+                    <option value="compassionate">Compassionate Leave</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input type="date" name="start_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <input type="date" name="end_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                <textarea name="reason" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Please provide reason for leave request..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeLeaveModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
+                    Submit Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Complaint Modal -->
+<div id="complaintModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900">File Complaint</h2>
+            <button onclick="closeComplaintModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <form id="complaintForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Complaint Type</label>
+                <select name="complaint_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select Complaint Type</option>
+                    <option value="workplace">Workplace Issue</option>
+                    <option value="harassment">Harassment</option>
+                    <option value="discrimination">Discrimination</option>
+                    <option value="safety">Safety Concern</option>
+                    <option value="policy">Policy Violation</option>
+                    <option value="salary">Salary Issue</option>
+                    <option value="working">Working Conditions</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <input type="text" name="subject" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief description of the issue...">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea name="description" rows="6" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Please provide detailed description of your complaint..."></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Desired Resolution</label>
+                <textarea name="resolution" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="What would you like to see as the outcome?"></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeComplaintModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
+                    Submit Complaint
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contract Modal -->
+<div id="contractModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Employment Contract</h2>
+            <button onclick="closeContractModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Employee Information</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Employee ID:</span>
+                            <span class="font-medium">EMP001</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Full Name:</span>
+                            <span class="font-medium">John Doe</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Position:</span>
+                            <span class="font-medium">Senior Developer</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Department:</span>
+                            <span class="font-medium">IT Department</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Contract Details</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Contract Type:</span>
+                            <span class="font-medium">Permanent</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Start Date:</span>
+                            <span class="font-medium">01 January 2022</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">End Date:</span>
+                            <span class="font-medium">Open-ended</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Probation Period:</span>
+                            <span class="font-medium">3 months</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Compensation</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Basic Salary:</span>
+                            <span class="font-medium">TZS 2,000,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Housing Allowance:</span>
+                            <span class="font-medium">TZS 500,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Transport Allowance:</span>
+                            <span class="font-medium">TZS 200,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Package:</span>
+                            <span class="font-medium text-green-600">TZS 2,700,000</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Working Hours</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Working Days:</span>
+                            <span class="font-medium">Monday - Friday</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Working Hours:</span>
+                            <span class="font-medium">8:00 AM - 5:00 PM</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Lunch Break:</span>
+                            <span class="font-medium">1:00 PM - 2:00 PM</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Overtime Rate:</span>
+                            <span class="font-medium">1.5x normal rate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Leave Entitlement</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Annual Leave:</span>
+                        <span class="font-medium">28 days per year</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Sick Leave:</span>
+                        <span class="font-medium">90 days per year</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Maternity Leave:</span>
+                        <span class="font-medium">84 days (as per Labour Act)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Public Holidays:</span>
+                        <span class="font-medium">As per Tanzania Calendar</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Terms & Conditions</h3>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-700 mb-3">
+                        This employment contract is governed by the Tanzania Employment and Labour Relations Act, 2019. 
+                        Both parties agree to comply with all statutory requirements including working hours, leave entitlements, 
+                        and termination procedures as outlined in the Labour Act.
+                    </p>
+                    <div class="space-y-2">
+                        <div class="flex items-start space-x-2">
+                            <input type="checkbox" checked class="mt-1" disabled>
+                            <span class="text-sm text-gray-700">I have read and understood the terms and conditions</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <input type="checkbox" checked class="mt-1" disabled>
+                            <span class="text-sm text-gray-700">I agree to comply with company policies and procedures</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <input type="checkbox" checked class="mt-1" disabled>
+                            <span class="text-sm text-gray-700">I understand my rights and responsibilities under Tanzania Labour Law</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="downloadContract()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
+                    Download PDF
+                </button>
+                <button onclick="printContract()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <i data-feather="printer" class="w-4 h-4 inline mr-2"></i>
+                    Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+// Modal functions
+function showLeaveModal() {
+    document.getElementById('leaveModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeLeaveModal() {
+    document.getElementById('leaveModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    document.getElementById('leaveForm').reset();
+}
+
+function showComplaintModal() {
+    document.getElementById('complaintModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeComplaintModal() {
+    document.getElementById('complaintModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    document.getElementById('complaintForm').reset();
+}
+
+function showContractModal() {
+    document.getElementById('contractModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeContractModal() {
+    document.getElementById('contractModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+// Client switching function (required by sidebar)
+function switchClient(clientId) {
+    // Show notification
+    showNotification('Switching to client...', 'info');
+    
+    // Simulate client switch
+    setTimeout(() => {
+        // Update the select value
+        const select = document.querySelector('select[onchange="switchClient(this.value)"]');
+        if (select) {
+            select.value = clientId;
+        }
+        
+        // Show success message
+        const clientNames = {
+            '1': 'ABC Manufacturing Ltd',
+            '2': 'XYZ Construction Co',
+            '3': 'Tanzania Mining Corp',
+            '4': 'East Africa Logistics'
+        };
+        
+        showNotification(`Switched to ${clientNames[clientId]}`, 'success');
+        
+        // In a real application, this would reload the page or make an API call
+        // window.location.reload();
+    }, 500);
+}
+
+// Notification functions (required by header)
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
+function removeNotification(notificationId) {
+    const notification = document.getElementById(notificationId);
+    if (notification) {
+        notification.remove();
+        updateNotificationBadge();
+    }
+}
+
+function markAllAsRead() {
+    const unreadNotifications = document.querySelectorAll('.notification-item:not(.read)');
+    unreadNotifications.forEach(notification => {
+        notification.classList.add('read');
+    });
+    updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    const unreadCount = document.querySelectorAll('.notification-item:not(.read)').length;
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+// Action functions
+function downloadPayslip() {
+    // Show notification
+    showNotification('Preparing payslip download...', 'info');
+    
+    // Simulate download
+    setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('Month,Basic Salary,Allowances,Deductions,Net Pay,Status\nNovember 2024,2500000,500000,595000,2405000,Paid');
+        link.download = 'payslip_november_2024.csv';
+        link.click();
+        showNotification('Payslip downloaded successfully!', 'success');
+    }, 1000);
+}
+
+function downloadContract() {
+    // Show notification
+    showNotification('Preparing contract download...', 'info');
+    
+    // Simulate download
+    setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent('EMPLOYMENT CONTRACT\n\nEmployee: John Doe\nID: EMP001\nPosition: Senior Developer\nDepartment: IT Department\nContract Type: Permanent\nStart Date: 01 January 2022\n\nThis is a sample contract document.');
+        link.download = 'employment_contract.pdf';
+        link.click();
+        showNotification('Contract downloaded successfully!', 'success');
+    }, 1000);
+}
+
+function printContract() {
+    window.print();
+    showNotification('Print dialog opened', 'info');
+}
+
+// Form submissions
+document.getElementById('leaveForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    // Show loading
+    showNotification('Submitting leave request...', 'info');
+    
+    // Simulate API call
+    setTimeout(() => {
+        closeLeaveModal();
+        showNotification('Leave request submitted successfully!', 'success');
+        
+        // Update UI (in real app, this would refresh from API)
+        updateLeaveBalance();
+    }, 1500);
+});
+
+document.getElementById('complaintForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    // Show loading
+    showNotification('Submitting complaint...', 'info');
+    
+    // Simulate API call
+    setTimeout(() => {
+        closeComplaintModal();
+        showNotification('Complaint submitted successfully! Reference: COMP-2024-' + Math.floor(Math.random() * 1000), 'success');
+    }, 1500);
+});
+
+// Update leave balance (simulation)
+function updateLeaveBalance() {
+    // This would normally fetch from API
+    const leaveBalances = document.querySelectorAll('.text-right .text-2xl');
+    if (leaveBalances.length > 0) {
+        const currentValue = parseInt(leaveBalances[0].textContent);
+        const newValue = Math.max(0, currentValue - 1);
+        leaveBalances[0].textContent = newValue;
+    }
+}
+
+// Notification function
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    
+    const colors = {
+        success: 'bg-green-500 text-white',
+        error: 'bg-red-500 text-white',
+        warning: 'bg-yellow-500 text-white',
+        info: 'bg-blue-500 text-white'
+    };
+    
+    notification.className += ' ' + colors[type] || colors.info;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i data-feather="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Auto remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Initialize feather icons
+if (typeof feather !== 'undefined') {
+    feather.replace();
+}
+</script>
+@endpush
+
 @endsection

@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ClientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +50,39 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
         Route::get('/setup', function () {
             return view('organization.setup');
         })->name('organization.setup');
+    });
+
+    // User Management Routes
+    Route::prefix('users')->group(function () {
+        Route::get('/', function () {
+            return view('users.index');
+        })->name('users.index');
+        
+        Route::get('/create', function () {
+            return view('users.create');
+        })->name('users.create');
+    });
+
+    // Role Management Routes
+    Route::prefix('roles')->group(function () {
+        Route::get('/', function () {
+            return view('roles.index');
+        })->name('roles.index');
+        
+        Route::get('/create', function () {
+            return view('roles.create');
+        })->name('roles.create');
+    });
+
+    // Permission Management Routes
+    Route::prefix('permissions')->group(function () {
+        Route::get('/', function () {
+            return view('permissions.index');
+        })->name('permissions.index');
+        
+        Route::get('/create', function () {
+            return view('permissions.create');
+        })->name('permissions.create');
     });
 
     // Employee Management Routes
@@ -122,11 +159,104 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
         })->name('analytics.index');
     });
 
+    // Attendance Routes
+    Route::prefix('attendance')->group(function () {
+        Route::get('/', function () {
+            return view('attendance.index');
+        })->name('attendance.index');
+    });
+
+    // Compensation Routes
+    Route::prefix('compensation')->group(function () {
+        Route::get('/', function () {
+            return view('compensation.index');
+        })->name('compensation.index');
+    });
+
+    // Compliance Routes
+    Route::prefix('compliance')->group(function () {
+        Route::get('/', function () {
+            return view('compliance.index');
+        })->name('compliance.index');
+    });
+
+    // Discipline Routes
+    Route::prefix('discipline')->group(function () {
+        Route::get('/', function () {
+            return view('discipline.index');
+        })->name('discipline.index');
+    });
+
+    // Employees Routes
+    Route::prefix('employees')->group(function () {
+        Route::get('/', function () {
+            return view('employees.index');
+        })->name('employees.index');
+    });
+
+    // Onboarding Routes
+    Route::prefix('onboarding')->group(function () {
+        Route::get('/', function () {
+            return view('onboarding.index');
+        })->name('onboarding.index');
+    });
+
+    // Organization Routes
+    Route::prefix('organization')->group(function () {
+        Route::get('/', function () {
+            return view('organization.index');
+        })->name('organization.index');
+    });
+
+    // Payroll Routes
+    Route::prefix('payroll')->group(function () {
+        Route::get('/', function () {
+            return view('payroll.index');
+        })->name('payroll.index');
+    });
+
+    // Performance Routes
+    Route::prefix('performance')->group(function () {
+        Route::get('/', function () {
+            return view('performance.index');
+        })->name('performance.index');
+    });
+
+    // Recruitment Routes
+    Route::prefix('recruitment')->group(function () {
+        Route::get('/', function () {
+            return view('recruitment.index');
+        })->name('recruitment.index');
+    });
+
+    // Training Routes
+    Route::prefix('training')->group(function () {
+        Route::get('/', function () {
+            return view('training.index');
+        })->name('training.index');
+    });
+
     // Employee Self Service Routes
     Route::prefix('selfservice')->group(function () {
         Route::get('/', function () {
             return view('selfservice.index');
-        })->name('selfservice.index');
+        })->name('selfservice');
+        
+        Route::get('/leave', function () {
+            return view('selfservice.leave');
+        })->name('selfservice.leave');
+        
+        Route::get('/payslip', function () {
+            return view('selfservice.payslip');
+        })->name('selfservice.payslip');
+        
+        Route::get('/contract', function () {
+            return view('selfservice.contract');
+        })->name('selfservice.contract');
+        
+        Route::get('/complaint', function () {
+            return view('selfservice.complaint');
+        })->name('selfservice.complaint');
     });
 
     // Case Management Routes
@@ -143,10 +273,36 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
         })->name('users.index');
     });
 
+    // Client Management Routes
     Route::prefix('clients')->group(function () {
         Route::get('/', function () {
             return view('clients.index');
         })->name('clients.index');
+        
+        Route::get('/create', function () {
+            return view('clients.create');
+        })->name('clients.create');
+        
+        Route::get('/edit', function () {
+            return view('clients.edit');
+        })->name('clients.edit');
+    });
+
+    // API Routes without middleware for testing
+    Route::prefix('api/clients')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store']);
+        Route::get('/{id}', [ClientController::class, 'show']);
+        Route::put('/{id}', [ClientController::class, 'update']);
+        Route::delete('/{id}', [ClientController::class, 'destroy']);
+        Route::post('/bulk', [ClientController::class, 'bulkOperations']);
+        Route::get('/export', [ClientController::class, 'export']);
+        Route::get('/statistics', [ClientController::class, 'statistics']);
+    });
+
+    // Test route
+    Route::get('/test', function () {
+        return view('test');
     });
 
     // Profile and Settings

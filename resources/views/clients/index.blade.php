@@ -8,31 +8,31 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">Client Management</h1>
-            <p class="text-gray-600 mt-2">Manage client organizations and their settings</p>
+            <p class="text-gray-600 mt-2">Manage multi-tenant clients and their HR systems</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onclick="exportClients()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Clients
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <a href="{{ route('clients.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Add New Client
-            </button>
+            </a>
         </div>
     </div>
 
-    <!-- Client Stats -->
+    <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="briefcase" class="w-6 h-6 text-blue-600"></i>
+                    <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+1</span>
+                <span class="text-sm text-blue-600 font-medium">Total</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">4</h3>
-            <p class="text-gray-600 text-sm">Total Clients</p>
+            <p class="text-2xl font-bold text-gray-900" id="totalClients">0</p>
+            <p class="text-sm text-gray-500">Total Clients</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -40,250 +40,702 @@
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">All</span>
+                <span class="text-sm text-green-600 font-medium">Active</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">4</h3>
-            <p class="text-gray-600 text-sm">Active Clients</p>
+            <p class="text-2xl font-bold text-gray-900" id="activeClients">0</p>
+            <p class="text-sm text-gray-500">Active Clients</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="users" class="w-6 h-6 text-purple-600"></i>
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <i data-feather="pause-circle" class="w-6 h-6 text-gray-600"></i>
                 </div>
-                <span class="text-sm text-blue-600 font-medium">248</span>
+                <span class="text-sm text-gray-600 font-medium">Inactive</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">905</h3>
-            <p class="text-gray-600 text-sm">Total Employees</p>
+            <p class="text-2xl font-bold text-gray-900" id="inactiveClients">0</p>
+            <p class="text-sm text-gray-500">Inactive Clients</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="trending-up" class="w-6 h-6 text-yellow-600"></i>
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i data-feather="alert-circle" class="w-6 h-6 text-red-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+15%</span>
+                <span class="text-sm text-red-600 font-medium">Suspended</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">TZS 168M</h3>
-            <p class="text-gray-600 text-sm">Monthly Revenue</p>
+            <p class="text-2xl font-bold text-gray-900" id="suspendedClients">0</p>
+            <p class="text-sm text-gray-500">Suspended Clients</p>
         </div>
     </div>
 
-    <!-- Client List -->
+    <!-- Filters and Search -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Client Organizations</h3>
-            <div class="flex space-x-3">
-                <div class="relative">
-                    <input type="text" placeholder="Search clients..." class="form-input pl-10 pr-4 py-2">
-                        <i data-feather="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
-                </div>
-                <select class="form-select">
-                    <option>All Industries</option>
-                    <option>Manufacturing</option>
-                    <option>Construction</option>
-                    <option>Mining</option>
-                    <option>Logistics</option>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
+            <button onclick="resetFilters()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Reset Filters</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <input type="text" id="searchInput" placeholder="Search clients..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
                 </select>
-                <select class="form-select">
-                    <option>All Status</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
-                    <option>Trial</option>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                <select id="industryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All Industries</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                <select id="sortBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="created_at">Created Date</option>
+                    <option value="name">Name</option>
+                    <option value="industry">Industry</option>
+                    <option value="employee_count">Employee Count</option>
                 </select>
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-            @foreach([
-                ['name' => 'ABC Manufacturing Ltd', 'industry' => 'Manufacturing', 'employees' => 248, 'status' => 'Active', 'revenue' => '45.2M', 'contact' => 'John Smith', 'email' => 'john.smith@abcmanufacturing.co.tz', 'phone' => '+255 22 123 4567', 'address' => 'Plot 123, Industrial Area, Dar es Salaam', 'subscription' => 'Enterprise', 'start' => '2023-01-15', 'renewal' => '2025-01-15'],
-                ['name' => 'XYZ Construction Co', 'industry' => 'Construction', 'employees' => 156, 'status' => 'Active', 'revenue' => '28.7M', 'contact' => 'Sarah Johnson', 'email' => 'sarah.johnson@xyzconstruction.co.tz', 'phone' => '+255 22 234 5678', 'address' => 'Plot 456, Kigamboni, Dar es Salaam', 'subscription' => 'Professional', 'start' => '2023-03-01', 'renewal' => '2025-03-01'],
-                ['name' => 'Tanzania Mining Corp', 'industry' => 'Mining', 'employees' => 412, 'status' => 'Active', 'revenue' => '78.9M', 'contact' => 'Michael Chen', 'email' => 'michael.chen@tzmining.co.tz', 'phone' => '+255 22 345 6789', 'address' => 'Plot 789, Mwanza', 'subscription' => 'Enterprise', 'start' => '2022-06-01', 'renewal' => '2024-06-01'],
-                ['name' => 'East Africa Logistics', 'industry' => 'Logistics', 'employees' => 89, 'status' => 'Active', 'revenue' => '15.3M', 'contact' => 'Emily Davis', 'email' => 'emily.davis@eallogistics.co.tz', 'phone' => '+255 22 456 7890', 'address' => 'Plot 321, Port Area, Dar es Salaam', 'subscription' => 'Standard', 'start' => '2023-09-01', 'renewal' => '2025-09-01']
-            ] as $client)
-            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
-                            <i data-feather="briefcase" class="w-6 h-6 text-white"></i>
-                        </div>
-                        <div class="ml-3">
-                            <h4 class="font-semibold text-gray-900">{{ $client['name'] }}</h4>
-                            <p class="text-sm text-gray-600">{{ $client['industry'] }}</p>
-                        </div>
-                    </div>
-                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">{{ $client['status'] }}</span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <p class="text-sm text-gray-600">Employees</p>
-                        <p class="font-medium text-gray-900">{{ $client['employees'] }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Monthly Revenue</p>
-                        <p class="font-medium text-gray-900">TZS {{ $client['revenue'] }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Subscription</p>
-                        <p class="font-medium text-gray-900">{{ $client['subscription'] }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Renewal</p>
-                        <p class="font-medium text-gray-900">{{ $client['renewal'] }}</p>
-                    </div>
-                </div>
-                
-                <div class="border-t border-gray-200 pt-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ $client['contact'] }}</p>
-                            <p class="text-sm text-gray-600">{{ $client['email'] }}</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="text-indigo-600 hover:text-indigo-800">
-                                <i data-feather="mail" class="w-4 h-4"></i>
-                            </button>
-                            <button class="text-indigo-600 hover:text-indigo-800">
-                                <i data-feather="phone" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-gray-600">{{ $client['address'] }}</p>
-                        <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Manage →</button>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        </div>
     </div>
 
-    <!-- Client Analytics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Revenue by Client</h3>
-            <div class="space-y-4">
-                @foreach([
-                    ['client' => 'Tanzania Mining Corp', 'revenue' => 78900000, 'percentage' => 47],
-                    ['client' => 'ABC Manufacturing Ltd', 'revenue' => 45200000, 'percentage' => 27],
-                    ['client' => 'XYZ Construction Co', 'revenue' => 28700000, 'percentage' => 17],
-                    ['client' => 'East Africa Logistics', 'revenue' => 15300000, 'percentage' => 9]
-                ] as $revenue)
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                        <span class="text-sm font-medium text-gray-900">{{ $revenue['client'] }}</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-sm font-medium text-gray-900 mr-2">TZS {{ number_format($revenue['revenue'], 0) }}</span>
-                        <span class="text-sm text-gray-500">({{ $revenue['percentage'] }}%)</span>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Industry Distribution</h3>
-            <div class="space-y-4">
-                @foreach([
-                    ['industry' => 'Manufacturing', 'clients' => 1, 'employees' => 248],
-                    ['industry' => 'Construction', 'clients' => 1, 'employees' => 156],
-                    ['industry' => 'Mining', 'clients' => 1, 'employees' => 412],
-                    ['industry' => 'Logistics', 'clients' => 1, 'employees' => 89]
-                ] as $industry)
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                        <span class="text-sm font-medium text-gray-900">{{ $industry['industry'] }}</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-sm font-medium text-gray-900 mr-2">{{ $industry['employees'] }}</span>
-                        <span class="text-sm text-gray-500">employees</span>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-
-    <!-- Subscription Plans -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Subscription Plans Overview</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Manage Plans</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            @foreach([
-                ['plan' => 'Standard', 'clients' => 1, 'price' => 150000, 'features' => ['Basic HR Features', 'Up to 100 Employees', 'Email Support', 'Monthly Reports']],
-                ['plan' => 'Professional', 'clients' => 1, 'price' => 300000, 'features' => ['Advanced HR Features', 'Up to 500 Employees', 'Priority Support', 'Custom Reports']],
-                ['plan' => 'Enterprise', 'clients' => 2, 'price' => 600000, 'features' => ['All Features', 'Unlimited Employees', '24/7 Support', 'API Access', 'Custom Integrations']],
-                ['plan' => 'Custom', 'clients' => 0, 'price' => 0, 'features' => ['Tailored Solutions', 'Custom Pricing', 'Dedicated Support', 'On-Premise Option']]
-            ] as $plan)
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between mb-3">
-                    <h4 class="font-semibold text-gray-900">{{ $plan['plan'] }}</h4>
-                    <span class="text-sm text-gray-500">{{ $plan['clients'] }} clients</span>
-                </div>
-                <div class="mb-3">
-                    <p class="text-2xl font-bold text-gray-900">
-                        @if($plan['price'] > 0)
-                        TZS {{ number_format($plan['price'], 0) }}
-                        @else
-                        Custom
-                        @endif
-                    </p>
-                    <p class="text-sm text-gray-600">per month</p>
-                </div>
-                <div class="space-y-2 mb-4">
-                    @foreach($plan['features'] as $feature)
-                    <div class="flex items-center">
-                        <i data-feather="check" class="w-4 h-4 text-green-600 mr-2"></i>
-                        <span class="text-sm text-gray-700">{{ $feature }}</span>
-                    </div>
-                    @endforeach
-                </div>
-                <button class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
-                    {{ $plan['clients'] > 0 ? 'View Clients' : 'Contact Sales' }}
-                </button>
-            </div>
-            @endforeach
-        </div>
-    </div>
-
-    <!-- Recent Activities -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Recent Client Activities</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All</button>
-        </div>
-        <div class="space-y-4">
-            @foreach([
-                ['client' => 'ABC Manufacturing Ltd', 'action' => 'Subscription renewed', 'time' => '2 days ago', 'user' => 'System'],
-                ['client' => 'XYZ Construction Co', 'action' => 'New user added', 'time' => '3 days ago', 'user' => 'Sarah Williams'],
-                ['client' => 'Tanzania Mining Corp', 'action' => 'Support ticket resolved', 'time' => '5 days ago', 'user' => 'John Doe'],
-                ['client' => 'East Africa Logistics', 'action' => 'Training session completed', 'time' => '1 week ago', 'user' => 'Michael Chen'],
-                ['client' => 'ABC Manufacturing Ltd', 'action' => 'Report generated', 'time' => '2 weeks ago', 'user' => 'System']
-            ] as $activity)
-            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
-                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
-                    <i data-feather="activity" class="w-5 h-5 text-indigo-600"></i>
-                </div>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ $activity['action'] }}</p>
-                            <p class="text-xs text-gray-500">{{ $activity['client'] }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-gray-500">{{ $activity['time'] }}</p>
-                            <p class="text-xs text-gray-500">{{ $activity['user'] }}</p>
-                        </div>
-                    </div>
+    <!-- Clients Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">Clients</h2>
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="selectAll" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="selectAll" class="text-sm text-gray-600">Select All</label>
+                    <select id="bulkAction" class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Bulk Actions</option>
+                        <option value="activate">Activate</option>
+                        <option value="deactivate">Deactivate</option>
+                        <option value="delete">Delete</option>
+                        <option value="export">Export Selected</option>
+                    </select>
+                    <button onclick="performBulkAction()" class="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                        Apply
+                    </button>
                 </div>
             </div>
-            @endforeach
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientsTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Clients will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="p-6 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="showingFrom">0</span> to <span id="showingTo">0</span> of <span id="totalResults">0</span> results
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="previousPage()" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">Previous</button>
+                    <div id="paginationNumbers" class="flex items-center space-x-1">
+                        <!-- Pagination numbers will be loaded here -->
+                    </div>
+                    <button onclick="nextPage()" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">Next</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+// API endpoints
+const API_BASE = '/api/clients';
+
+// Global variables
+let clients = [];
+let filteredClients = [];
+let currentPage = 1;
+let totalPages = 1;
+let selectedClients = [];
+
+// Load clients from API
+async function loadClients() {
+    console.log('Loading clients...');
+    try {
+        const search = document.getElementById('searchInput').value;
+        const status = document.getElementById('statusFilter').value;
+        const industry = document.getElementById('industryFilter').value;
+        const sortBy = document.getElementById('sortBy').value;
+        const sortOrder = 'desc';
+        
+        const params = new URLSearchParams({
+            page: currentPage,
+            search: search,
+            status: status,
+            industry: industry,
+            sort_by: sortBy,
+            sort_order: sortOrder
+        });
+        
+        console.log('Fetching:', `${API_BASE}?${params}`);
+        const response = await fetch(`${API_BASE}?${params}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        console.log('Data structure:', JSON.stringify(data, null, 2));
+        
+        if (data.success) {
+            console.log('Clients data:', data.clients);
+            console.log('Clients data type:', typeof data.clients);
+            console.log('Clients data.data:', data.clients?.data);
+            
+            // Handle Laravel paginator structure
+            clients = data.clients.data || data.clients || [];
+            filteredClients = clients;
+            totalPages = data.clients.last_page || 1;
+            
+            console.log('Clients array:', clients);
+            console.log('Filtered clients:', filteredClients);
+            console.log('Total pages:', totalPages);
+            
+            // Update statistics
+            updateStatistics(data.stats);
+            
+            // Update industry filter
+            updateIndustryFilter(data.industries);
+            
+            // Render clients
+            console.log('About to render clients...');
+            renderClients();
+            
+            // Update pagination
+            updatePagination(data.clients);
+        } else {
+            console.log('API returned success=false');
+            showNotification('Failed to load clients', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading clients:', error);
+        showNotification('Error loading clients: ' + error.message, 'error');
+    }
+}
+
+// Update statistics
+function updateStatistics(stats) {
+    document.getElementById('totalClients').textContent = stats.total;
+    document.getElementById('activeClients').textContent = stats.active;
+    document.getElementById('inactiveClients').textContent = stats.inactive;
+    document.getElementById('suspendedClients').textContent = stats.suspended;
+}
+
+// Update industry filter
+function updateIndustryFilter(industries) {
+    const select = document.getElementById('industryFilter');
+    const currentValue = select.value;
+    
+    select.innerHTML = '<option value="">All Industries</option>';
+    industries.forEach(industry => {
+        select.innerHTML += `<option value="${industry}">${industry}</option>`;
+    });
+    
+    select.value = currentValue;
+}
+
+// Render clients table
+function renderClients() {
+    console.log('renderClients() called');
+    console.log('filteredClients:', filteredClients);
+    console.log('filteredClients length:', filteredClients.length);
+    
+    const tbody = document.getElementById('clientsTableBody');
+    console.log('tbody element:', tbody);
+    
+    if (!tbody) {
+        console.error('clientsTableBody element not found!');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    console.log('tbody cleared');
+    
+    if (filteredClients.length === 0) {
+        console.log('No clients to display');
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">No clients found</td></tr>';
+        return;
+    }
+    
+    filteredClients.forEach((client, index) => {
+        console.log(`Rendering client ${index}:`, client);
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox" class="client-checkbox w-4 h-4 text-indigo-600 border-gray-300 rounded" value="${client.id}">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-indigo-600 font-semibold">${client.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-900">${client.name}</div>
+                        <div class="text-sm text-gray-500">${client.email}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900">${client.industry}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${client.city}, ${client.country}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${client.contact_person}</div>
+                <div class="text-sm text-gray-500">${client.contact_phone}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${getSubscriptionBadge(client.subscription_plan)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${client.employee_count}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${getStatusBadge(client.status)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="{{ route('clients.edit') }}?id=${client.id}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                    <button onclick="deleteClient(${client.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    console.log('Finished rendering clients');
+    console.log('Rows added:', filteredClients.length);
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Add checkbox event listeners
+    addCheckboxListeners();
+}
+
+// Get status badge HTML
+function getStatusBadge(status) {
+    const badges = {
+        active: '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>',
+        inactive: '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>',
+        suspended: '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>'
+    };
+    return badges[status] || badges.inactive;
+}
+
+// Get subscription badge HTML
+function getSubscriptionBadge(plan) {
+    const badges = {
+        basic: '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Basic</span>',
+        premium: '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Premium</span>',
+        enterprise: '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Enterprise</span>'
+    };
+    return badges[plan] || badges.basic;
+}
+
+// Add checkbox listeners
+function addCheckboxListeners() {
+    const checkboxes = document.querySelectorAll('.client-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const clientId = parseInt(this.value);
+            if (this.checked) {
+                selectedClients.push(clientId);
+            } else {
+                selectedClients = selectedClients.filter(id => id !== clientId);
+            }
+            updateBulkActionButton();
+        });
+    });
+}
+
+// Update bulk action button
+function updateBulkActionButton() {
+    const bulkAction = document.getElementById('bulkAction');
+    const applyButton = bulkAction.nextElementSibling;
+    
+    if (selectedClients.length > 0) {
+        bulkAction.disabled = false;
+        applyButton.disabled = false;
+    } else {
+        bulkAction.disabled = true;
+        applyButton.disabled = true;
+    }
+}
+
+// Delete client
+async function deleteClient(clientId) {
+    if (!confirm('Are you sure you want to delete this client?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/${clientId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Client deleted successfully', 'success');
+            loadClients();
+        } else {
+            showNotification('Failed to delete client', 'error');
+        }
+    } catch (error) {
+        showNotification('Error deleting client: ' + error.message, 'error');
+    }
+}
+
+// Export clients
+async function exportClients() {
+    try {
+        const status = document.getElementById('statusFilter').value;
+        const industry = document.getElementById('industryFilter').value;
+        
+        const params = new URLSearchParams({
+            status: status,
+            industry: industry
+        });
+        
+        const response = await fetch(`${API_BASE}/export?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Create and download CSV
+            const blob = new Blob([data.csv_data], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `clients_export_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showNotification(`Exported ${data.count} clients successfully`, 'success');
+        } else {
+            showNotification('Failed to export clients', 'error');
+        }
+    } catch (error) {
+        showNotification('Error exporting clients: ' + error.message, 'error');
+    }
+}
+
+// Bulk operations
+async function performBulkAction() {
+    const action = document.getElementById('bulkAction').value;
+    
+    if (!action || selectedClients.length === 0) {
+        showNotification('Please select clients and an action', 'warning');
+        return;
+    }
+    
+    if (action === 'delete' && !confirm(`Are you sure you want to delete ${selectedClients.length} clients?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/bulk`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                action: action,
+                client_ids: selectedClients
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            
+            // Handle export
+            if (action === 'export') {
+                const blob = new Blob([data.csv_data], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `selected_clients_export_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+            
+            // Reset selection
+            selectedClients = [];
+            document.getElementById('selectAll').checked = false;
+            updateBulkActionButton();
+            
+            loadClients();
+        } else {
+            showNotification(data.message || 'Bulk operation failed', 'error');
+        }
+    } catch (error) {
+        showNotification('Error performing bulk operation: ' + error.message, 'error');
+    }
+}
+
+// Reset filters
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('industryFilter').value = '';
+    document.getElementById('sortBy').value = 'created_at';
+    currentPage = 1;
+    loadClients();
+}
+
+// Pagination
+function updatePagination(paginationData) {
+    document.getElementById('showingFrom').textContent = paginationData.from || 0;
+    document.getElementById('showingTo').textContent = paginationData.to || 0;
+    document.getElementById('totalResults').textContent = paginationData.total || 0;
+    
+    // Update pagination numbers
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    paginationNumbers.innerHTML = '';
+    
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.className = `px-3 py-1 border rounded-lg text-sm ${i === currentPage ? 'bg-indigo-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`;
+        button.onclick = () => goToPage(i);
+        paginationNumbers.appendChild(button);
+    }
+}
+
+function goToPage(page) {
+    currentPage = page;
+    loadClients();
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        loadClients();
+    }
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        currentPage++;
+        loadClients();
+    }
+}
+
+// Select all functionality
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.client-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+        const clientId = parseInt(checkbox.value);
+        if (this.checked) {
+            if (!selectedClients.includes(clientId)) {
+                selectedClients.push(clientId);
+            }
+        } else {
+            selectedClients = selectedClients.filter(id => id !== clientId);
+        }
+    });
+    updateBulkActionButton();
+});
+
+// Filter and search event listeners
+document.getElementById('searchInput').addEventListener('input', debounce(() => {
+    currentPage = 1;
+    loadClients();
+}, 300));
+
+document.getElementById('statusFilter').addEventListener('change', () => {
+    currentPage = 1;
+    loadClients();
+});
+
+document.getElementById('industryFilter').addEventListener('change', () => {
+    currentPage = 1;
+    loadClients();
+});
+
+document.getElementById('sortBy').addEventListener('change', () => {
+    currentPage = 1;
+    loadClients();
+});
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Notification function
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    
+    const colors = {
+        success: 'bg-green-500 text-white',
+        error: 'bg-red-500 text-white',
+        warning: 'bg-yellow-500 text-white',
+        info: 'bg-blue-500 text-white'
+    };
+    
+    notification.className += ' ' + colors[type] || colors.info;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i data-feather="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Auto remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadClients();
+    
+    // Initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+
+// Client switching function (required by sidebar)
+function switchClient(clientId) {
+    showNotification('Switching to client...', 'info');
+    
+    setTimeout(() => {
+        const select = document.querySelector('select[onchange="switchClient(this.value)"]');
+        if (select) {
+            select.value = clientId;
+        }
+        
+        const clientNames = {
+            '1': 'ABC Manufacturing Ltd',
+            '2': 'XYZ Construction Co',
+            '3': 'Tanzania Mining Corp',
+            '4': 'East Africa Logistics'
+        };
+        
+        showNotification(`Switched to ${clientNames[clientId]}`, 'success');
+    }, 500);
+}
+
+// Notification functions (required by header)
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
+function removeNotification(notificationId) {
+    const notification = document.getElementById(notificationId);
+    if (notification) {
+        notification.remove();
+        updateNotificationBadge();
+    }
+}
+
+function markAllAsRead() {
+    const unreadNotifications = document.querySelectorAll('.notification-item:not(.read)');
+    unreadNotifications.forEach(notification => {
+        notification.classList.add('read');
+    });
+    updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    const unreadCount = document.querySelectorAll('.notification-item:not(.read)').length;
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+</script>
+@endpush
+
 @endsection

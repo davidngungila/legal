@@ -11,14 +11,22 @@
             <p class="text-gray-600 mt-2">Manage system users and access permissions</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onclick="window.location.href='/roles'" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i data-feather="shield" class="w-4 h-4 inline mr-2"></i>
+                Manage Roles
+            </button>
+            <button onclick="window.location.href='/permissions'" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i data-feather="key" class="w-4 h-4 inline mr-2"></i>
+                Manage Permissions
+            </button>
+            <button onclick="exportUsers()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Users
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <a href="{{ route('users.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="user-plus" class="w-4 h-4 inline mr-2"></i>
                 Add New User
-            </button>
+            </a>
         </div>
     </div>
 
@@ -31,7 +39,7 @@
                 </div>
                 <span class="text-sm text-green-600 font-medium">+3</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">48</h3>
+            <h3 class="text-2xl font-bold text-gray-900" id="totalUsersCount">48</h3>
             <p class="text-gray-600 text-sm">Total Users</p>
         </div>
 
@@ -42,185 +50,68 @@
                 </div>
                 <span class="text-sm text-green-600 font-medium">Active</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">45</h3>
+            <h3 class="text-2xl font-bold text-gray-900" id="activeUsersCount">45</h3>
             <p class="text-gray-600 text-sm">Active Users</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="user-check" class="w-6 h-6 text-yellow-600"></i>
+                    <i data-feather="user-x" class="w-6 h-6 text-yellow-600"></i>
                 </div>
-                <span class="text-sm text-yellow-600 font-medium">Admin</span>
+                <span class="text-sm text-red-600 font-medium">-2</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">8</h3>
-            <p class="text-gray-600 text-sm">Admin Users</p>
+            <h3 class="text-2xl font-bold text-gray-900" id="inactiveUsersCount">3</h3>
+            <p class="text-gray-600 text-sm">Inactive Users</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="clock" class="w-6 h-6 text-purple-600"></i>
+                    <i data-feather="shield" class="w-6 h-6 text-purple-600"></i>
                 </div>
-                <span class="text-sm text-orange-600 font-medium">Recent</span>
+                <span class="text-sm text-purple-600 font-medium">Admin</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">5</h3>
-            <p class="text-gray-600 text-sm">New This Month</p>
+            <h3 class="text-2xl font-bold text-gray-900" id="adminUsersCount">8</h3>
+            <p class="text-gray-600 text-sm">Admin Users</p>
         </div>
     </div>
 
-    <!-- User List -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">System Users</h3>
-            <div class="flex space-x-3">
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
                 <div class="relative">
-                    <input type="text" placeholder="Search users..." class="form-input pl-10 pr-4 py-2">
-                    <i data-feather="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
+                    <input type="text" id="userSearch" placeholder="Search users..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full md:w-64">
+                    <i data-feather="search" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5"></i>
                 </div>
-                <select class="form-select">
-                    <option>All Roles</option>
-                    <option>Super Admin</option>
-                    <option>HR Admin</option>
-                    <option>HR Officer</option>
-                    <option>Finance Officer</option>
-                    <option>Line Manager</option>
-                    <option>Employee</option>
+                <select id="roleFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All Roles</option>
+                    <option value="super_admin">Super Admin</option>
+                    <option value="hr_admin">HR Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="employee">Employee</option>
                 </select>
-                <select class="form-select">
-                    <option>All Status</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
-                    <option>Suspended</option>
+                <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All Status</option>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
                 </select>
             </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach([
-                        ['name' => 'Admin User', 'email' => 'admin@legalhr.co.tz', 'role' => 'Super Admin', 'dept' => 'IT', 'lastLogin' => '2024-03-29 09:30', 'status' => 'Active'],
-                        ['name' => 'Sarah Williams', 'email' => 'sarah.williams@legalhr.co.tz', 'role' => 'HR Admin', 'dept' => 'HR', 'lastLogin' => '2024-03-29 08:45', 'status' => 'Active'],
-                        ['name' => 'John Smith', 'email' => 'john.smith@legalhr.co.tz', 'role' => 'HR Officer', 'dept' => 'HR', 'lastLogin' => '2024-03-29 09:15', 'status' => 'Active'],
-                        ['name' => 'Michael Chen', 'email' => 'michael.chen@legalhr.co.tz', 'role' => 'Finance Officer', 'dept' => 'Finance', 'lastLogin' => '2024-03-28 16:30', 'status' => 'Active'],
-                        ['name' => 'Emily Davis', 'email' => 'emily.davis@legalhr.co.tz', 'role' => 'Line Manager', 'dept' => 'Operations', 'lastLogin' => '2024-03-29 07:45', 'status' => 'Active'],
-                        ['name' => 'David Wilson', 'email' => 'david.wilson@legalhr.co.tz', 'role' => 'Employee', 'dept' => 'Sales', 'lastLogin' => '2024-03-28 17:00', 'status' => 'Active'],
-                        ['name' => 'Lisa Brown', 'email' => 'lisa.brown@legalhr.co.tz', 'role' => 'Employee', 'dept' => 'Marketing', 'lastLogin' => '2024-03-27 14:30', 'status' => 'Active'],
-                        ['name' => 'James Taylor', 'email' => 'james.taylor@legalhr.co.tz', 'role' => 'HR Officer', 'dept' => 'HR', 'lastLogin' => '2024-03-26 11:20', 'status' => 'Suspended']
-                    ] as $user)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                                    <span class="text-white text-xs font-medium">{{ substr($user['name'], 0, 1) }}</span>
-                                </div>
-                                <div class="ml-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $user['name'] }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user['email'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                @if($user['role'] === 'Super Admin') bg-purple-100 text-purple-800
-                                @elseif($user['role'] === 'HR Admin') bg-blue-100 text-blue-800
-                                @elseif($user['role'] === 'HR Officer') bg-green-100 text-green-800
-                                @elseif($user['role'] === 'Finance Officer') bg-yellow-100 text-yellow-800
-                                @elseif($user['role'] === 'Line Manager') bg-orange-100 text-orange-800
-                                @else bg-gray-100 text-gray-800 @endif">
-                                {{ $user['role'] }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user['dept'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user['lastLogin'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                @if($user['status'] === 'Active') bg-green-100 text-green-800
-                                @elseif($user['status'] === 'Suspended') bg-red-100 text-red-800
-                                @else bg-gray-100 text-gray-800 @endif">
-                                {{ $user['status'] }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                            <button class="text-gray-600 hover:text-gray-900">Permissions</button>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            <button onclick="resetFilters()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i data-feather="refresh-cw" class="w-4 h-4 inline mr-2"></i>
+                Reset Filters
+            </button>
         </div>
     </div>
 
-    <!-- Role Distribution -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Role Distribution</h3>
-            <div class="space-y-4">
-                @foreach([
-                    ['role' => 'Super Admin', 'count' => 1, 'color' => 'purple'],
-                    ['role' => 'HR Admin', 'count' => 2, 'color' => 'blue'],
-                    ['role' => 'HR Officer', 'count' => 8, 'color' => 'green'],
-                    ['role' => 'Finance Officer', 'count' => 3, 'color' => 'yellow'],
-                    ['role' => 'Line Manager', 'count' => 12, 'color' => 'orange'],
-                    ['role' => 'Employee', 'count' => 22, 'color' => 'gray']
-                ] as $role)
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-{{ $role['color'] }}-500 rounded-full mr-3"></div>
-                        <span class="text-sm font-medium text-gray-900">{{ $role['role'] }}</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-sm font-medium text-gray-900 mr-2">{{ $role['count'] }}</span>
-                        <span class="text-sm text-gray-500">({{ round(($role['count'] / 48) * 100) }}%)</span>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">User Activity</h3>
-            <div class="space-y-4">
-                @foreach([
-                    ['metric' => 'Daily Active Users', 'value' => 42, 'percentage' => 87],
-                    ['metric' => 'Weekly Active Users', 'value' => 45, 'percentage' => 94],
-                    ['metric' => 'Monthly Active Users', 'value' => 47, 'percentage' => 98],
-                    ['metric' => 'New Users (This Month)', 'value' => 5, 'percentage' => 10]
-                ] as $activity)
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="font-medium text-gray-900">{{ $activity['metric'] }}</p>
-                        <p class="text-sm text-gray-500">{{ $activity['value'] }} users</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-medium text-gray-900">{{ $activity['percentage'] }}%</p>
-                        <p class="text-sm text-gray-500">of total</p>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-
-    <!-- System Permissions -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">System Permissions Matrix</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit Permissions</button>
+    <!-- Users Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Users List</h2>
         </div>
         <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
@@ -272,3 +163,144 @@
     </div>
 </div>
 @endsection
+
+<script>
+    // API endpoints
+    const API_BASE = '/api/users';
+
+    // Sample user data - will be replaced with API call
+    let users = [];
+    let currentPage = 1;
+    let filteredUsers = [];
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers();
+    });
+
+    // Load users from API
+    async function loadUsers() {
+        try {
+            const response = await fetch(`${API_BASE}?${new URLSearchParams(window.location.search)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                users = data.users;
+                filteredUsers = [...users];
+                renderUsers();
+                updateStats();
+            } else {
+                showNotification('Failed to load users', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+            showNotification('Error loading users', 'error');
+        }
+    }
+
+    // Render users table
+    function renderUsers() {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
+        
+        const startIndex = (currentPage - 1) * 10;
+        const endIndex = startIndex + 10;
+        const pageUsers = filteredUsers.slice(startIndex, endIndex);
+        
+        pageUsers.forEach(user => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="checkbox" class="user-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-id="${user.id}">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-indigo-600 font-medium text-sm">${user.first_name.charAt(0)}${user.last_name.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${user.first_name} ${user.last_name}</div>
+                            <div class="text-sm text-gray-500">${user.email}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${user.email}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(user.role)}">
+                        ${user.role_display || user.role}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                        ${user.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${formatDate(user.last_login_at)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-2">
+                        <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-900" title="Edit">
+                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900" title="Delete">
+                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Re-initialize feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+}
+
+// Form submissions
+document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch(API_BASE, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeCreateUserModal();
+            showNotification('User created successfully', 'success');
+            loadUsers(); // Reload users
+        } else {
+            showNotification(data.message || 'Failed to create user', 'error');
+            if (data.errors) {
+            }
+        } catch (error) {
+            console.error('Error loading user:', error);
+            showNotification('Error loading user', 'error');
+        }
+    }
+
+    async function deleteUser(userId) {
+        document.getElementById('deleteUserId').value = userId;
+        showDeleteUserModal();
+    } catch (error) {
+        console.error('Error updating user:', error);
+        showNotification('Error updating user', 'error');
+    }
+});
+</script>

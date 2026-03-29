@@ -15,9 +15,9 @@
     
     <!-- Client Selector (for Super Admin and HR Admin) -->
     @if(isset($currentUser) && ((is_object($currentUser) && ($currentUser->role === 'super_admin' || $currentUser->role === 'hr_admin')) || (is_array($currentUser) && ($currentUser['role'] === 'super_admin' || $currentUser['role'] === 'hr_admin'))))
-    <div class="p-4 border-b border-[#1a1a3a] flex-shrink-0">
-        <label class="text-xs text-[#a0a0c0] block mb-2">Current Client:</label>
-        <select class="w-full bg-[#1a1a3a] text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
+    <div class="p-4 border-b border-indigo-700 flex-shrink-0">
+        <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
+        <select class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
             <option value="1">ABC Manufacturing Ltd</option>
             <option value="2">XYZ Construction Co</option>
             <option value="3">Tanzania Mining Corp</option>
@@ -142,7 +142,7 @@
             
             <!-- Employee Self Service -->
             <li>
-                <a href="{{ route('selfservice.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                <a href="{{ route('selfservice.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('selfservice.*') ? 'bg-indigo-700' : '' }}">
                     <i data-feather="user" class="w-5 h-5"></i>
                     <span>Employee Self Service</span>
                 </a>
@@ -156,8 +156,7 @@
                 </a>
             </li>
             
-            <!-- Settings (Admin only) -->
-            @if(isset($currentUser) && ((is_object($currentUser) && ($currentUser->role === 'super_admin' || $currentUser->role === 'hr_admin')) || (is_array($currentUser) && ($currentUser['role'] === 'super_admin' || $currentUser['role'] === 'hr_admin'))))
+            <!-- Settings -->
             <li>
                 <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Administration</div>
                 <ul class="space-y-1 ml-4">
@@ -168,6 +167,18 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('roles.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('roles.*') ? 'bg-indigo-700' : '' }}">
+                            <i data-feather="shield" class="w-4 h-4"></i>
+                            <span class="text-sm">Role Management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('permissions.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('permissions.*') ? 'bg-indigo-700' : '' }}">
+                            <i data-feather="key" class="w-4 h-4"></i>
+                            <span class="text-sm">Permission Management</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('clients.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="briefcase" class="w-4 h-4"></i>
                             <span class="text-sm">Client Management</span>
@@ -175,7 +186,6 @@
                     </li>
                 </ul>
             </li>
-            @endif
         </ul>
     </nav>
 </aside>

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'last_login_at', 'last_login_ip'])]
+#[Fillable(['first_name', 'last_name', 'email', 'phone', 'password', 'is_active', 'last_login_at', 'last_login_ip'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -19,11 +19,19 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The roles that belong to the user.
+     * The roles that belong to user.
      */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    /**
+     * The permissions that belong to user.
+     */
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class);
     }
 
     /**
