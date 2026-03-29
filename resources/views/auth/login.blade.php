@@ -13,12 +13,17 @@
         </div>
         
         <div class="text-center z-10">
+            <!-- Logo Section -->
             <div class="mb-8">
-                <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                    <i data-feather="briefcase" class="w-10 h-10 text-indigo-600"></i>
+                <div class="w-36 h-36 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-40 h-40 object-contain">
                 </div>
-                <h1 class="text-4xl font-bold mb-2">LegalHR</h1>
-                <p class="text-xl opacity-90">Tanzania</p>
+            </div>
+            
+            <!-- System Info -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold mb-2">Orvion</h1>
+                <p class="text-xl opacity-90">HR Management System</p>
             </div>
             
             <div class="space-y-4 text-lg">
@@ -28,7 +33,7 @@
                 </div>
                 <div class="flex items-center justify-center space-x-3">
                     <i data-feather="shield" class="w-5 h-5"></i>
-                    <span>Tanzania Labor Compliant</span>
+                    <span>Labor Compliant</span>
                 </div>
                 <div class="flex items-center justify-center space-x-3">
                     <i data-feather="users" class="w-5 h-5"></i>
@@ -107,14 +112,14 @@
             
             <div class="mt-6 text-center">
                 <div class="forgot-password">
-                    <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">Forgot your password?</a>
+                    <a href="#" class="text-[#040344] hover:text-[#040344]/80 text-sm">Forgot your password?</a>
                 </div>
                 
                 <div class="signup-link mt-4">
                     <span class="text-gray-600 text-sm">Don't have an account? </span>
-                    <a href="{{ route('register') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Sign up</a>
+                    <a href="{{ route('register') }}" class="text-[#040344] hover:text-[#040344]/80 text-sm font-medium">Sign up</a>
                     <span class="mx-2 text-gray-400">|</span>
-                    <a href="{{ route('sample-users') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Sample Users</a>
+                    <a href="{{ route('sample-users') }}" class="text-[#040344] hover:text-[#040344]/80 text-sm font-medium">Sample Users</a>
                 </div>
             </div>
         </div>

@@ -35,7 +35,7 @@
         
         .login-left {
             flex: 1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #040344 0%, #040344 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -82,14 +82,14 @@
         
         .form-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #040344;
+            box-shadow: 0 0 0 3px rgba(4, 3, 68, 0.1);
         }
         
         .btn-primary {
             width: 100%;
             padding: 0.875rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #040344 0%, #040344 100%);
             color: white;
             border: none;
             border-radius: 0.5rem;
@@ -100,7 +100,7 @@
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 25px rgba(4, 3, 68, 0.3);
         }
         
         .floating-shapes {
