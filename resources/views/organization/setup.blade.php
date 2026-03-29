@@ -413,3 +413,89 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Fallback switchClient function - only use if main function not available
+if (typeof window.switchClient !== 'function') {
+    window.switchClient = function(clientId) {
+        // Show client switch modal
+        showClientSwitchModal(clientId);
+    };
+    
+    // Include necessary modal functions
+    function showClientSwitchModal(clientId) {
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        modalOverlay.id = 'clientSwitchModal';
+        
+        const clients = {
+            '1': 'ABC Manufacturing Ltd',
+            '2': 'XYZ Construction Co',
+            '3': 'Tanzania Mining Corp',
+            '4': 'East Africa Logistics'
+        };
+        const clientName = clients[clientId] || 'Unknown Client';
+        
+        modalOverlay.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="briefcase" class="w-8 h-8 text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Switch Client</h3>
+                    <p class="text-gray-600">Are you sure you want to switch to <strong>${clientName}</strong>?</p>
+                    <p class="text-sm text-gray-500 mt-2">All data will be refreshed and updated.</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button onclick="closeClientSwitchModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmClientSwitch('${clientId}', '${clientName}')" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Switch Client
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalOverlay);
+        
+        // Add blur effect to background
+        document.body.classList.add('backdrop-blur-sm');
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        setTimeout(() => {
+            modalOverlay.querySelector('.transform').classList.add('scale-100');
+        }, 10);
+    }
+    
+    function closeClientSwitchModal() {
+        const modal = document.getElementById('clientSwitchModal');
+        if (modal) {
+            modal.querySelector('.transform').classList.remove('scale-100');
+            
+            // Remove blur effect from background
+            document.body.classList.remove('backdrop-blur-sm');
+            
+            setTimeout(() => {
+                document.body.removeChild(modal);
+            }, 200);
+        }
+    }
+    
+    function confirmClientSwitch(clientId, clientName) {
+        closeClientSwitchModal();
+        
+        // Store selected client
+        localStorage.setItem('selectedClient', clientId);
+        
+        // Reload page to update data
+        window.location.reload();
+    }
+}
+</script>
+@endpush

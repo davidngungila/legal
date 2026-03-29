@@ -91,11 +91,11 @@
             <div class="relative">
                 <button id="userButton" onclick="toggleUserDropdown()" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                     <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-                        <span class="text-sm font-bold text-white">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                        <span class="text-sm font-bold text-white">{{ substr(is_object($currentUser) ? $currentUser->name : $currentUser['name'], 0, 1) }}</span>
                     </div>
                     <div class="hidden md:block text-left">
-                        <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
-                        <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ is_object($currentUser) ? $currentUser->name : $currentUser['name'] }}</p>
+                        <p class="text-xs text-gray-500">{{ is_object($currentUser) ? $currentUser->email : $currentUser['email'] }}</p>
                     </div>
                     <i data-feather="chevron-down" class="w-4 h-4 text-gray-400"></i>
                 </button>
@@ -106,14 +106,14 @@
                     <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-                                <span class="text-sm font-bold text-white">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                                <span class="text-sm font-bold text-white">{{ substr(is_object($currentUser) ? $currentUser->name : $currentUser['name'], 0, 1) }}</span>
                             </div>
                             <div class="flex-1">
-                                <p class="font-semibold text-gray-900">{{ auth()->user()->name }}</p>
-                                <p class="text-sm text-gray-600">{{ auth()->user()->email }}</p>
+                                <p class="font-semibold text-gray-900">{{ is_object($currentUser) ? $currentUser->name : $currentUser['name'] }}</p>
+                                <p class="text-sm text-gray-600">{{ is_object($currentUser) ? $currentUser->email : $currentUser['email'] }}</p>
                                 <div class="flex items-center mt-1">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                        {{ ucfirst(str_replace('_', ' ', auth()->user()->role)) }}
+                                        {{ ucfirst(str_replace('_', ' ', is_object($currentUser) ? $currentUser->role : $currentUser['role'])) }}
                                     </span>
                                 </div>
                             </div>
