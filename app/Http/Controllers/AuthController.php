@@ -3,40 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class AuthController
 {
-    /**
-     * Sample users for demonstration
-     */
-    private $sampleUsers = [
-        [
-            'email' => 'admin@legalhr.com',
-            'password' => 'admin123',
-            'name' => 'Admin User',
-            'role' => 'super_admin'
-        ],
-        [
-            'email' => 'hr@legalhr.com',
-            'password' => 'hr123',
-            'name' => 'HR Manager',
-            'role' => 'hr_admin'
-        ],
-        [
-            'email' => 'manager@legalhr.com',
-            'password' => 'manager123',
-            'name' => 'Department Manager',
-            'role' => 'manager'
-        ],
-        [
-            'email' => 'employee@legalhr.com',
-            'password' => 'emp123',
-            'name' => 'John Employee',
-            'role' => 'employee'
-        ]
-    ];
-
     /**
      * Show login form
      */
@@ -55,15 +27,15 @@ class AuthController
             'password' => 'required',
         ]);
 
-        // Check against sample users
-        $user = collect($this->sampleUsers)->firstWhere('email', $credentials['email']);
-
-        if ($user && $user['password'] === $credentials['password']) {
-            // Convert array to object for consistent access
-            $userObject = (object) $user;
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
             
-            // Store user object in session
-            Session::put('user', $userObject);
+            // Update last login
+            $user = Auth::user();
+            $user->update([
+                'last_login_at' => now(),
+                'last_login_ip' => $request->ip(),
+            ]);
             
             return redirect('/dashboard')->with('success', 'Login successful!');
         }
@@ -76,9 +48,13 @@ class AuthController
     /**
      * Handle logout
      */
-    public function logout()
+    public function logout(Request $request)
     {
-        Session::forget('user');
+        Auth::logout();
+        
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
         return redirect('/login')->with('success', 'Logged out successfully!');
     }
 
@@ -108,6 +84,6 @@ class AuthController
      */
     public static function getCurrentUser()
     {
-        return Session::get('user');
+        return Auth::user();
     }
 }

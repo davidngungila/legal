@@ -14,21 +14,28 @@ use App\Http\Controllers\AuthController;
 |
 */
 
+// Root route - redirect to login
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
 // Authentication Routes
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::get('/sample-users', function () {
-    return view('auth.sample-users');
-})->name('sample-users');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
-Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.post');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::middleware(['guest', 'web'])->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/sample-users', function () {
+        return view('auth.sample-users');
+    })->name('sample-users');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::get('/register', function () {
+        return view('auth.register');
+    })->name('register');
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.post');
+});
+Route::middleware(['web'])->post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes (require authentication)
-Route::middleware(['web', \App\Http\Middleware\ShareCurrentUser::class])->group(function () {
+Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', function () {
         return view('dashboard');
