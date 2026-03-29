@@ -271,14 +271,20 @@ function updateNotificationBadge() {
                     </div>
                 </td>
             `;
-            tbody.appendChild(row);
-        });
+      // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== USERS PAGE INITIALIZED ===');
+        console.log('API_BASE:', API_BASE);
+        console.log('Current URL:', window.location.href);
+        console.log('Current search params:', window.location.search);
         
-        // Re-initialize feather icons
+        loadUsers();
+        
+        // Initialize feather icons
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
-    }
+    });
 
     // Helper functions
     function getRoleBadgeClass(role) {

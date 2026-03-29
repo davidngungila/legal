@@ -163,25 +163,25 @@
                     <li>
                         <a href="{{ route('users.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('users.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="settings" class="w-4 h-4"></i>
-                            <span class="text-sm">User Management</span>
+                            <span>Users</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('roles.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('roles.*') ? 'bg-indigo-700' : '' }}">
                             <i data-feather="shield" class="w-4 h-4"></i>
-                            <span class="text-sm">Role Management</span>
+                            <span>Roles</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('permissions.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('permissions.*') ? 'bg-indigo-700' : '' }}">
                             <i data-feather="key" class="w-4 h-4"></i>
-                            <span class="text-sm">Permission Management</span>
+                            <span>Permissions</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('clients.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span class="text-sm">Client Management</span>
+                            <span>Clients</span>
                         </a>
                     </li>
                 </ul>
