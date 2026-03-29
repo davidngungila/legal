@@ -17,7 +17,7 @@
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body class="font-lato bg-gray-50">
-    @auth
+    @if(isset($currentUser))
         <!-- Main Application Layout -->
         <div class="flex h-screen overflow-hidden">
             <!-- Sidebar -->
@@ -40,39 +40,11 @@
     @else
         <!-- Auth Layout -->
         @yield('content')
-    @endauth
+    @endif
     
     <script>
         // Initialize Feather Icons
         feather.replace();
-        
-        // Client Switching for Super Admin and HR Admin
-        function switchClient(clientId) {
-            if (confirm('Are you sure you want to switch to this client? All data will be refreshed.')) {
-                // Show loading state
-                const select = document.querySelector('select[onchange="switchClient(this.value)"]');
-                if (select) {
-                    select.disabled = true;
-                }
-                
-                // Simulate API call and page reload
-                setTimeout(() => {
-                    // Store selected client
-                    localStorage.setItem('selectedClient', clientId);
-                    
-                    // Update all client-specific data displays
-                    updateClientData(clientId);
-                    
-                    // Show success message
-                    showNotification('Client switched successfully', 'success');
-                    
-                    // Re-enable select
-                    if (select) {
-                        select.disabled = false;
-                    }
-                }, 1000);
-            }
-        }
         
         // Update client-specific data throughout the application
         function updateClientData(clientId) {
@@ -171,5 +143,7 @@
             }
         });
     </script>
+    
+    @stack('scripts')
 </body>
 </html>

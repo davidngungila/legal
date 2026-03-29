@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Login - LegalHR Tanzania')
+@section('title', 'Forgot Password - LegalHR Tanzania')
 
 @section('content')
 <div class="login-container">
@@ -42,12 +42,12 @@
         </div>
     </div>
     
-    <!-- Right Side - Login Form -->
+    <!-- Right Side - Forgot Password Form -->
     <div class="login-right">
         <div class="login-form">
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                <p class="text-gray-600">Sign in to your LegalHR account</p>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Forgot Password?</h2>
+                <p class="text-gray-600">No worries, we'll send you reset instructions.</p>
             </div>
             
             @if(session('success'))
@@ -62,7 +62,7 @@
                 </div>
             @endif
             
-            <form method="POST" action="{{ route('login.post') }}" class="space-y-6">
+            <form method="POST" action="{{ route('password.post') }}" class="space-y-6">
                 @csrf
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
@@ -70,70 +70,25 @@
                         <i data-feather="mail" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
                         <input type="email" id="email" name="email" required
                                class="form-input pl-10"
-                               placeholder="Enter your email">
+                               placeholder="Enter your email address">
                     </div>
-                </div>
-                
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <div class="relative">
-                        <i data-feather="lock" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
-                        <input type="password" id="password" name="password" required
-                               class="form-input pl-10"
-                               placeholder="Enter your password">
-                    </div>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="remember" class="mr-2">
-                        <span class="text-sm text-gray-600">Remember me</span>
-                    </label>
                 </div>
                 
                 <button type="submit" class="btn-primary">
                     <span class="flex items-center justify-center">
-                        <i data-feather="log-in" class="w-5 h-5 mr-2"></i>
-                        LOGIN
+                        <i data-feather="send" class="w-5 h-5 mr-2"></i>
+                        SEND RESET LINK
                     </span>
                 </button>
             </form>
             
             <div class="mt-6 text-center">
-                <div class="forgot-password">
-                    <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">Forgot your password?</a>
-                </div>
-                
-                <div class="signup-link mt-4">
-                    <span class="text-gray-600 text-sm">Don't have an account? </span>
-                    <a href="{{ route('register') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Sign up</a>
-                    <span class="mx-2 text-gray-400">|</span>
-                    <a href="{{ route('sample-users') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Sample Users</a>
+                <div class="back-to-login">
+                    <span class="text-gray-600 text-sm">Remember your password? </span>
+                    <a href="{{ route('login') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Back to login</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
-<script>
-// Auto-fill credentials if coming from sample users page
-document.addEventListener('DOMContentLoaded', function() {
-    const email = sessionStorage.getItem('loginEmail');
-    const password = sessionStorage.getItem('loginPassword');
-    
-    if (email && password) {
-        const emailField = document.getElementById('email');
-        const passwordField = document.getElementById('password');
-        
-        if (emailField && passwordField) {
-            emailField.value = email;
-            passwordField.value = password;
-            
-            // Clear sessionStorage
-            sessionStorage.removeItem('loginEmail');
-            sessionStorage.removeItem('loginPassword');
-        }
-    }
-});
-</script>

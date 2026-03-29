@@ -23,29 +23,178 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Client Management
 function switchClient(clientId) {
-    if (confirm('Are you sure you want to switch to this client? All data will be refreshed.')) {
-        // Show loading state
-        const select = document.querySelector('select[onchange="switchClient(this.value)"]');
-        if (select) {
-            select.disabled = true;
-        }
+    showClientSwitchModal(clientId);
+}
+
+function showClientSwitchModal(clientId) {
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modalOverlay.id = 'clientSwitchModal';
+    
+    // Get client name
+    const clients = {
+        '1': 'ABC Manufacturing Ltd',
+        '2': 'XYZ Construction Co',
+        '3': 'Tanzania Mining Corp',
+        '4': 'East Africa Logistics'
+    };
+    const clientName = clients[clientId] || 'Unknown Client';
+    
+    // Create modal content
+    modalOverlay.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-feather="briefcase" class="w-8 h-8 text-indigo-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Switch Client</h3>
+                <p class="text-gray-600">Are you sure you want to switch to <strong>${clientName}</strong>?</p>
+                <p class="text-sm text-gray-500 mt-2">All data will be refreshed and updated.</p>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="closeClientSwitchModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmClientSwitch('${clientId}', '${clientName}')" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Switch Client
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add to body
+    document.body.appendChild(modalOverlay);
+    
+    // Add blur effect to background
+    document.body.classList.add('backdrop-blur-sm');
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Add animation
+    setTimeout(() => {
+        modalOverlay.querySelector('.transform').classList.add('scale-100');
+    }, 10);
+}
+
+function closeClientSwitchModal() {
+    const modal = document.getElementById('clientSwitchModal');
+    if (modal) {
+        modal.querySelector('.transform').classList.remove('scale-100');
         
-        // Simulate API call
+        // Remove blur effect from background
+        document.body.classList.remove('backdrop-blur-sm');
+        
         setTimeout(() => {
-            // Store selected client
-            localStorage.setItem('selectedClient', clientId);
+            document.body.removeChild(modal);
+        }, 200);
+    }
+}
+
+function confirmClientSwitch(clientId, clientName) {
+    // Close modal
+    closeClientSwitchModal();
+    
+    // Show splash screen
+    showClientSwitchSplash(clientName);
+    
+    // Simulate switching process
+    setTimeout(() => {
+        // Store selected client
+        localStorage.setItem('selectedClient', clientId);
+        
+        // Update all client-specific data displays
+        updateClientData(clientId);
+        
+        // Hide splash and show success
+        hideClientSwitchSplash(clientName);
+    }, 2000);
+}
+
+function showClientSwitchSplash(clientName) {
+    // Create splash overlay
+    const splashOverlay = document.createElement('div');
+    splashOverlay.className = 'fixed inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 z-50 flex items-center justify-center';
+    splashOverlay.id = 'clientSwitchSplash';
+    
+    splashOverlay.innerHTML = `
+        <div class="text-center text-white">
+            <div class="mb-8">
+                <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                    <i data-feather="briefcase" class="w-12 h-12 text-white"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4">Switching Client</h2>
+                <p class="text-xl opacity-90">Now working in <strong>${clientName}</strong></p>
+            </div>
             
-            // Update all client-specific data displays
-            updateClientData(clientId);
+            <div class="flex justify-center space-x-2 mb-8">
+                <div class="w-3 h-3 bg-white rounded-full animate-bounce" style="animation-delay: 0s;"></div>
+                <div class="w-3 h-3 bg-white rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                <div class="w-3 h-3 bg-white rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+            </div>
             
-            // Show success message
-            showNotification('Client switched successfully', 'success');
-            
-            // Re-enable select
-            if (select) {
-                select.disabled = false;
-            }
-        }, 1000);
+            <div class="text-sm opacity-75">
+                <p>Refreshing all data...</p>
+                <p class="mt-1">Please wait a moment</p>
+            </div>
+        </div>
+    `;
+    
+    // Add to body
+    document.body.appendChild(splashOverlay);
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function hideClientSwitchSplash(clientName) {
+    // Show success message
+    const splash = document.getElementById('clientSwitchSplash');
+    if (splash) {
+        splash.innerHTML = `
+            <div class="text-center text-white">
+                <div class="mb-8">
+                    <div class="w-24 h-24 bg-green-400 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                        <i data-feather="check-circle" class="w-12 h-12 text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold mb-4">Client Switched!</h2>
+                    <p class="text-xl opacity-90">You are now working in <strong>${clientName}</strong></p>
+                </div>
+                
+                <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-6">
+                    <p class="text-sm mb-2">✅ Dashboard data updated</p>
+                    <p class="text-sm mb-2">✅ Employee records refreshed</p>
+                    <p class="text-sm mb-2">✅ Analytics data synchronized</p>
+                    <p class="text-sm">✅ Company information loaded</p>
+                </div>
+                
+                <button onclick="closeClientSwitchSplash()" class="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
+                    Continue to Dashboard
+                </button>
+            </div>
+        `;
+        
+        // Re-initialize feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+}
+
+function closeClientSwitchSplash() {
+    const splash = document.getElementById('clientSwitchSplash');
+    if (splash) {
+        splash.style.opacity = '0';
+        splash.style.transition = 'opacity 0.5s ease-out';
+        setTimeout(() => {
+            document.body.removeChild(splash);
+        }, 500);
     }
 }
 

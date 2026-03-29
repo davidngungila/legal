@@ -14,7 +14,7 @@
     </div>
     
     <!-- Client Selector (for Super Admin and HR Admin) -->
-    @if(auth()->user()->role === 'super_admin' || auth()->user()->role === 'hr_admin')
+    @if(isset($currentUser) && ((is_object($currentUser) && ($currentUser->role === 'super_admin' || $currentUser->role === 'hr_admin')) || (is_array($currentUser) && ($currentUser['role'] === 'super_admin' || $currentUser['role'] === 'hr_admin'))))
     <div class="p-4 border-b border-indigo-700 flex-shrink-0">
         <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
         <select class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
@@ -41,7 +41,7 @@
             <li>
                 <div class="px-4 py-2 text-xs text-indigo-300 font-semibold uppercase tracking-wider">Organization</div>
                 <a href="{{ route('organization.setup') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('organization.*') ? 'bg-indigo-700' : '' }}">
-                    <i data-feather="building" class="w-5 h-5"></i>
+                    <i data-feather="briefcase" class="w-5 h-5"></i>
                     <span>Company Setup</span>
                 </a>
             </li>
@@ -157,7 +157,7 @@
             </li>
             
             <!-- Settings (Admin only) -->
-            @if(auth()->user()->role === 'super_admin' || auth()->user()->role === 'hr_admin')
+            @if(isset($currentUser) && ((is_object($currentUser) && ($currentUser->role === 'super_admin' || $currentUser->role === 'hr_admin')) || (is_array($currentUser) && ($currentUser['role'] === 'super_admin' || $currentUser['role'] === 'hr_admin'))))
             <li>
                 <div class="px-4 py-2 text-xs text-indigo-300 font-semibold uppercase tracking-wider">Administration</div>
                 <ul class="space-y-1 ml-4">

@@ -270,7 +270,7 @@
                                 <button class="text-green-600 hover:text-green-900" title="Hearing">
                                     <i data-feather="users" class="w-4 h-4"></i>
                                 </button>
-                                @if($case['review'] == 'pending' && auth()->user()->role === 'hr_admin')
+                                @if($case['review'] == 'pending' && isset($currentUser) && ((is_object($currentUser) && $currentUser->role === 'hr_admin') || (is_array($currentUser) && $currentUser['role'] === 'hr_admin')))
                                 <button class="text-red-600 hover:text-red-900" title="Review">
                                     <i data-feather="check-square" class="w-4 h-4"></i>
                                 </button>
