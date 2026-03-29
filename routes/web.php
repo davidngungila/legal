@@ -240,7 +240,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
     Route::prefix('selfservice')->group(function () {
         Route::get('/', function () {
             return view('selfservice.index');
-        })->name('selfservice');
+        })->name('selfservice.index');
         
         Route::get('/leave', function () {
             return view('selfservice.leave');
