@@ -493,4 +493,161 @@
         }
     }
 </script>
+
+@push('scripts')
+<script>
+// Fallback switchClient function if main app.js is not loaded
+if (typeof switchClient === 'undefined') {
+    function switchClient(clientId) {
+        const clientNames = {
+            '1': 'ABC Manufacturing Ltd',
+            '2': 'XYZ Construction Co',
+            '3': 'Tanzania Mining Corp',
+            '4': 'East Africa Logistics'
+        };
+        
+        const clientName = clientNames[clientId] || 'Unknown Client';
+        
+        // Add blur effect to background
+        document.body.classList.add('backdrop-blur-sm');
+        
+        // Create modal with transparent background
+        const modalOverlay = document.createElement('div');
+        modalOverlay.id = 'clientSwitchModal';
+        modalOverlay.className = 'fixed inset-0 flex items-center justify-center z-50';
+        modalOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // Very light transparent overlay
+        modalOverlay.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md mx-4 transform scale-0 transition-transform duration-200 shadow-xl">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                        <i data-feather="users" class="w-6 h-6 text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Switch Client</h2>
+                        <p class="text-sm text-gray-600">Are you sure you want to switch to ${clientName}?</p>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-6">All data will be refreshed and updated.</p>
+                <div class="flex space-x-3">
+                    <button onclick="closeClientSwitchModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmClientSwitch('${clientId}', '${clientName}')" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Switch Client
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Add to body
+        document.body.appendChild(modalOverlay);
+        
+        // Re-initialize feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Add animation
+        setTimeout(() => {
+            modalOverlay.querySelector('.transform').classList.add('scale-100');
+        }, 10);
+    }
+}
+
+// Fallback closeClientSwitchModal function
+if (typeof closeClientSwitchModal === 'undefined') {
+    function closeClientSwitchModal() {
+        const modal = document.getElementById('clientSwitchModal');
+        if (modal) {
+            modal.querySelector('.transform').classList.remove('scale-100');
+            
+            // Remove blur effect from background
+            document.body.classList.remove('backdrop-blur-sm');
+            
+            setTimeout(() => {
+                document.body.removeChild(modal);
+            }, 200);
+        }
+    }
+}
+
+// Fallback confirmClientSwitch function
+if (typeof confirmClientSwitch === 'undefined') {
+    function confirmClientSwitch(clientId, clientName) {
+        closeClientSwitchModal();
+        
+        // Store selected client
+        localStorage.setItem('selectedClient', clientId);
+        localStorage.setItem('selectedClientName', clientName);
+        
+        // Show success notification
+        showNotification(`Successfully switched to ${clientName}`, 'success');
+        
+        // Reload page to update all data
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
+
+// Fallback toggleNotifications function
+if (typeof toggleNotifications === 'undefined') {
+    function toggleNotifications() {
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        if (notificationDropdown) {
+            notificationDropdown.classList.toggle('hidden');
+        }
+    }
+}
+
+// Fallback showNotification function
+if (typeof showNotification === 'undefined') {
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+        
+        // Set color based on type
+        const colors = {
+            success: 'bg-green-500 text-white',
+            error: 'bg-red-500 text-white',
+            warning: 'bg-yellow-500 text-white',
+            info: 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ' ' + colors[type] || colors.info;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i data-feather="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Add to body
+        document.body.appendChild(notification);
+        
+        // Re-initialize feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+}
+</script>
+@endpush
+
 @endsection

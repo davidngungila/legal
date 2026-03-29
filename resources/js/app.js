@@ -27,9 +27,13 @@ function switchClient(clientId) {
 }
 
 function showClientSwitchModal(clientId) {
-    // Create modal overlay
+    // Add blur effect to background
+    document.body.classList.add('backdrop-blur-sm');
+    
+    // Create modal overlay with transparent background
     const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modalOverlay.className = 'fixed inset-0 z-50 flex items-center justify-center';
+    modalOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // Very light transparent overlay
     modalOverlay.id = 'clientSwitchModal';
     
     // Get client name
@@ -66,9 +70,6 @@ function showClientSwitchModal(clientId) {
     
     // Add to body
     document.body.appendChild(modalOverlay);
-    
-    // Add blur effect to background
-    document.body.classList.add('backdrop-blur-sm');
     
     // Re-initialize feather icons
     if (typeof feather !== 'undefined') {
@@ -606,9 +607,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Notification System
 function toggleNotifications() {
-    const dropdown = document.getElementById('notificationDropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('hidden');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    if (notificationDropdown) {
+        notificationDropdown.classList.toggle('hidden');
     }
 }
 
