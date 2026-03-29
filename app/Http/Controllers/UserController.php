@@ -17,41 +17,24 @@ class UserController
      */
     public function index(Request $request)
     {
-        $query = User::with('roles');
+        $users = User::with('roles')->orderBy('created_at', 'desc')->get();
         
-        // Search functionality
-        if ($request->has('search')) {
-            $search = $request->get('search');
-            $query->where(function($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-        
-        // Filter by role
-        if ($request->has('role')) {
-            $query->whereHas('roles', function($q) use ($request) {
-                $q->where('name', $request->get('role'));
-            });
-        }
-        
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('is_active', $request->get('status'));
-        }
-        
-        $users = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Add role information to each user
+        $users->each(function ($user) {
+            $user->role_display = $user->roles->first()?->display_name ?? 'No Role';
+            $user->role = $user->roles->first()?->name ?? 'no_role';
+        });
         
         return response()->json([
-            'users' => $users->items(),
-            'pagination' => [
-                'current_page' => $users->currentPage(),
-                'last_page' => $users->lastPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-                'from' => $users->firstItem(),
-                'to' => $users->lastItem()
+            'success' => true,
+            'users' => $users,
+            'stats' => [
+                'total' => User::count(),
+                'active' => User::where('is_active', 1)->count(),
+                'inactive' => User::where('is_active', 0)->count(),
+                'admin' => User::whereHas('roles', function($q) {
+                    $q->whereIn('name', ['super_admin', 'lead_hr_admin']);
+                })->count()
             ]
         ]);
     }

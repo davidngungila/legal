@@ -115,48 +115,19 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Super Admin</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">HR Admin</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">HR Officer</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Finance Officer</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Line Manager</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" id="selectAllUsers" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach([
-                        ['module' => 'Dashboard', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => true, 'line_manager' => true, 'employee' => true],
-                        ['module' => 'Employee Management', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => false, 'line_manager' => true, 'employee' => false],
-                        ['module' => 'Payroll', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => false, 'finance_officer' => true, 'line_manager' => false, 'employee' => false],
-                        ['module' => 'Performance', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => false, 'line_manager' => true, 'employee' => false],
-                        ['module' => 'Discipline', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => false, 'line_manager' => true, 'employee' => false],
-                        ['module' => 'Compliance', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => false, 'line_manager' => false, 'employee' => false],
-                        ['module' => 'Analytics', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => true, 'line_manager' => false, 'employee' => false],
-                        ['module' => 'Self Service', 'super_admin' => true, 'hr_admin' => true, 'hr_officer' => true, 'finance_officer' => true, 'line_manager' => true, 'employee' => true]
-                    ] as $permission)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $permission['module'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <i data-feather="{{ $permission['super_admin'] ? 'check-circle' : 'x-circle' }}" class="w-5 h-5 {{ $permission['super_admin'] ? 'text-green-600' : 'text-red-600' }}"></i>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <i data-feather="{{ $permission['hr_admin'] ? 'check-circle' : 'x-circle' }}" class="w-5 h-5 {{ $permission['hr_admin'] ? 'text-green-600' : 'text-red-600' }}"></i>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <i data-feather="{{ $permission['hr_officer'] ? 'check-circle' : 'x-circle' }}" class="w-5 h-5 {{ $permission['hr_officer'] ? 'text-green-600' : 'text-red-600' }}"></i>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <i data-feather="{{ $permission['finance_officer'] ? 'check-circle' : 'x-circle' }}" class="w-5 h-5 {{ $permission['finance_officer'] ? 'text-green-600' : 'text-red-600' }}"></i>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <i data-feather="{{ $permission['line_manager'] ? 'check-circle' : 'x-circle' }}" class="w-5 h-5 {{ $permission['line_manager'] ? 'text-green-600' : 'text-red-600' }}"></i>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <i data-feather="{{ $permission['employee'] ? 'check-circle' : 'x-circle' }}" class="w-5 h-5 {{ $permission['employee'] ? 'text-green-600' : 'text-red-600' }}"></i>
-                        </td>
-                    </tr>
-                    @endforeach
+                <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Users will be loaded dynamically -->
                 </tbody>
             </table>
         </div>
@@ -173,7 +144,47 @@
     let currentPage = 1;
     let filteredUsers = [];
 
-    // Initialize page
+    // Global functions (must be defined outside DOMContentLoaded)
+// Client switching function is now defined in layouts/app.blade.php
+
+// Notification functions (required by header)
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
+function removeNotification(notificationId) {
+    const notification = document.getElementById(notificationId);
+    if (notification) {
+        notification.remove();
+        updateNotificationBadge();
+    }
+}
+
+function markAllAsRead() {
+    const unreadNotifications = document.querySelectorAll('.notification-item:not(.read)');
+    unreadNotifications.forEach(notification => {
+        notification.classList.add('read');
+    });
+    updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    const unreadCount = document.querySelectorAll('.notification-item:not(.read)').length;
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+// Initialize page
     document.addEventListener('DOMContentLoaded', function() {
         loadUsers();
     });
@@ -184,9 +195,16 @@
             const response = await fetch(`${API_BASE}?${new URLSearchParams(window.location.search)}`);
             const data = await response.json();
             
+            console.log('Users API response:', data);
+            
             if (data.success) {
-                users = data.users;
+                // Handle simple array structure (like permissions)
+                users = data.users || [];
                 filteredUsers = [...users];
+                
+                console.log('Users loaded:', users);
+                console.log('Filtered users:', filteredUsers);
+                
                 renderUsers();
                 updateStats();
             } else {
@@ -203,11 +221,12 @@
         const tbody = document.getElementById('usersTableBody');
         tbody.innerHTML = '';
         
-        const startIndex = (currentPage - 1) * 10;
-        const endIndex = startIndex + 10;
-        const pageUsers = filteredUsers.slice(startIndex, endIndex);
+        if (filteredUsers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No users found</td></tr>';
+            return;
+        }
         
-        pageUsers.forEach(user => {
+        filteredUsers.forEach((user) => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50';
             row.innerHTML = `
@@ -260,9 +279,34 @@
             feather.replace();
         }
     }
-}
 
-// Form submissions
+    // Helper functions
+    function getRoleBadgeClass(role) {
+        const roleClasses = {
+            'super_admin': 'bg-purple-100 text-purple-800',
+            'lead_hr_admin': 'bg-blue-100 text-blue-800',
+            'hr_officer': 'bg-green-100 text-green-800',
+            'finance_payroll_officer': 'bg-yellow-100 text-yellow-800',
+            'line_manager': 'bg-orange-100 text-orange-800',
+            'employee': 'bg-gray-100 text-gray-800',
+            'external_auditor': 'bg-red-100 text-red-800'
+        };
+        return roleClasses[role] || 'bg-gray-100 text-gray-800';
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return 'Never';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Form submissions
 document.getElementById('createUserForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -288,19 +332,20 @@ document.getElementById('createUserForm').addEventListener('submit', async funct
         } else {
             showNotification(data.message || 'Failed to create user', 'error');
             if (data.errors) {
+                Object.keys(data.errors).forEach(field => {
+                    showNotification(`${field}: ${data.errors[field].join(', ')}`, 'error');
+                });
             }
-        } catch (error) {
-            console.error('Error loading user:', error);
-            showNotification('Error loading user', 'error');
         }
-    }
-
-    async function deleteUser(userId) {
-        document.getElementById('deleteUserId').value = userId;
-        showDeleteUserModal();
     } catch (error) {
-        console.error('Error updating user:', error);
-        showNotification('Error updating user', 'error');
+        console.error('Error creating user:', error);
+        showNotification('Error creating user', 'error');
     }
+}
+
+async function deleteUser(userId) {
+    document.getElementById('deleteUserId').value = userId;
+    showDeleteUserModal();
+}
 });
 </script>
