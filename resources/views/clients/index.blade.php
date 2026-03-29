@@ -196,12 +196,12 @@ async function loadClients() {
         const sortBy = document.getElementById('sortBy').value;
         const sortOrder = 'desc';
         
+        // Create URL parameters
         const params = new URLSearchParams({
-            page: currentPage,
-            search: search,
-            status: status,
-            industry: industry,
-            sort_by: sortBy,
+            search: search || '',
+            status: status || '',
+            industry: industry || '',
+            sort_by: sortBy || 'created_at',
             sort_order: sortOrder
         });
         
@@ -213,37 +213,26 @@ async function loadClients() {
                 'Accept': 'application/json'
             }
         });
-        console.log('Response status:', response.status);
         
         const data = await response.json();
+        console.log('Response status:', response.status);
         console.log('Response data:', data);
         console.log('Data structure:', JSON.stringify(data, null, 2));
         
         if (data.success) {
+            // Handle simple array structure (like permissions)
+            clients = data.clients || [];
+            filteredClients = [...clients];
+            totalPages = 1;
+            
             console.log('Clients data:', data.clients);
             console.log('Clients data type:', typeof data.clients);
-            console.log('Clients data.data:', data.clients?.data);
-            
-            // Handle Laravel paginator structure
-            clients = data.clients.data || data.clients || [];
-            filteredClients = clients;
-            totalPages = data.clients.last_page || 1;
-            
             console.log('Clients array:', clients);
             console.log('Filtered clients:', filteredClients);
             console.log('Total pages:', totalPages);
             
-            // Update statistics
-            updateStatistics(data.stats);
-            
-            // Update industry filter
-            updateIndustryFilter(data.industries);
-            
-            // Render clients
-            console.log('About to render clients...');
             renderClients();
-            
-            // Update pagination
+            updateStats();
             updatePagination(data.clients);
         } else {
             console.log('API returned success=false');
@@ -261,6 +250,19 @@ function updateStatistics(stats) {
     document.getElementById('activeClients').textContent = stats.active;
     document.getElementById('inactiveClients').textContent = stats.inactive;
     document.getElementById('suspendedClients').textContent = stats.suspended;
+}
+
+// Update statistics function
+function updateStats() {
+    // Stats will be updated from API response
+    // This function can be used for real-time updates if needed
+    const stats = {
+        total: clients.length,
+        active: clients.filter(client => client.status === 'active').length,
+        inactive: clients.filter(client => client.status === 'inactive').length,
+        suspended: clients.filter(client => client.status === 'suspended').length
+    };
+    updateStatistics(stats);
 }
 
 // Update industry filter

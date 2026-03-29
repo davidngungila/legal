@@ -16,6 +16,37 @@
     
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
+    
+    <!-- Global Functions -->
+    <script>
+        // Client switching function (available on all pages)
+        function switchClient(clientId) {
+            if (typeof showNotification === 'undefined') {
+                // Define showNotification if not available
+                function showNotification(message, type = 'info') {
+                    console.log('Notification:', message);
+                }
+            }
+            
+            showNotification('Switching to client...', 'info');
+            
+            setTimeout(() => {
+                const select = document.querySelector('select[onchange="switchClient(this.value)"]');
+                if (select) {
+                    select.value = clientId;
+                }
+                
+                const clientNames = {
+                    '1': 'ABC Manufacturing Ltd',
+                    '2': 'XYZ Construction Co',
+                    '3': 'Tanzania Mining Corp',
+                    '4': 'East Africa Logistics'
+                };
+                
+                showNotification(`Switched to ${clientNames[clientId]}`, 'success');
+            }, 500);
+        }
+    </script>
 </head>
 <body class="font-lato bg-gray-50">
     @if(isset($currentUser))

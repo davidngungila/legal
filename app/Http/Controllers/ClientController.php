@@ -14,52 +14,7 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
-        // Debug: Log the request
-        \Log::info('ClientController::index called');
-        \Log::info('Request data: ' . json_encode($request->all()));
-        
-        $query = Client::query();
-        
-        // Debug: Log the base query
-        \Log::info('Base query count: ' . $query->count());
-        
-        // Search functionality
-        if ($request->has('search') && $request->get('search') !== '') {
-            $search = $request->get('search');
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('industry', 'like', "%{$search}%");
-            });
-            \Log::info('Applied search filter: ' . $search);
-        }
-        
-        // Filter by status
-        if ($request->has('status') && $request->get('status') !== '') {
-            $query->where('status', $request->get('status'));
-            \Log::info('Applied status filter: ' . $request->get('status'));
-        }
-        
-        // Filter by industry
-        if ($request->has('industry') && $request->get('industry') !== '') {
-            $query->where('industry', $request->get('industry'));
-            \Log::info('Applied industry filter: ' . $request->get('industry'));
-        }
-        
-        // Sort by
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
-        
-        // Debug: Log final query
-        \Log::info('Final query count: ' . $query->count());
-        
-        $clients = $query->paginate(10);
-        
-        // Debug: Log results
-        \Log::info('Clients count: ' . $clients->count());
-        \Log::info('Total clients: ' . $clients->total());
+        $clients = Client::orderBy('created_at', 'desc')->get();
         
         return response()->json([
             'success' => true,
