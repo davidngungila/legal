@@ -35,6 +35,16 @@ class User extends Authenticatable
     }
 
     /**
+     * The clients that belong to user.
+     */
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class)
+            ->withPivot(['role', 'is_active', 'joined_at'])
+            ->withTimestamps();
+    }
+
+    /**
      * Check if user has a specific role.
      */
     public function hasRole($role): bool
