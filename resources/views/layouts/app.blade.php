@@ -30,12 +30,14 @@
             
             showNotification('Switching to client...', 'info');
             
+            // Store selected client in session storage
+            sessionStorage.setItem('selectedClientId', clientId);
+            
+            // Update UI elements
+            updateClientUI(clientId);
+            
+            // Trigger data refresh for components that need client-specific data
             setTimeout(() => {
-                const select = document.querySelector('select[onchange="switchClient(this.value)"]');
-                if (select) {
-                    select.value = clientId;
-                }
-                
                 const clientNames = {
                     '1': 'ABC Manufacturing Ltd',
                     '2': 'XYZ Construction Co',
@@ -44,7 +46,98 @@
                 };
                 
                 showNotification(`Switched to ${clientNames[clientId]}`, 'success');
+                
+                // Trigger custom event for other components to listen to
+                document.dispatchEvent(new CustomEvent('clientChanged', {
+                    detail: {
+                        clientId: clientId,
+                        clientName: clientNames[clientId]
+                    }
+                }));
+                
+                // Reload data if there are data tables on the page
+                if (typeof loadEmployees === 'function') {
+                    loadEmployees();
+                }
+                if (typeof loadPermissions === 'function') {
+                    loadPermissions();
+                }
+                if (typeof filterEmployees === 'function') {
+                    filterEmployees();
+                }
             }, 500);
+        }
+        
+        // Update UI elements when client changes
+        function updateClientUI(clientId) {
+            // Update client selector
+            const select = document.querySelector('select[onchange="switchClient(this.value)"]');
+            if (select) {
+                select.value = clientId;
+            }
+            
+            // Update any client display elements
+            const clientDisplays = document.querySelectorAll('[data-client-display]');
+            clientDisplays.forEach(element => {
+                const clientNames = {
+                    '1': 'ABC Manufacturing Ltd',
+                    '2': 'XYZ Construction Co',
+                    '3': 'Tanzania Mining Corp',
+                    '4': 'East Africa Logistics'
+                };
+                element.textContent = clientNames[clientId] || 'No Client Selected';
+            });
+            
+            // Update page title if applicable
+            const titleElement = document.querySelector('title');
+            if (titleElement && clientId) {
+                const clientNames = {
+                    '1': 'ABC Manufacturing Ltd',
+                    '2': 'XYZ Construction Co',
+                    '3': 'Tanzania Mining Corp',
+                    '4': 'East Africa Logistics'
+                };
+                const originalTitle = titleElement.getAttribute('data-original-title') || titleElement.textContent;
+                titleElement.setAttribute('data-original-title', originalTitle);
+                titleElement.textContent = `${clientNames[clientId]} - ${originalTitle}`;
+            }
+        }
+        
+        // Initialize client selection on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedClientId = sessionStorage.getItem('selectedClientId');
+            if (savedClientId) {
+                updateClientUI(savedClientId);
+            }
+            
+            // Listen for client change events
+            document.addEventListener('clientChanged', function(event) {
+                console.log('Client changed to:', event.detail);
+                // Additional logic can be added here for specific pages
+            });
+        });
+        
+        // Get current selected client
+        function getCurrentClient() {
+            const clientId = sessionStorage.getItem('selectedClientId') || '1';
+            const clientNames = {
+                '1': 'ABC Manufacturing Ltd',
+                '2': 'XYZ Construction Co',
+                '3': 'Tanzania Mining Corp',
+                '4': 'East Africa Logistics'
+            };
+            return {
+                id: clientId,
+                name: clientNames[clientId]
+            };
+        }
+        
+        // Filter data based on current client
+        function filterByClient(data) {
+            const currentClient = getCurrentClient();
+            // For now, return all data. In a real app, this would filter based on client
+            // This is a placeholder for client-specific data filtering
+            return data;
         }
     </script>
 </head>

@@ -257,7 +257,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load permissions from API
 async function loadPermissions() {
     try {
-        const response = await fetch(API_BASE);
+        const response = await fetch(API_BASE, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -375,7 +382,14 @@ function closeEditPermissionModal() {
 // CRUD operations
 async function editPermission(permissionId) {
     try {
-        const response = await fetch(`${API_BASE}/${permissionId}`);
+        const response = await fetch(`${API_BASE}/${permissionId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -406,8 +420,10 @@ async function deletePermission(permissionId) {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
         });
         
         const data = await response.json();
@@ -438,6 +454,7 @@ document.getElementById('createPermissionForm').addEventListener('submit', async
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify(Object.fromEntries(formData))
         });
         
@@ -473,6 +490,7 @@ document.getElementById('editPermissionForm').addEventListener('submit', async f
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify(Object.fromEntries(formData))
         });
         

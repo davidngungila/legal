@@ -6,8 +6,23 @@
 <div class="p-6">
     <!-- Dashboard Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 font-manrope">Dashboard</h1>
-<p class="text-gray-600 mt-2">Welcome back, {{ auth()->user()?->name ?? 'User' }}! Here's your HR overview.</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-manrope">Dashboard</h1>
+                <p class="text-gray-600 mt-2">Welcome back, {{ auth()->user()?->name ?? 'User' }}! Here's your HR overview.</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="briefcase" class="w-5 h-5 text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Current Client</p>
+                        <p class="text-sm font-semibold text-gray-900" data-client-display>ABC Manufacturing Ltd</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Stats Grid -->
