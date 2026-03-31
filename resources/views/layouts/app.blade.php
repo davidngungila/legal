@@ -192,13 +192,11 @@
         
         // Update UI elements when client changes
         function updateClientUI(clientId) {
-            // Save client ID immediately
-            sessionStorage.setItem('selectedClientId', clientId);
-            
             // Update client selector
             const select = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (select) {
                 select.value = clientId;
+                console.log('Client selector updated to:', clientId);
             }
             
             // Update any client display elements
@@ -227,29 +225,69 @@
                 titleElement.textContent = `${clientNames[clientId]} - ${originalTitle}`;
             }
             
-            // Log for debugging
-            console.log('Client UI updated to:', clientId);
+            // Ensure all client-related UI elements are synchronized
+            synchronizeClientElements(clientId);
+        }
+        
+        // Synchronize all client-related elements across the page
+        function synchronizeClientElements(clientId) {
+            // Update all elements that should reflect current client
+            const clientElements = [
+                '[data-client-display]',
+                '[data-org-name]',
+                '.client-indicator',
+                '.current-client'
+            ];
+            
+            clientElements.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => {
+                    const clientNames = {
+                        '1': 'ABC Manufacturing Ltd',
+                        '2': 'XYZ Construction Co',
+                        '3': 'Tanzania Mining Corp',
+                        '4': 'East Africa Logistics'
+                    };
+                    
+                    if (element.hasAttribute('data-client-display')) {
+                        element.textContent = clientNames[clientId];
+                    }
+                });
+            });
+            
+            console.log('Client elements synchronized for:', clientId);
         }
         
         // Initialize client selection on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Debug: Check if sessionStorage is available
+            if (typeof Storage === 'undefined') {
+                console.error('SessionStorage not available - client persistence may not work');
+                return;
+            }
+            
             const savedClientId = sessionStorage.getItem('selectedClientId');
+            console.log('Page loaded - saved client ID:', savedClientId);
+            
             if (savedClientId) {
+                // Restore saved client
                 updateClientUI(savedClientId);
-                // Update all module data for the saved client
+                // Update all module data for saved client
                 updateAllModuleData(savedClientId);
-                console.log('Restored client selection:', savedClientId);
+                console.log('Restored client:', savedClientId);
             } else {
-                // Set default client and save it
+                // Set default client if none saved
                 sessionStorage.setItem('selectedClientId', '1');
                 updateAllModuleData('1');
                 console.log('Set default client: 1');
             }
             
-            // Ensure client selector reflects current selection
+            // Ensure client selector shows correct value
             const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (clientSelector) {
-                clientSelector.value = getCurrentClient().id;
+                const currentClient = getCurrentClient();
+                clientSelector.value = currentClient.id;
+                console.log('Client selector set to:', currentClient.id);
             }
             
             // Listen for client change events
@@ -258,80 +296,71 @@
                 // Additional logic can be added here for specific pages
             });
             
-            // Add navigation event listener to preserve client
-            preserveClientOnNavigation();
-            
-            // Add periodic persistence check (every 5 seconds)
-            setInterval(ensureClientPersistence, 5000);
-            
-            // Add immediate persistence check
-            setTimeout(ensureClientPersistence, 1000);
-        });
-        
-        // Preserve client selection during navigation
-        function preserveClientOnNavigation() {
-            // Listen for beforeunload to ensure client is saved
-            window.addEventListener('beforeunload', function() {
-                const currentClient = getCurrentClient();
-                sessionStorage.setItem('selectedClientId', currentClient.id);
-            });
-            
-            // Intercept navigation clicks to ensure client persistence
-            document.addEventListener('click', function(e) {
-                const link = e.target.closest('a');
-                if (link && link.href) {
-                    // Ensure current client is saved before navigation
+            // Add page visibility change listener to maintain client state
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
                     const currentClient = getCurrentClient();
-                    sessionStorage.setItem('selectedClientId', currentClient.id);
+                    console.log('Page became visible - current client:', currentClient.id);
+                    updateClientUI(currentClient.id);
                 }
             });
             
-            // Listen for browser back/forward buttons
-            window.addEventListener('popstate', function() {
-                setTimeout(() => {
-                    const savedClientId = sessionStorage.getItem('selectedClientId');
-                    if (savedClientId) {
-                        updateClientUI(savedClientId);
-                        updateAllModuleData(savedClientId);
-                    }
-                }, 100);
+            // Add beforeunload listener to save state
+            window.addEventListener('beforeunload', function() {
+                const currentClient = getCurrentClient();
+                console.log('Page unloading - saving client:', currentClient.id);
+                sessionStorage.setItem('selectedClientId', currentClient.id);
             });
-        }
-        
-        // Enhanced client persistence check
-        function ensureClientPersistence() {
-            const currentClient = getCurrentClient();
-            const savedClientId = sessionStorage.getItem('selectedClientId');
-            
-            // If there's a mismatch, restore from sessionStorage
-            if (savedClientId && savedClientId !== currentClient.id) {
-                sessionStorage.setItem('selectedClientId', savedClientId);
-                updateClientUI(savedClientId);
-                updateAllModuleData(savedClientId);
-                console.log('Client persistence restored:', savedClientId);
-            }
-            
-            // Double-check client selector is correct
-            const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
-            if (clientSelector && clientSelector.value !== currentClient.id) {
-                clientSelector.value = currentClient.id;
-            }
-        }
+        });
         
         // Get current selected client
         function getCurrentClient() {
-            const clientId = sessionStorage.getItem('selectedClientId') || '1';
+            // Fallback chain for client ID
+            let clientId = sessionStorage.getItem('selectedClientId') || 
+                          localStorage.getItem('selectedClientId') || 
+                          '1';
+            
+            // Validate client ID is one of the valid options
+            const validClients = ['1', '2', '3', '4'];
+            if (!validClients.includes(clientId)) {
+                console.warn('Invalid client ID detected, resetting to default');
+                clientId = '1';
+                sessionStorage.setItem('selectedClientId', '1');
+                localStorage.setItem('selectedClientId', '1');
+            }
+            
             const clientNames = {
                 '1': 'ABC Manufacturing Ltd',
                 '2': 'XYZ Construction Co',
                 '3': 'Tanzania Mining Corp',
                 '4': 'East Africa Logistics'
             };
+            
             return {
                 id: clientId,
                 name: clientNames[clientId]
             };
         }
+        
+        // Validate and maintain client persistence
+        function validateClientPersistence() {
+            const currentClient = getCurrentClient();
+            
+            // Ensure sessionStorage has the client
+            sessionStorage.setItem('selectedClientId', currentClient.id);
+            
+            // Also keep localStorage as backup
+            localStorage.setItem('selectedClientId', currentClient.id);
+            
+            // Update UI elements
+            updateClientUI(currentClient.id);
+            
+            console.log('Client persistence validated - current client:', currentClient.id);
+            return currentClient;
+        }
+        
+        // Auto-validate client state every 30 seconds
+        setInterval(validateClientPersistence, 30000);
         
         // Company-specific data structures
         const companyData = {

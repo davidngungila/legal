@@ -60,7 +60,7 @@
                         <i data-feather="database" class="w-4 h-4 mr-3"></i>
                         Data & Storage
                     </a>
-                    <a href="#integrations" class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <a href="#integrations" class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg mb-1">
                         <i data-feather="link" class="w-4 h-4 mr-3"></i>
                         Integrations
                     </a>
@@ -106,14 +106,14 @@
                                 <option>YYYY-MM-DD</option>
                             </select>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
-                        <select class="form-select">
-                            <option selected>Tanzanian Shilling (TZS)</option>
-                            <option>US Dollar (USD)</option>
-                            <option>Euro (EUR)</option>
-                        </select>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                            <select class="form-select">
+                                <option selected>Tanzanian Shilling (TZS)</option>
+                                <option>US Dollar (USD)</option>
+                                <option>Euro (EUR)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,7 +220,7 @@
                                 <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">Show Online Status</p>
-                                        <p class="text-xs text-gray-500">Display when you're online</p>
+                                        <p class="text-xs text-gray-500">Display when you are online</p>
                                     </div>
                                     <input type="checkbox" class="form-checkbox" checked>
                                 </label>
@@ -243,7 +243,7 @@
                                 <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">Share Analytics Data</p>
-                                        <p class="text-xs text-gray-500">Help improve the system with anonymous data</p>
+                                        <p class="text-xs text-gray-500">Help improve system with anonymous data</p>
                                     </div>
                                     <input type="checkbox" class="form-checkbox">
                                 </label>
@@ -382,15 +382,13 @@
                                     </div>
                                     <input type="checkbox" class="form-checkbox" checked>
                                 </label>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Session Timeout</label>
-                                    <select class="form-select">
-                                        <option selected>30 minutes</option>
-                                        <option>1 hour</option>
-                                        <option>2 hours</option>
-                                        <option>4 hours</option>
-                                    </select>
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Session Timeout</label>
+                                <select class="form-select">
+                                    <option selected>30 minutes</option>
+                                    <option>1 hour</option>
+                                    <option>2 hours</option>
+                                    <option>4 hours</option>
+                                </select>
                             </div>
                         </div>
 
@@ -470,7 +468,7 @@
                                     </div>
                                 </button>
                                 <button class="w-full px-4 py-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-left flex items-center">
-                                    <i data-feather="alert-triangle" class="w-4 h-4 mr-3 text-red-600"></i>
+                                    <i data-feather="alert-triangle" class="w-4 h-4 mr-3"></i>
                                     <div>
                                         <p class="text-sm font-medium text-red-600">Delete Account</p>
                                         <p class="text-xs text-red-500">Permanently remove account</p>
@@ -553,6 +551,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 // Smooth scroll for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -592,4 +591,5 @@ window.addEventListener('scroll', function() {
     });
 });
 </script>
+@endpush
 @endsection
