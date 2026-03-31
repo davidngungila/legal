@@ -33,9 +33,9 @@
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+12%</span>
+                <span class="text-sm text-green-600 font-medium" data-emp-newhires>+12</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">248</h3>
+            <h3 class="text-2xl font-bold text-gray-900" data-emp-total>248</h3>
             <p class="text-gray-600 text-sm">Total Employees</p>
         </div>
 
@@ -45,9 +45,9 @@
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <i data-feather="alert-triangle" class="w-6 h-6 text-red-600"></i>
                 </div>
-                <span class="text-sm text-red-600 font-medium">High</span>
+                <span class="text-sm text-red-600 font-medium" data-critical-risk>Medium</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">7</h3>
+            <h3 class="text-2xl font-bold text-gray-900" data-critical-cases>7</h3>
             <p class="text-gray-600 text-sm">Active Disciplinary Cases</p>
         </div>
 
@@ -57,22 +57,94 @@
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="credit-card" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-sm text-gray-600 font-medium">Nov 2024</span>
+                <span class="text-sm text-gray-600 font-medium" data-pay-processed>Nov 2024</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">TZS 45.2M</h3>
+            <h3 class="text-2xl font-bold text-gray-900" data-pay-total>TZS 45.2M</h3>
             <p class="text-gray-600 text-sm">Monthly Payroll</p>
         </div>
 
-        <!-- Compliance Score -->
+        <!-- Attendance Rate -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="shield" class="w-6 h-6 text-purple-600"></i>
+                    <i data-feather="clock" class="w-6 h-6 text-purple-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">Good</span>
+                <span class="text-sm text-purple-600 font-medium" data-att-present>235</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">94%</h3>
-            <p class="text-gray-600 text-sm">Compliance Score</p>
+            <h3 class="text-2xl font-bold text-gray-900" data-att-rate>94.8%</h3>
+            <p class="text-gray-600 text-sm">Attendance Rate</p>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Organization Info -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Organization</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Industry:</span>
+                    <span class="text-sm font-medium" data-org-industry>Manufacturing</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Departments:</span>
+                    <span class="text-sm font-medium" data-org-departments>8</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Locations:</span>
+                    <span class="text-sm font-medium" data-org-locations>3</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Founded:</span>
+                    <span class="text-sm font-medium" data-org-founded>2015</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Breakdown -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Employee Breakdown</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Active:</span>
+                    <span class="text-sm font-medium text-green-600" data-emp-active>235</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">On Leave:</span>
+                    <span class="text-sm font-medium text-yellow-600" data-emp-onleave>8</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Probation:</span>
+                    <span class="text-sm font-medium text-blue-600" data-emp-probation>5</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Turnover:</span>
+                    <span class="text-sm font-medium text-red-600" data-emp-turnover>3.2%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time & Attendance -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Time & Attendance</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Absent Today:</span>
+                    <span class="text-sm font-medium text-red-600" data-att-absent>8</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Late Today:</span>
+                    <span class="text-sm font-medium text-yellow-600" data-att-late>5</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Weekly Hours:</span>
+                    <span class="text-sm font-medium" data-att-hours>9,800</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Overtime:</span>
+                    <span class="text-sm font-medium text-blue-600" data-att-overtime>120</span>
+                </div>
+            </div>
         </div>
     </div>
 

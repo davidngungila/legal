@@ -6,6 +6,39 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'LegalHR - Tanzania HR Management System')</title>
     
+    <!-- Custom CSS for client switching animations -->
+    <style>
+        .client-switching {
+            pointer-events: none;
+        }
+        
+        .client-switching * {
+            transition: all 0.3s ease !important;
+        }
+        
+        .client-switching .bg-white {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+        
+        @keyframes pulse-scale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse-on-switch {
+            animation: pulse-scale 0.6s ease-in-out;
+        }
+        
+        .data-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .loader-backdrop {
+            backdrop-filter: blur(2px);
+        }
+    </style>
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,13 +61,28 @@
                 }
             }
             
-            showNotification('Switching to client...', 'info');
+            // Prevent switching to the same client
+            const currentClient = getCurrentClient();
+            if (currentClient.id === clientId) {
+                showNotification('Already viewing this client', 'info');
+                return;
+            }
+            
+            // Show loading state
+            showClientSwitchingLoader(true);
+            showNotification('Switching client...', 'info');
+            
+            // Add transition effects
+            document.body.classList.add('client-switching');
             
             // Store selected client in session storage
             sessionStorage.setItem('selectedClientId', clientId);
             
             // Update UI elements
             updateClientUI(clientId);
+            
+            // Update all module data for the new client
+            updateAllModuleData(clientId);
             
             // Trigger data refresh for components that need client-specific data
             setTimeout(() => {
@@ -45,13 +93,21 @@
                     '4': 'East Africa Logistics'
                 };
                 
-                showNotification(`Switched to ${clientNames[clientId]}`, 'success');
+                // Show success notification with more details
+                showNotification(`Successfully switched to ${clientNames[clientId]}`, 'success');
+                
+                // Show additional context notification
+                setTimeout(() => {
+                    const data = companyData[clientId];
+                    showNotification(`Now viewing ${data.organization.employees} employees, ${data.organization.departments} departments`, 'info', 4000);
+                }, 1000);
                 
                 // Trigger custom event for other components to listen to
                 document.dispatchEvent(new CustomEvent('clientChanged', {
                     detail: {
                         clientId: clientId,
-                        clientName: clientNames[clientId]
+                        clientName: clientNames[clientId],
+                        organization: companyData[clientId].organization
                     }
                 }));
                 
@@ -65,11 +121,80 @@
                 if (typeof filterEmployees === 'function') {
                     filterEmployees();
                 }
+                
+                // Remove loading state and transitions
+                setTimeout(() => {
+                    showClientSwitchingLoader(false);
+                    document.body.classList.remove('client-switching');
+                    
+                    // Add completion animation
+                    addClientSwitchCompletionEffect();
+                }, 800);
             }, 500);
+        }
+        
+        // Show/hide client switching loader
+        function showClientSwitchingLoader(show) {
+            let loader = document.getElementById('clientSwitchLoader');
+            
+            if (show) {
+                if (!loader) {
+                    loader = document.createElement('div');
+                    loader.id = 'clientSwitchLoader';
+                    loader.innerHTML = `
+                        <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 transition-opacity duration-300">
+                            <div class="bg-white rounded-lg shadow-xl p-6 flex items-center space-x-4">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                                <div>
+                                    <p class="text-lg font-semibold text-gray-900">Switching Client</p>
+                                    <p class="text-sm text-gray-600">Updating dashboard data...</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(loader);
+                }
+                loader.style.display = 'flex';
+                setTimeout(() => {
+                    loader.classList.add('opacity-100');
+                }, 10);
+            } else {
+                if (loader) {
+                    loader.classList.remove('opacity-100');
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 300);
+                }
+            }
+        }
+        
+        // Add completion animation effect
+        function addClientSwitchCompletionEffect() {
+            const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
+            if (clientSelector) {
+                clientSelector.classList.add('ring-2', 'ring-green-500', 'ring-offset-2');
+                setTimeout(() => {
+                    clientSelector.classList.remove('ring-2', 'ring-green-500', 'ring-offset-2');
+                }, 2000);
+            }
+            
+            // Animate dashboard cards
+            const dashboardCards = document.querySelectorAll('.bg-white.rounded-xl');
+            dashboardCards.forEach((card, index) => {
+                card.style.transform = 'scale(0.98)';
+                card.style.opacity = '0.7';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                    card.style.opacity = '1';
+                }, 100 + (index * 50));
+            });
         }
         
         // Update UI elements when client changes
         function updateClientUI(clientId) {
+            // Save client ID immediately
+            sessionStorage.setItem('selectedClientId', clientId);
+            
             // Update client selector
             const select = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (select) {
@@ -101,6 +226,9 @@
                 titleElement.setAttribute('data-original-title', originalTitle);
                 titleElement.textContent = `${clientNames[clientId]} - ${originalTitle}`;
             }
+            
+            // Log for debugging
+            console.log('Client UI updated to:', clientId);
         }
         
         // Initialize client selection on page load
@@ -108,6 +236,20 @@
             const savedClientId = sessionStorage.getItem('selectedClientId');
             if (savedClientId) {
                 updateClientUI(savedClientId);
+                // Update all module data for the saved client
+                updateAllModuleData(savedClientId);
+                console.log('Restored client selection:', savedClientId);
+            } else {
+                // Set default client and save it
+                sessionStorage.setItem('selectedClientId', '1');
+                updateAllModuleData('1');
+                console.log('Set default client: 1');
+            }
+            
+            // Ensure client selector reflects current selection
+            const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
+            if (clientSelector) {
+                clientSelector.value = getCurrentClient().id;
             }
             
             // Listen for client change events
@@ -115,7 +257,66 @@
                 console.log('Client changed to:', event.detail);
                 // Additional logic can be added here for specific pages
             });
+            
+            // Add navigation event listener to preserve client
+            preserveClientOnNavigation();
+            
+            // Add periodic persistence check (every 5 seconds)
+            setInterval(ensureClientPersistence, 5000);
+            
+            // Add immediate persistence check
+            setTimeout(ensureClientPersistence, 1000);
         });
+        
+        // Preserve client selection during navigation
+        function preserveClientOnNavigation() {
+            // Listen for beforeunload to ensure client is saved
+            window.addEventListener('beforeunload', function() {
+                const currentClient = getCurrentClient();
+                sessionStorage.setItem('selectedClientId', currentClient.id);
+            });
+            
+            // Intercept navigation clicks to ensure client persistence
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a');
+                if (link && link.href) {
+                    // Ensure current client is saved before navigation
+                    const currentClient = getCurrentClient();
+                    sessionStorage.setItem('selectedClientId', currentClient.id);
+                }
+            });
+            
+            // Listen for browser back/forward buttons
+            window.addEventListener('popstate', function() {
+                setTimeout(() => {
+                    const savedClientId = sessionStorage.getItem('selectedClientId');
+                    if (savedClientId) {
+                        updateClientUI(savedClientId);
+                        updateAllModuleData(savedClientId);
+                    }
+                }, 100);
+            });
+        }
+        
+        // Enhanced client persistence check
+        function ensureClientPersistence() {
+            const currentClient = getCurrentClient();
+            const savedClientId = sessionStorage.getItem('selectedClientId');
+            
+            // If there's a mismatch, restore from sessionStorage
+            if (savedClientId && savedClientId !== currentClient.id) {
+                sessionStorage.setItem('selectedClientId', savedClientId);
+                updateClientUI(savedClientId);
+                updateAllModuleData(savedClientId);
+                console.log('Client persistence restored:', savedClientId);
+            }
+            
+            // Double-check client selector is correct
+            const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
+            if (clientSelector && clientSelector.value !== currentClient.id) {
+                clientSelector.value = currentClient.id;
+            }
+        }
         
         // Get current selected client
         function getCurrentClient() {
@@ -130,6 +331,390 @@
                 id: clientId,
                 name: clientNames[clientId]
             };
+        }
+        
+        // Company-specific data structures
+        const companyData = {
+            '1': { // ABC Manufacturing Ltd
+                organization: {
+                    name: 'ABC Manufacturing Ltd',
+                    industry: 'Manufacturing',
+                    employees: 248,
+                    departments: 8,
+                    locations: 3,
+                    founded: '2015'
+                },
+                employeeManagement: {
+                    total: 248,
+                    active: 235,
+                    onLeave: 8,
+                    probation: 5,
+                    newHires: 12,
+                    turnover: 3.2
+                },
+                timeAttendance: {
+                    todayPresent: 235,
+                    todayAbsent: 8,
+                    todayLate: 5,
+                    weeklyHours: 9800,
+                    overtime: 120,
+                    attendanceRate: 94.8
+                },
+                payroll: {
+                    monthlyPayroll: 'TZS 45.2M',
+                    lastProcessed: 'Nov 2024',
+                    pendingApprovals: 3,
+                    avgSalary: 'TZS 182K',
+                    bonusBudget: 'TZS 2.3M'
+                },
+                criticalModule: {
+                    activeCases: 7,
+                    pendingInvestigations: 2,
+                    resolvedThisMonth: 5,
+                    complianceScore: 87,
+                    riskLevel: 'Medium'
+                }
+            },
+            '2': { // XYZ Construction Co
+                organization: {
+                    name: 'XYZ Construction Co',
+                    industry: 'Construction',
+                    employees: 186,
+                    departments: 6,
+                    locations: 5,
+                    founded: '2012'
+                },
+                employeeManagement: {
+                    total: 186,
+                    active: 172,
+                    onLeave: 9,
+                    probation: 5,
+                    newHires: 8,
+                    turnover: 4.1
+                },
+                timeAttendance: {
+                    todayPresent: 172,
+                    todayAbsent: 9,
+                    todayLate: 7,
+                    weeklyHours: 7200,
+                    overtime: 180,
+                    attendanceRate: 92.5
+                },
+                payroll: {
+                    monthlyPayroll: 'TZS 38.7M',
+                    lastProcessed: 'Nov 2024',
+                    pendingApprovals: 5,
+                    avgSalary: 'TZS 208K',
+                    bonusBudget: 'TZS 1.9M'
+                },
+                criticalModule: {
+                    activeCases: 12,
+                    pendingInvestigations: 4,
+                    resolvedThisMonth: 3,
+                    complianceScore: 79,
+                    riskLevel: 'High'
+                }
+            },
+            '3': { // Tanzania Mining Corp
+                organization: {
+                    name: 'Tanzania Mining Corp',
+                    industry: 'Mining',
+                    employees: 312,
+                    departments: 10,
+                    locations: 4,
+                    founded: '2008'
+                },
+                employeeManagement: {
+                    total: 312,
+                    active: 298,
+                    onLeave: 11,
+                    probation: 3,
+                    newHires: 15,
+                    turnover: 2.8
+                },
+                timeAttendance: {
+                    todayPresent: 298,
+                    todayAbsent: 11,
+                    todayLate: 3,
+                    weeklyHours: 12400,
+                    overtime: 95,
+                    attendanceRate: 95.5
+                },
+                payroll: {
+                    monthlyPayroll: 'TZS 62.1M',
+                    lastProcessed: 'Nov 2024',
+                    pendingApprovals: 2,
+                    avgSalary: 'TZS 199K',
+                    bonusBudget: 'TZS 3.1M'
+                },
+                criticalModule: {
+                    activeCases: 5,
+                    pendingInvestigations: 1,
+                    resolvedThisMonth: 8,
+                    complianceScore: 91,
+                    riskLevel: 'Low'
+                }
+            },
+            '4': { // East Africa Logistics
+                organization: {
+                    name: 'East Africa Logistics',
+                    industry: 'Logistics',
+                    employees: 156,
+                    departments: 5,
+                    locations: 8,
+                    founded: '2016'
+                },
+                employeeManagement: {
+                    total: 156,
+                    active: 148,
+                    onLeave: 6,
+                    probation: 2,
+                    newHires: 6,
+                    turnover: 3.5
+                },
+                timeAttendance: {
+                    todayPresent: 148,
+                    todayAbsent: 6,
+                    todayLate: 4,
+                    weeklyHours: 6200,
+                    overtime: 85,
+                    attendanceRate: 94.9
+                },
+                payroll: {
+                    monthlyPayroll: 'TZS 31.4M',
+                    lastProcessed: 'Nov 2024',
+                    pendingApprovals: 1,
+                    avgSalary: 'TZS 201K',
+                    bonusBudget: 'TZS 1.6M'
+                },
+                criticalModule: {
+                    activeCases: 4,
+                    pendingInvestigations: 2,
+                    resolvedThisMonth: 6,
+                    complianceScore: 85,
+                    riskLevel: 'Medium'
+                }
+            }
+        };
+        
+        // Update all module data when client changes
+        function updateAllModuleData(clientId) {
+            const data = companyData[clientId];
+            if (!data) return;
+            
+            // Update Organization section
+            updateOrganizationData(data.organization);
+            
+            // Update Employee Management section
+            updateEmployeeManagementData(data.employeeManagement);
+            
+            // Update Time & Attendance section
+            updateTimeAttendanceData(data.timeAttendance);
+            
+            // Update Payroll section
+            updatePayrollData(data.payroll);
+            
+            // Update Critical Module section
+            updateCriticalModuleData(data.criticalModule);
+            
+            console.log('Updated all module data for client:', clientId);
+        }
+        
+        // Update Organization data
+        function updateOrganizationData(data) {
+            const elements = {
+                '[data-org-name]': data.name,
+                '[data-org-industry]': data.industry,
+                '[data-org-employees]': data.employees,
+                '[data-org-departments]': data.departments,
+                '[data-org-locations]': data.locations,
+                '[data-org-founded]': data.founded
+            };
+            
+            Object.entries(elements).forEach(([selector, value]) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    // Add transition effect
+                    element.style.transition = 'all 0.3s ease';
+                    element.style.transform = 'scale(0.95)';
+                    element.style.opacity = '0.5';
+                    
+                    setTimeout(() => {
+                        element.textContent = value;
+                        element.style.transform = 'scale(1)';
+                        element.style.opacity = '1';
+                    }, 150);
+                }
+            });
+        }
+        
+        // Update Employee Management data
+        function updateEmployeeManagementData(data) {
+            const elements = {
+                '[data-emp-total]': data.total,
+                '[data-emp-active]': data.active,
+                '[data-emp-onleave]': data.onLeave,
+                '[data-emp-probation]': data.probation,
+                '[data-emp-newhires]': data.newHires,
+                '[data-emp-turnover]': data.turnover + '%'
+            };
+            
+            Object.entries(elements).forEach(([selector, value]) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    // Add transition effect
+                    element.style.transition = 'all 0.3s ease';
+                    element.style.transform = 'scale(0.95)';
+                    element.style.opacity = '0.5';
+                    
+                    setTimeout(() => {
+                        element.textContent = value;
+                        element.style.transform = 'scale(1)';
+                        element.style.opacity = '1';
+                        
+                        // Add pulse effect for important metrics
+                        if (selector === '[data-emp-total]' || selector === '[data-emp-active]') {
+                            element.parentElement.classList.add('animate-pulse');
+                            setTimeout(() => {
+                                element.parentElement.classList.remove('animate-pulse');
+                            }, 1000);
+                        }
+                    }, 150);
+                }
+            });
+        }
+        
+        // Update Time & Attendance data
+        function updateTimeAttendanceData(data) {
+            const elements = {
+                '[data-att-present]': data.todayPresent,
+                '[data-att-absent]': data.todayAbsent,
+                '[data-att-late]': data.todayLate,
+                '[data-att-hours]': data.weeklyHours.toLocaleString(),
+                '[data-att-overtime]': data.overtime,
+                '[data-att-rate]': data.attendanceRate + '%'
+            };
+            
+            Object.entries(elements).forEach(([selector, value]) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    // Add transition effect
+                    element.style.transition = 'all 0.3s ease';
+                    element.style.transform = 'scale(0.95)';
+                    element.style.opacity = '0.5';
+                    
+                    setTimeout(() => {
+                        element.textContent = value;
+                        element.style.transform = 'scale(1)';
+                        element.style.opacity = '1';
+                        
+                        // Add color animation for attendance rate
+                        if (selector === '[data-att-rate]') {
+                            const rate = parseFloat(data.attendanceRate);
+                            if (rate >= 95) {
+                                element.classList.add('text-green-600');
+                            } else if (rate >= 90) {
+                                element.classList.add('text-yellow-600');
+                            } else {
+                                element.classList.add('text-red-600');
+                            }
+                        }
+                    }, 150);
+                }
+            });
+        }
+        
+        // Update Payroll data
+        function updatePayrollData(data) {
+            const elements = {
+                '[data-pay-total]': data.monthlyPayroll,
+                '[data-pay-processed]': data.lastProcessed,
+                '[data-pay-pending]': data.pendingApprovals,
+                '[data-pay-avg]': data.avgSalary,
+                '[data-pay-budget]': data.bonusBudget
+            };
+            
+            Object.entries(elements).forEach(([selector, value]) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    // Add transition effect
+                    element.style.transition = 'all 0.3s ease';
+                    element.style.transform = 'scale(0.95)';
+                    element.style.opacity = '0.5';
+                    
+                    setTimeout(() => {
+                        element.textContent = value;
+                        element.style.transform = 'scale(1)';
+                        element.style.opacity = '1';
+                        
+                        // Add highlight effect for payroll total
+                        if (selector === '[data-pay-total]') {
+                            element.parentElement.classList.add('bg-green-50', 'border-green-200');
+                            setTimeout(() => {
+                                element.parentElement.classList.remove('bg-green-50', 'border-green-200');
+                            }, 1500);
+                        }
+                    }, 150);
+                }
+            });
+        }
+        
+        // Update Critical Module data
+        function updateCriticalModuleData(data) {
+            const elements = {
+                '[data-critical-cases]': data.activeCases,
+                '[data-critical-pending]': data.pendingInvestigations,
+                '[data-critical-resolved]': data.resolvedThisMonth,
+                '[data-critical-score]': data.complianceScore + '%',
+                '[data-critical-risk]': data.riskLevel
+            };
+            
+            Object.entries(elements).forEach(([selector, value]) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    // Add transition effect
+                    element.style.transition = 'all 0.3s ease';
+                    element.style.transform = 'scale(0.95)';
+                    element.style.opacity = '0.5';
+                    
+                    setTimeout(() => {
+                        element.textContent = value;
+                        element.style.transform = 'scale(1)';
+                        element.style.opacity = '1';
+                    }, 150);
+                }
+            });
+            
+            // Update risk level styling with animation
+            const riskElement = document.querySelector('[data-critical-risk]');
+            if (riskElement) {
+                riskElement.style.transition = 'all 0.3s ease';
+                riskElement.style.transform = 'scale(0.9)';
+                
+                setTimeout(() => {
+                    // Remove existing risk classes
+                    riskElement.className = riskElement.className.replace(/bg-\w+-100|text-\w+-800/g, '');
+                    
+                    // Add new risk classes with animation
+                    if (data.riskLevel === 'High') {
+                        riskElement.classList.add('bg-red-100', 'text-red-800');
+                    } else if (data.riskLevel === 'Medium') {
+                        riskElement.classList.add('bg-yellow-100', 'text-yellow-800');
+                    } else {
+                        riskElement.classList.add('bg-green-100', 'text-green-800');
+                    }
+                    
+                    riskElement.style.transform = 'scale(1)';
+                    
+                    // Add pulse effect for high risk
+                    if (data.riskLevel === 'High') {
+                        riskElement.classList.add('animate-pulse');
+                        setTimeout(() => {
+                            riskElement.classList.remove('animate-pulse');
+                        }, 2000);
+                    }
+                }, 200);
+            }
         }
         
         // Filter data based on current client
