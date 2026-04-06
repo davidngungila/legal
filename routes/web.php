@@ -116,6 +116,9 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
         Route::get('/', function () {
             return view('payroll.index');
         })->name('payroll.index');
+        Route::get('/payslip', function () {
+            return view('payroll.payslip');
+        })->name('payroll.payslip');
     });
 
     Route::prefix('compensation')->group(function () {
