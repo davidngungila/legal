@@ -11,7 +11,7 @@
             <p class="text-gray-600 mt-2">Review your employment contract details</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <a href="{{ route('selfservice') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <a href="{{ route('selfservice.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="arrow-left" class="w-4 h-4 inline mr-2"></i>
                 Back to Self Service
             </a>
@@ -19,63 +19,83 @@
     </div>
 
     <!-- Contract Overview -->
+    @if($employee)
     <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-8 text-white mb-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-                <h2 class="text-2xl font-bold mb-2">Permanent Employment Agreement</h2>
-                <p class="text-purple-200">Contract ID: EMP-2022-001 | Effective: 01 January 2022</p>
+                <h2 class="text-2xl font-bold mb-2">Employment Contract</h2>
+                <p class="text-purple-200">Employee ID: {{ $employee->employee_id }} | Department: {{ $employee->department }}</p>
             </div>
             <div class="mt-4 md:mt-0">
-                <p class="text-lg font-semibold">Status: Active</p>
-                <p class="text-sm text-purple-200">Open-ended contract</p>
+                <p class="text-lg font-semibold">Status: {!! $employee->status_badge !!}</p>
+                <p class="text-sm text-purple-200">Position: {{ $employee->position }}</p>
             </div>
         </div>
     </div>
+    @else
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
+        <div class="flex items-center">
+            <i data-feather="alert-triangle" class="w-5 h-5 text-yellow-600 mr-3"></i>
+            <div>
+                <h3 class="text-yellow-800 font-semibold">Employee Record Not Found</h3>
+                <p class="text-yellow-600 text-sm">Your employment contract details are not available for the current client. Please contact HR.</p>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Contract Details -->
     <div class="space-y-6 mb-8">
         <!-- Employee Information -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-xl font-bold text-gray-900 mb-6">Employee Information</h2>
+            @if($employee)
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-4">
                     <div class="flex justify-between">
                         <span class="text-gray-600">Employee ID:</span>
-                        <span class="font-medium">EMP001</span>
+                        <span class="font-medium">{{ $employee->employee_id }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Full Name:</span>
-                        <span class="font-medium">John Doe</span>
+                        <span class="font-medium">{{ $employee->first_name }} {{ $employee->last_name }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Position:</span>
-                        <span class="font-medium">Senior Developer</span>
+                        <span class="font-medium">{{ $employee->position }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Department:</span>
-                        <span class="font-medium">IT Department</span>
+                        <span class="font-medium">{{ $employee->department }}</span>
                     </div>
                 </div>
                 
                 <div class="space-y-4">
                     <div class="flex justify-between">
                         <span class="text-gray-600">Email:</span>
-                        <span class="font-medium">john.doe@company.com</span>
+                        <span class="font-medium">{{ $employee->email }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Phone:</span>
-                        <span class="font-medium">+255 712 345 678</span>
+                        <span class="font-medium">{{ $employee->phone ?? 'Not provided' }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Address:</span>
-                        <span class="font-medium">Dar es Salaam, Tanzania</span>
+                        <span class="font-medium">{{ $employee->address ?? 'Not provided' }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Nationality:</span>
-                        <span class="font-medium">Tanzanian</span>
+                        <span class="text-gray-600">Hire Date:</span>
+                        <span class="font-medium">{{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('d F Y') : 'Not specified' }}</span>
                     </div>
                 </div>
             </div>
+            @else
+            <div class="text-center py-8 text-gray-500">
+                <i data-feather="user" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                <p>No employee information available.</p>
+                <p class="text-sm mt-2">Please contact HR for your contract details.</p>
+            </div>
+            @endif
         </div>
 
         <!-- Contract Terms -->
@@ -125,30 +145,31 @@
         <!-- Compensation -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-xl font-bold text-gray-900 mb-6">Compensation & Benefits</h2>
+            @if($employee)
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Salary Structure</h3>
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Basic Salary:</span>
-                            <span class="font-medium">TZS 2,000,000</span>
+                            <span class="font-medium">TZS {{ number_format($employee->salary ?? 0, 0) }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Housing Allowance:</span>
-                            <span class="font-medium">TZS 500,000</span>
+                            <span class="font-medium">TZS {{ number_format($employee->salary * 0.2 ?? 0, 0) }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Transport Allowance:</span>
-                            <span class="font-medium">TZS 200,000</span>
+                            <span class="font-medium">TZS {{ number_format($employee->salary * 0.08 ?? 0, 0) }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Communication Allowance:</span>
-                            <span class="font-medium">TZS 50,000</span>
+                            <span class="font-medium">TZS {{ number_format($employee->salary * 0.02 ?? 0, 0) }}</span>
                         </div>
                         <div class="border-t pt-3">
                             <div class="flex justify-between">
                                 <span class="font-semibold text-gray-900">Total Package:</span>
-                                <span class="font-bold text-green-600">TZS 2,750,000</span>
+                                <span class="font-bold text-green-600">TZS {{ number_format($employee->salary * 1.3 ?? 0, 0) }}</span>
                             </div>
                         </div>
                     </div>
@@ -180,6 +201,51 @@
                     </div>
                 </div>
             </div>
+            @else
+            <div class="text-center py-8 text-gray-500">
+                <i data-feather="dollar-sign" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                <p>No compensation information available.</p>
+                <p class="text-sm mt-2">Please contact HR for your salary details.</p>
+            </div>
+            @endif
+        </div>
+
+        <!-- Contract Request Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Request Contract Copy</h2>
+            
+            <form method="POST" action="{{ route('selfservice.contract.request') }}" class="space-y-4">
+                @csrf
+                @if(session('success'))
+                    <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                        {{ session('error') }}
+                    </div>
+                @endif
+                @if($errors->any())
+                    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+                
+                <div>
+                    <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Reason for Request *</label>
+                    <textarea id="reason" name="reason" rows="3" required 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                              placeholder="Please specify why you need a copy of your employment contract..."></textarea>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
+                        Request Contract Copy
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Working Hours -->

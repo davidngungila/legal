@@ -11,7 +11,7 @@
             <p class="text-gray-600 mt-2">Submit grievances or concerns</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <a href="{{ route('selfservice') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <a href="{{ route('selfservice.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="arrow-left" class="w-4 h-4 inline mr-2"></i>
                 Back to Self Service
             </a>
@@ -84,11 +84,35 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <h2 class="text-xl font-bold text-gray-900 mb-6">Complaint Details</h2>
         
-        <form id="complaintForm" class="space-y-6">
+        <form method="POST" action="{{ route('selfservice.complaint.store') }}" class="space-y-6">
+            @csrf
+            @if(session('success'))
+                <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if($errors->any())
+                <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ $errors->first() }}
+                </div>
+            @endif
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Complaint Type *</label>
-                    <select name="complaint_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
+                    <input type="text" id="title" name="title" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Brief description of the issue...">
+                </div>
+                
+                <div>
+                    <label for="complaint_type" class="block text-sm font-medium text-gray-700 mb-2">Complaint Type *</label>
+                    <select id="complaint_type" name="complaint_type" required 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Complaint Type</option>
                         <option value="workplace">Workplace Issue</option>
                         <option value="harassment">Harassment</option>
@@ -101,94 +125,54 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
-                    <select name="priority" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select Priority</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
-                </div>
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
-                <input type="text" name="subject" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief description of the issue...">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Detailed Description *</label>
+                <textarea id="description" name="description" rows="6" required 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                          placeholder="Please provide detailed description of your complaint, including specific dates, times, locations, and any witnesses..."></textarea>
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Detailed Description *</label>
-                <textarea name="description" rows="6" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Please provide detailed description of your complaint, including specific dates, times, locations, and any witnesses..."></textarea>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Desired Resolution *</label>
-                <textarea name="resolution" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="What would you like to see as the outcome of this complaint?"></textarea>
+                <label for="desired_resolution" class="block text-sm font-medium text-gray-700 mb-2">Desired Resolution *</label>
+                <textarea id="desired_resolution" name="desired_resolution" rows="3" required 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                          placeholder="What would you like to see as the outcome of this complaint?"></textarea>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Date of Incident</label>
-                    <input type="date" name="incident_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="incident_date" class="block text-sm font-medium text-gray-700 mb-2">Date of Incident</label>
+                    <input type="date" id="incident_date" name="incident_date" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Time of Incident</label>
-                    <input type="time" name="incident_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="incident_time" class="block text-sm font-medium text-gray-700 mb-2">Time of Incident</label>
+                    <input type="time" id="incident_time" name="incident_time" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Location of Incident</label>
-                <input type="text" name="incident_location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Where did the incident occur?">
+                <label for="incident_location" class="block text-sm font-medium text-gray-700 mb-2">Location of Incident</label>
+                <input type="text" id="incident_location" name="incident_location" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                       placeholder="Where did the incident occur?">
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Witnesses (if any)</label>
-                <textarea name="witnesses" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Names and contact information of any witnesses..."></textarea>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Supporting Documents</label>
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <i data-feather="upload" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
-                    <p class="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
-                    <p class="text-xs text-gray-500">PDF, JPG, PNG up to 10MB</p>
-                    <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" class="hidden">
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Contact Method</label>
-                    <select name="contact_method" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="email">Email</option>
-                        <option value="phone">Phone</option>
-                        <option value="inperson">In Person</option>
-                        <option value="anonymous">Anonymous</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Availability for Follow-up</label>
-                    <input type="text" name="availability" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Best times to contact you...">
-                </div>
+                <label for="witnesses" class="block text-sm font-medium text-gray-700 mb-2">Witnesses (if any)</label>
+                <textarea id="witnesses" name="witnesses" rows="3" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                          placeholder="Names and contact information of any witnesses..."></textarea>
             </div>
             
             <div class="flex items-center space-x-3">
                 <input type="checkbox" name="acknowledgement" required class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                 <label for="acknowledgement" class="text-sm text-gray-700">
                     I confirm that the information provided is accurate and true to the best of my knowledge. I understand that false statements may result in disciplinary action.
-                </label>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-                <input type="checkbox" name="confidentiality" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                <label for="confidentiality" class="text-sm text-gray-700">
-                    I request that this complaint be handled confidentially where possible, in accordance with company policy and Tanzania Labour Law.
                 </label>
             </div>
             
@@ -208,131 +192,40 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-gray-900">Recent Complaints</h2>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All History</button>
+            <a href="{{ route('selfservice') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All History</a>
         </div>
         
         <div class="space-y-4">
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Resolved</span>
-                    <span class="text-xs text-gray-500">2 weeks ago</span>
+            @if($employee && $employee->selfServiceRequests->where('request_type', 'complaint')->count() > 0)
+                @foreach($employee->selfServiceRequests->where('request_type', 'complaint')->take(3) as $request)
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        {!! $request->status_badge !!}
+                        <span class="text-xs text-gray-500">{{ $request->created_at->diffForHumans() }}</span>
+                    </div>
+                    <p class="font-medium text-gray-900 mb-1">{{ $request->title }}</p>
+                    <p class="text-sm text-gray-600 mb-2">{{ Str::limit($request->description, 100) }}</p>
+                    <p class="text-xs text-gray-500">
+                        Reference: COMP-{{ str_pad($request->id, 4, '0', STR_PAD_LEFT) }} 
+                        @if($request->status === 'resolved')
+                            | Resolved: {{ $request->approval_notes ?? 'Successfully resolved' }}
+                        @elseif($request->status === 'pending')
+                            | Status: Awaiting HR response
+                        @elseif($request->status === 'in_progress')
+                            | Status: Being investigated
+                        @endif
+                    </p>
                 </div>
-                <p class="font-medium text-gray-900 mb-1">Salary Discrepancy</p>
-                <p class="text-sm text-gray-600 mb-2">Incorrect overtime calculation for October 2024</p>
-                <p class="text-xs text-gray-500">Reference: COMP-2024-015 | Resolved: Salary corrected and back-paid</p>
-            </div>
-
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">In Progress</span>
-                    <span class="text-xs text-gray-500">1 week ago</span>
+                @endforeach
+            @else
+                <div class="text-center py-8 text-gray-500">
+                    <i data-feather="alert-circle" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                    <p>No complaints found.</p>
+                    <p class="text-sm mt-2">Submit your first complaint to see it here.</p>
                 </div>
-                <p class="font-medium text-gray-900 mb-1">Working Conditions</p>
-                <p class="text-sm text-gray-600 mb-2">Air conditioning issues in office area</p>
-                <p class="text-xs text-gray-500">Reference: COMP-2024-016 | Status: Maintenance team contacted</p>
-            </div>
-
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Pending</span>
-                    <span class="text-xs text-gray-500">3 days ago</span>
-                </div>
-                <p class="font-medium text-gray-900 mb-1">Policy Clarification</p>
-                <p class="text-sm text-gray-600 mb-2">Questions about remote work policy</p>
-                <p class="text-xs text-gray-500">Reference: COMP-2024-017 | Status: Awaiting HR response</p>
-            </div>
+            @endif
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-// Form submission
-document.getElementById('complaintForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    // Show loading
-    showNotification('Submitting complaint...', 'info');
-    
-    // Simulate API call
-    setTimeout(() => {
-        const reference = 'COMP-2024-' + Math.floor(Math.random() * 1000);
-        showNotification(`Complaint submitted successfully! Reference: ${reference}`, 'success');
-        
-        // Reset form
-        this.reset();
-        
-        // Update statistics (simulation)
-        updateComplaintStats();
-    }, 1500);
-});
-
-// Update complaint statistics (simulation)
-function updateComplaintStats() {
-    // This would normally fetch from API
-    const pendingCount = document.querySelector('.text-blue-600').parentElement.parentElement.querySelector('.text-2xl');
-    if (pendingCount) {
-        const currentValue = parseInt(pendingCount.textContent);
-        pendingCount.textContent = currentValue + 1;
-    }
-    
-    const totalCount = document.querySelector('.text-purple-600').parentElement.parentElement.querySelector('.text-2xl');
-    if (totalCount) {
-        const currentValue = parseInt(totalCount.textContent);
-        totalCount.textContent = currentValue + 1;
-    }
-}
-
-// Notification function
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-    
-    const colors = {
-        success: 'bg-green-500 text-white',
-        error: 'bg-red-500 text-white',
-        warning: 'bg-yellow-500 text-white',
-        info: 'bg-blue-500 text-white'
-    };
-    
-    notification.className += ' ' + colors[type] || colors.info;
-    notification.innerHTML = `
-        <div class="flex items-center">
-            <i data-feather="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Re-initialize feather icons
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
-    
-    // Animate in
-    setTimeout(() => {
-        notification.classList.remove('translate-x-full');
-    }, 100);
-    
-    // Auto remove
-    setTimeout(() => {
-        notification.classList.add('translate-x-full');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Initialize feather icons
-if (typeof feather !== 'undefined') {
-    feather.replace();
-}
-</script>
-@endpush
 
 @endsection

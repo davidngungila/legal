@@ -15,11 +15,8 @@
         <!-- Client Selector -->
         <div class="mt-4">
             <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
-            <select class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
-                <option value="1">ABC Manufacturing Ltd</option>
-                <option value="2">XYZ Construction Co</option>
-                <option value="3">Tanzania Mining Corp</option>
-                <option value="4">East Africa Logistics</option>
+            <select id="clientSelector" class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
+                <option value="">Loading clients...</option>
             </select>
         </div>
     </div>
@@ -187,3 +184,172 @@
         </ul>
     </nav>
 </aside>
+
+<script>
+// Client switching functionality
+let currentClientId = null;
+let availableClients = [];
+
+// Load clients on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadAvailableClients();
+    loadCurrentClient();
+});
+
+// Load available clients
+async function loadAvailableClients() {
+    try {
+        const response = await fetch('/api/client-switch/available', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            availableClients = data.clients;
+            updateClientSelector();
+        }
+    } catch (error) {
+        console.error('Error loading clients:', error);
+    }
+}
+
+// Load current client
+async function loadCurrentClient() {
+    try {
+        const response = await fetch('/api/client-switch/current', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.client) {
+            currentClientId = data.client.id;
+            updateClientSelector();
+        }
+    } catch (error) {
+        console.error('Error loading current client:', error);
+    }
+}
+
+// Update client selector dropdown
+function updateClientSelector() {
+    const selector = document.getElementById('clientSelector');
+    if (!selector) return;
+    
+    selector.innerHTML = '';
+    
+    availableClients.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = client.name;
+        option.selected = client.id == currentClientId;
+        
+        // Add visual indicator for current client
+        if (client.id == currentClientId) {
+            option.textContent += ' (Current)';
+        }
+        
+        // Add status indicator
+        if (client.status !== 'active') {
+            option.textContent += ` [${client.status}]`;
+            option.disabled = client.status !== 'active';
+        }
+        
+        selector.appendChild(option);
+    });
+}
+
+// Switch client function
+async function switchClient(clientId) {
+    if (!clientId || clientId == currentClientId) {
+        return;
+    }
+    
+    // Show loading state
+    showNotification('Switching client...', 'info');
+    
+    try {
+        const response = await fetch('/api/client-switch/switch', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                client_id: clientId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentClientId = clientId;
+            showNotification(data.message, 'success');
+            
+            // Reload the page to refresh data for the new client
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification('Failed to switch client', 'error');
+        }
+    } catch (error) {
+        console.error('Error switching client:', error);
+        showNotification('Error switching client', 'error');
+    }
+}
+
+// Notification helper function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    
+    const colors = {
+        success: 'bg-green-500 text-white',
+        error: 'bg-red-500 text-white',
+        warning: 'bg-yellow-500 text-white',
+        info: 'bg-blue-500 text-white'
+    };
+    
+    notification.className += ' ' + colors[type] || colors.info;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i data-feather="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Auto remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+</script>

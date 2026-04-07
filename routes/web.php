@@ -6,6 +6,13 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientSwitchController;
+use App\Http\Controllers\TestLoginController;
+use App\Http\Controllers\SelfServiceController;
+use App\Http\Controllers\DocumentsController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OnboardingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,15 +48,13 @@ Route::middleware(['web'])->post('/logout', [AuthController::class, 'logout'])->
 // Protected Routes (require authentication)
 Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Organization Routes
     Route::prefix('organization')->group(function () {
-        Route::get('/setup', function () {
-            return view('organization.setup');
-        })->name('organization.setup');
+        Route::get('/setup', [OrganizationController::class, 'setup'])->name('organization.setup');
+        Route::post('/update', [OrganizationController::class, 'update'])->name('organization.update');
+        Route::get('/stats', [OrganizationController::class, 'stats'])->name('organization.stats');
     });
 
     // User Management Routes
@@ -199,9 +204,10 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
 
     // Onboarding Routes
     Route::prefix('onboarding')->group(function () {
-        Route::get('/', function () {
-            return view('onboarding.index');
-        })->name('onboarding.index');
+        Route::get('/', [OnboardingController::class, 'index'])->name('onboarding.index');
+        Route::post('/start', [OnboardingController::class, 'startOnboarding'])->name('onboarding.start');
+        Route::post('/complete/{employeeId}', [OnboardingController::class, 'completeOnboarding'])->name('onboarding.complete');
+        Route::get('/progress/{employeeId}', [OnboardingController::class, 'getProgress'])->name('onboarding.progress');
     });
 
     // Organization Routes
@@ -241,25 +247,19 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
 
     // Employee Self Service Routes
     Route::prefix('selfservice')->group(function () {
-        Route::get('/', function () {
-            return view('selfservice.index');
-        })->name('selfservice.index');
-        
-        Route::get('/leave', function () {
-            return view('selfservice.leave');
-        })->name('selfservice.leave');
-        
-        Route::get('/payslip', function () {
-            return view('selfservice.payslip');
-        })->name('selfservice.payslip');
-        
-        Route::get('/contract', function () {
-            return view('selfservice.contract');
-        })->name('selfservice.contract');
-        
-        Route::get('/complaint', function () {
-            return view('selfservice.complaint');
-        })->name('selfservice.complaint');
+        Route::get('/', [SelfServiceController::class, 'index'])->name('selfservice.index');
+        Route::get('/leave', [SelfServiceController::class, 'leave'])->name('selfservice.leave');
+        Route::post('/leave', [SelfServiceController::class, 'storeLeave'])->name('selfservice.leave.store');
+        Route::get('/payslip', [SelfServiceController::class, 'payslip'])->name('selfservice.payslip');
+        Route::post('/payslip', [SelfServiceController::class, 'requestPayslip'])->name('selfservice.payslip.request');
+        Route::get('/contract', [SelfServiceController::class, 'contract'])->name('selfservice.contract');
+        Route::post('/contract', [SelfServiceController::class, 'requestContract'])->name('selfservice.contract.request');
+        Route::get('/complaint', [SelfServiceController::class, 'complaint'])->name('selfservice.complaint');
+        Route::post('/complaint', [SelfServiceController::class, 'storeComplaint'])->name('selfservice.complaint.store');
+        Route::get('/profile', [SelfServiceController::class, 'profile'])->name('selfservice.profile');
+        Route::post('/profile', [SelfServiceController::class, 'updateProfile'])->name('selfservice.profile.update');
+        Route::get('/expense', [SelfServiceController::class, 'expense'])->name('selfservice.expense');
+        Route::post('/expense', [SelfServiceController::class, 'storeExpense'])->name('selfservice.expense.store');
     });
 
     // Case Management Routes
@@ -267,6 +267,16 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
         Route::get('/', function () {
             return view('casemanagement.index');
         })->name('casemanagement.index');
+    });
+
+    // Documents & Policies Routes
+    Route::prefix('documents')->group(function () {
+        Route::get('/', [DocumentsController::class, 'index'])->name('documents.index');
+        Route::get('/view/{id}', [DocumentsController::class, 'view'])->name('documents.view');
+        Route::get('/download/{id}', [DocumentsController::class, 'download'])->name('documents.download');
+        Route::get('/category/{category}', [DocumentsController::class, 'byCategory'])->name('documents.category');
+        Route::get('/type/{type}', [DocumentsController::class, 'byType'])->name('documents.type');
+        Route::post('/search', [DocumentsController::class, 'search'])->name('documents.search');
     });
 
     // Admin Routes (Super Admin and HR Admin only)
@@ -313,9 +323,19 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])
             Route::get('/export', [ClientController::class, 'export']);
             Route::get('/statistics', [ClientController::class, 'statistics']);
         });
+
+        // Client Switching API
+        Route::prefix('client-switch')->group(function () {
+            Route::post('/switch', [ClientSwitchController::class, 'switch']);
+            Route::get('/current', [ClientSwitchController::class, 'current']);
+            Route::get('/available', [ClientSwitchController::class, 'available']);
+        });
     });
 
-    // Test route
+    // Test route for authentication
+Route::get('/test-login', [TestLoginController::class, 'testLogin']);
+
+// Test route
     Route::get('/test', function () {
         return view('test');
     });

@@ -18,7 +18,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-gray-500">Current Client</p>
-                        <p class="text-sm font-semibold text-gray-900" data-client-display>ABC Manufacturing Ltd</p>
+                        <p class="text-sm font-semibold text-gray-900" data-client-display>{{ $client->name ?? 'No Client Selected' }}</p>
                     </div>
                 </div>
             </div>
@@ -33,9 +33,9 @@
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium" data-emp-newhires>+12</span>
+                <span class="text-sm text-green-600 font-medium">+{{ $stats['new_hires'] }}</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" data-emp-total>248</h3>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['total_employees'] }}</h3>
             <p class="text-gray-600 text-sm">Total Employees</p>
         </div>
 
@@ -45,9 +45,9 @@
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <i data-feather="alert-triangle" class="w-6 h-6 text-red-600"></i>
                 </div>
-                <span class="text-sm text-red-600 font-medium" data-critical-risk>Medium</span>
+                <span class="text-sm text-red-600 font-medium">Medium</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" data-critical-cases>7</h3>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['active_cases'] }}</h3>
             <p class="text-gray-600 text-sm">Active Disciplinary Cases</p>
         </div>
 
@@ -57,9 +57,9 @@
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="credit-card" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-sm text-gray-600 font-medium" data-pay-processed>Nov 2024</span>
+                <span class="text-sm text-gray-600 font-medium">{{ now()->format('M Y') }}</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" data-pay-total>TZS 45.2M</h3>
+            <h3 class="text-2xl font-bold text-gray-900">TZS {{ number_format($stats['monthly_payroll'], 1) }}M</h3>
             <p class="text-gray-600 text-sm">Monthly Payroll</p>
         </div>
 
@@ -69,9 +69,9 @@
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <i data-feather="clock" class="w-6 h-6 text-purple-600"></i>
                 </div>
-                <span class="text-sm text-purple-600 font-medium" data-att-present>235</span>
+                <span class="text-sm text-purple-600 font-medium">{{ $stats['present_today'] }}</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" data-att-rate>94.8%</h3>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['attendance_rate'] }}%</h3>
             <p class="text-gray-600 text-sm">Attendance Rate</p>
         </div>
     </div>
@@ -84,19 +84,19 @@
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Industry:</span>
-                    <span class="text-sm font-medium" data-org-industry>Manufacturing</span>
+                    <span class="text-sm font-medium">{{ $client->industry ?? 'Not specified' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Departments:</span>
-                    <span class="text-sm font-medium" data-org-departments>8</span>
+                    <span class="text-sm font-medium">{{ $client->departments_count ?? 8 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Locations:</span>
-                    <span class="text-sm font-medium" data-org-locations>3</span>
+                    <span class="text-sm font-medium">{{ $client->locations_count ?? 3 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Founded:</span>
-                    <span class="text-sm font-medium" data-org-founded>2015</span>
+                    <span class="text-sm font-medium">{{ $client->founded_year ?? '2015' }}</span>
                 </div>
             </div>
         </div>
@@ -107,19 +107,19 @@
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Active:</span>
-                    <span class="text-sm font-medium text-green-600" data-emp-active>235</span>
+                    <span class="text-sm font-medium text-green-600">{{ $stats['active_employees'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">On Leave:</span>
-                    <span class="text-sm font-medium text-yellow-600" data-emp-onleave>8</span>
+                    <span class="text-sm font-medium text-yellow-600">{{ $stats['on_leave_employees'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Probation:</span>
-                    <span class="text-sm font-medium text-blue-600" data-emp-probation>5</span>
+                    <span class="text-sm font-medium text-blue-600">{{ $stats['probation_employees'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Turnover:</span>
-                    <span class="text-sm font-medium text-red-600" data-emp-turnover>3.2%</span>
+                    <span class="text-sm font-medium text-red-600">3.2%</span>
                 </div>
             </div>
         </div>
@@ -130,19 +130,19 @@
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Absent Today:</span>
-                    <span class="text-sm font-medium text-red-600" data-att-absent>8</span>
+                    <span class="text-sm font-medium text-red-600">{{ $stats['absent_today'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Late Today:</span>
-                    <span class="text-sm font-medium text-yellow-600" data-att-late>5</span>
+                    <span class="text-sm font-medium text-yellow-600">{{ $stats['late_today'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Weekly Hours:</span>
-                    <span class="text-sm font-medium" data-att-hours>9,800</span>
+                    <span class="text-sm font-medium">{{ $stats['present_today'] * 40 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Overtime:</span>
-                    <span class="text-sm font-medium text-blue-600" data-att-overtime>120</span>
+                    <span class="text-sm font-medium text-blue-600">120</span>
                 </div>
             </div>
         </div>
@@ -176,27 +176,20 @@
                 <span class="w-2 h-2 bg-red-500 rounded-full"></span>
             </div>
             <div class="space-y-3">
-                <div class="flex items-start space-x-3 p-3 bg-red-50 rounded-lg">
-                    <i data-feather="alert-circle" class="w-5 h-5 text-red-600 mt-0.5"></i>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Contract Expiring</p>
-                        <p class="text-xs text-gray-600">John Doe - 15 days remaining</p>
+                @forelse($alerts as $alert)
+                    <div class="flex items-start space-x-3 p-3 bg-{{ $alert['color'] }}-50 rounded-lg">
+                        <i data-feather="{{ $alert['icon'] }}" class="w-5 h-5 text-{{ $alert['color'] }}-600 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ $alert['title'] }}</p>
+                            <p class="text-xs text-gray-600">{{ $alert['description'] }}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
-                    <i data-feather="alert-triangle" class="w-5 h-5 text-yellow-600 mt-0.5"></i>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Pending HR Approval</p>
-                        <p class="text-xs text-gray-600">Termination case #003</p>
+                @empty
+                    <div class="text-center py-4 text-gray-500">
+                        <i data-feather="check-circle" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                        <p class="text-sm">No critical alerts</p>
                     </div>
-                </div>
-                <div class="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg">
-                    <i data-feather="clock" class="w-5 h-5 text-orange-600 mt-0.5"></i>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Work Permit Expiry</p>
-                        <p class="text-xs text-gray-600">Jane Smith - 30 days</p>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
 
@@ -204,42 +197,22 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
             <div class="space-y-3">
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <i data-feather="check" class="w-4 h-4 text-green-600"></i>
+                @forelse($recentActivities as $activity)
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-{{ $activity['color'] }}-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i data-feather="{{ $activity['icon'] }}" class="w-4 h-4 text-{{ $activity['color'] }}-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ $activity['title'] }}</p>
+                            <p class="text-xs text-gray-600">{{ $activity['description'] }} - {{ $activity['time'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">New Employee Onboarded</p>
-                        <p class="text-xs text-gray-600">Michael Johnson - 2 hours ago</p>
+                @empty
+                    <div class="text-center py-4 text-gray-500">
+                        <i data-feather="activity" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                        <p class="text-sm">No recent activities</p>
                     </div>
-                </div>
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <i data-feather="file-text" class="w-4 h-4 text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Leave Request Approved</p>
-                        <p class="text-xs text-gray-600">Sarah Williams - 4 hours ago</p>
-                    </div>
-                </div>
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <i data-feather="award" class="w-4 h-4 text-purple-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Training Completed</p>
-                        <p class="text-xs text-gray-600">OSHA Compliance - 6 hours ago</p>
-                    </div>
-                </div>
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <i data-feather="user-plus" class="w-4 h-4 text-yellow-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Job Application Received</p>
-                        <p class="text-xs text-gray-600">Senior Developer - 8 hours ago</p>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
 

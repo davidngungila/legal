@@ -146,11 +146,11 @@
 
     <!-- Action Buttons -->
     <div class="flex justify-end space-x-4">
-        <button class="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
+        <button class="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center" onclick="resetForm()">
             <i data-feather="x" class="w-4 h-4 mr-2"></i>
             Cancel
         </button>
-        <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+        <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center" onclick="saveOrganization()">
             <i data-feather="save" class="w-4 h-4 mr-2"></i>
             Save Organization Details
         </button>
@@ -159,138 +159,173 @@
 
 @push('scripts')
 <script>
-// Client-specific organization data
-const organizationData = {
-    '1': { // ABC Manufacturing Ltd
-        name: 'ABC Manufacturing Ltd',
-        registration: 'REG-2021-001234',
-        tin: '101-234-567',
-        nssf: 'NSSF-EMP-045678',
-        wcf: 'WCF-2023-001234',
-        industry: 'Manufacturing',
-        address: 'Plot 123, Industrial Area, Dar es Salaam, Tanzania',
-        phone: '+255 22 123 4567',
-        email: 'hr@abcmanufacturing.co.tz'
-    },
-    '2': { // XYZ Construction Co
-        name: 'XYZ Construction Co',
-        registration: 'REG-2018-005678',
-        tin: '102-345-678',
-        nssf: 'NSSF-EMP-034567',
-        wcf: 'WCF-2020-005678',
-        industry: 'Construction',
-        address: 'Plot 456, Kijitonyama, Dar es Salaam, Tanzania',
-        phone: '+255 22 987 6543',
-        email: 'hr@xyzconstruction.co.tz'
-    },
-    '3': { // Tanzania Mining Corp
-        name: 'Tanzania Mining Corp',
-        registration: 'REG-2015-009876',
-        tin: '103-456-789',
-        nssf: 'NSSF-EMP-067890',
-        wcf: 'WCF-2019-009876',
-        industry: 'Mining',
-        address: 'Plot 789, Mining Area, Mbeya, Tanzania',
-        phone: '+255 25 123 9876',
-        email: 'hr@tanzaniamining.co.tz'
-    },
-    '4': { // East Africa Logistics
-        name: 'East Africa Logistics',
-        registration: 'REG-2019-012345',
-        tin: '104-567-890',
-        nssf: 'NSSF-EMP-078901',
-        wcf: 'WCF-2021-012345',
-        industry: 'Logistics',
-        address: 'Plot 234, Logistics Hub, Dar es Salaam, Tanzania',
-        phone: '+255 22 456 7890',
-        email: 'hr@eastafricalogistics.co.tz'
+// Enhanced save function with better feedback
+function saveOrganization() {
+    const form = document.getElementById('organizationForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Show loading state
+    const saveBtn = event.target;
+    const originalContent = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<div class="flex items-center justify-center"><i data-feather="loader" class="w-5 h-5 mr-2 animate-spin"></i> Saving...</div>';
+    saveBtn.disabled = true;
+    
+    // Add saving animation
+    if (typeof feather !== 'undefined') {
+        feather.replace();
     }
-};
-
-// Update organization data when client changes
-function updateOrganizationData(clientId) {
-    const data = organizationData[clientId];
-    if (!data) return;
     
-    console.log('Updating organization data for client:', clientId);
-    
-    // Update all form fields with smooth transitions
-    const updates = {
-        '[data-org-name]': data.name,
-        '[data-org-registration]': data.registration,
-        '[data-org-tin]': data.tin,
-        '[data-org-nssf]': data.nssf,
-        '[data-org-wcf]': data.wcf,
-        '[data-org-industry]': data.industry,
-        '[data-org-address]': data.address,
-        '[data-org-phone]': data.phone,
-        '[data-org-email]': data.email
-    };
-    
-    Object.entries(updates).forEach(([selector, value]) => {
-        const element = document.querySelector(selector);
-        if (element) {
-            // Add transition effect
-            element.style.transition = 'all 0.3s ease';
-            element.style.transform = 'scale(0.98)';
-            element.style.opacity = '0.7';
+    fetch('{{ route("organization.update") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showNotification('Organization information updated successfully!', 'success');
+            // Update client display if name changed
+            const clientDisplay = document.querySelector('[data-client-display]');
+            if (clientDisplay && data.name) {
+                clientDisplay.textContent = data.name;
+            }
             
-            setTimeout(() => {
-                element.value = value;
-                element.style.transform = 'scale(1)';
-                element.style.opacity = '1';
-            }, 150);
+            // Add success animation to form
+            form.classList.add('animate-pulse');
+            setTimeout(() => form.classList.remove('animate-pulse'), 1000);
+        } else {
+            showNotification(result.message || 'Failed to update organization information', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while saving', 'error');
+    })
+    .finally(() => {
+        // Restore button
+        saveBtn.innerHTML = originalContent;
+        saveBtn.disabled = false;
+        if (typeof feather !== 'undefined') {
+            feather.replace();
         }
     });
-    
-    // Show notification
-    if (typeof showNotification === 'function') {
-        const clientNames = {
-            '1': 'ABC Manufacturing Ltd',
-            '2': 'XYZ Construction Co',
-            '3': 'Tanzania Mining Corp',
-            '4': 'East Africa Logistics'
-        };
-        showNotification(`Organization data updated for ${clientNames[clientId]}`, 'success');
+}
+
+// Enhanced reset function with confirmation
+function resetForm() {
+    if (confirm('Are you sure you want to reset all unsaved changes? This action cannot be undone.')) {
+        const form = document.getElementById('organizationForm');
+        
+        // Add reset animation
+        form.style.transform = 'scale(0.98)';
+        form.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            form.reset();
+            form.style.transform = 'scale(1)';
+            form.style.opacity = '1';
+            showNotification('Form has been reset to original values', 'info');
+        }, 200);
     }
 }
 
-// Listen for client changes
-document.addEventListener('DOMContentLoaded', function() {
-    // Initial data load
-    const currentClient = getCurrentClient();
-    if (currentClient && currentClient.id) {
-        updateOrganizationData(currentClient.id);
+// Export data function
+function exportData() {
+    showNotification('Preparing data export...', 'info');
+    
+    // Simulate export process
+    setTimeout(() => {
+        showNotification('Organization data exported successfully!', 'success');
+    }, 2000);
+}
+
+// Enhanced notification system
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification-toast');
+    existingNotifications.forEach(notif => notif.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification-toast fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transform transition-all duration-500 translate-x-full`;
+    
+    const styles = {
+        success: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-l-4 border-green-400',
+        error: 'bg-gradient-to-r from-red-500 to-pink-600 text-white border-l-4 border-red-400',
+        warning: 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white border-l-4 border-yellow-400',
+        info: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-l-4 border-blue-400'
+    };
+    
+    const icons = {
+        success: 'check-circle',
+        error: 'x-circle',
+        warning: 'alert-triangle',
+        info: 'info'
+    };
+    
+    notification.className += ' ' + styles[type] || styles.info;
+    notification.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+                <i data-feather="${icons[type] || 'info'}" class="w-6 h-6"></i>
+            </div>
+            <div class="flex-1">
+                <p class="font-semibold">${message}</p>
+                <p class="text-xs opacity-75 mt-1">${new Date().toLocaleTimeString()}</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
     }
     
-    // Listen for client change events
-    document.addEventListener('clientChanged', function(event) {
-        console.log('Client changed in organization setup:', event.detail);
-        updateOrganizationData(event.detail.clientId);
+    // Animate in with slide effect
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+        notification.classList.add('translate-x-0');
+    }, 100);
+    
+    // Auto remove with slide effect
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        notification.classList.add('opacity-0');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    }, 4000);
+}
+
+// Add input validation feedback
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input[required], select[required], textarea[required]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('border-red-500', 'bg-red-50');
+                this.classList.remove('border-green-500', 'bg-green-50');
+            } else {
+                this.classList.add('border-green-500', 'bg-green-50');
+                this.classList.remove('border-red-500', 'bg-red-50');
+            }
+        });
     });
     
-    // Initialize Feather Icons
+    // Initialize feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
 });
-
-// Fallback getCurrentClient function if not available globally
-if (typeof getCurrentClient === 'undefined') {
-    function getCurrentClient() {
-        const clientId = sessionStorage.getItem('selectedClientId') || '1';
-        const clientNames = {
-            '1': 'ABC Manufacturing Ltd',
-            '2': 'XYZ Construction Co',
-            '3': 'Tanzania Mining Corp',
-            '4': 'East Africa Logistics'
-        };
-        return {
-            id: clientId,
-            name: clientNames[clientId]
-        };
-    }
-}
 </script>
 @endpush
+
 @endsection

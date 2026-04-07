@@ -9,6 +9,12 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">User Management</h1>
             <p class="text-gray-600 mt-2">Manage system users and access permissions</p>
+            @if($currentClient)
+            <div class="mt-2 flex items-center space-x-2">
+                <span class="text-sm text-gray-500">Showing users for:</span>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">{{ $currentClient->name }}</span>
+            </div>
+            @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
             <button onclick="window.location.href='/roles'" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">

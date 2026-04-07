@@ -9,35 +9,42 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">Employee Self Service</h1>
             <p class="text-gray-600 mt-2">Manage your HR information and requests efficiently</p>
+            @if($currentClient)
+            <div class="mt-2 flex items-center space-x-2">
+                <span class="text-sm text-gray-500">Self-service portal for:</span>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">{{ $currentClient->name }}</span>
+            </div>
+            @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
             <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="help-circle" class="w-4 h-4 inline mr-2"></i>
                 Help & Support
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <a href="{{ route('selfservice.profile') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="user-plus" class="w-4 h-4 inline mr-2"></i>
                 Update Profile
-            </button>
+            </a>
         </div>
     </div>
 
     <!-- Employee Profile Card -->
+    @if($employee)
     <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-8 text-white mb-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div class="flex items-center space-x-4 mb-4 md:mb-0">
                 <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                    <span class="text-2xl font-bold text-indigo-600">JD</span>
+                    <span class="text-2xl font-bold text-indigo-600">{{ substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1) }}</span>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold">John Doe</h2>
-                    <p class="text-indigo-200">Senior Developer</p>
-                    <p class="text-indigo-200">EMP001 • IT Department</p>
+                    <h2 class="text-2xl font-bold">{{ $employee->first_name }} {{ $employee->last_name }}</h2>
+                    <p class="text-indigo-200">{{ $employee->position }}</p>
+                    <p class="text-indigo-200">{{ $employee->employee_id }} · {{ $employee->department }}</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
-                    <p class="text-3xl font-bold">3</p>
+                    <p class="text-3xl font-bold">{{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->diffInYears(\Carbon\Carbon::now()) : 0 }}</p>
                     <p class="text-sm text-indigo-200">Years Service</p>
                 </div>
                 <div>
@@ -49,12 +56,23 @@
                     <p class="text-sm text-indigo-200">Performance</p>
                 </div>
                 <div>
-                    <p class="text-3xl font-bold">TZS 2.4M</p>
+                    <p class="text-3xl font-bold">TZS {{ number_format($employee->salary ?? 0, 0) }}</p>
                     <p class="text-sm text-indigo-200">Net Salary</p>
                 </div>
             </div>
         </div>
     </div>
+    @else
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
+        <div class="flex items-center">
+            <i data-feather="alert-triangle" class="w-5 h-5 text-yellow-600 mr-3"></i>
+            <div>
+                <h3 class="text-yellow-800 font-semibold">Employee Record Not Found</h3>
+                <p class="text-yellow-600 text-sm">Your employee record is not available for the current client. Please contact HR.</p>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -170,39 +188,42 @@
         <!-- Recent Leave Requests -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-semibold text-gray-900">Recent Leave Requests</h3>
-                <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All</button>
+                <h3 class="text-lg font-semibold text-gray-900">Recent Requests</h3>
+                <a href="{{ route('selfservice.leave') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All</a>
             </div>
             <div class="space-y-4">
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Approved</span>
-                        <span class="text-xs text-gray-500">5 days ago</span>
+                @if($recentRequests->count() > 0)
+                    @foreach($recentRequests as $request)
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            {!! $request->request_type_badge !!}
+                            <span class="text-xs text-gray-500">{{ $request->created_at->diffForHumans() }}</span>
+                        </div>
+                        <p class="font-medium text-gray-900 mb-1">{{ $request->title }}</p>
+                        @if($request->request_type === 'leave')
+                            <p class="text-sm text-gray-600 mb-2">{{ $request->start_date }} - {{ $request->end_date }} ({{ $request->days_requested }} days)</p>
+                        @endif
+                        @if($request->request_type === 'expense_claim')
+                            <p class="text-sm text-gray-600 mb-2">Amount: TZS {{ number_format($request->amount, 0) }}</p>
+                        @endif
+                        <p class="text-xs text-gray-500">
+                            @if($request->status === 'approved')
+                                Approved by: {{ $request->approver->name ?? 'HR Manager' }}
+                            @elseif($request->status === 'pending')
+                                Awaiting approval from: Department Manager
+                            @elseif($request->status === 'rejected')
+                                Rejected: {{ $request->rejection_reason ?? 'Not specified' }}
+                            @endif
+                        </p>
                     </div>
-                    <p class="font-medium text-gray-900 mb-1">Annual Leave</p>
-                    <p class="text-sm text-gray-600 mb-2">15 Nov 2024 - 19 Nov 2024 (5 days)</p>
-                    <p class="text-xs text-gray-500">Approved by: Sarah Williams (HR Manager)</p>
-                </div>
-
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">Pending</span>
-                        <span class="text-xs text-gray-500">2 days ago</span>
+                    @endforeach
+                @else
+                    <div class="text-center py-8 text-gray-500">
+                        <i data-feather="inbox" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p>No recent requests found.</p>
+                        <p class="text-sm mt-2">Submit your first request to see it here.</p>
                     </div>
-                    <p class="font-medium text-gray-900 mb-1">Sick Leave</p>
-                    <p class="text-sm text-gray-600 mb-2">28 Nov 2024 - 29 Nov 2024 (2 days)</p>
-                    <p class="text-xs text-gray-500">Awaiting approval from: Department Manager</p>
-                </div>
-
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">Rejected</span>
-                        <span class="text-xs text-gray-500">2 weeks ago</span>
-                    </div>
-                    <p class="font-medium text-gray-900 mb-1">Annual Leave</p>
-                    <p class="text-sm text-gray-600 mb-2">10 Dec 2024 - 20 Dec 2024 (10 days)</p>
-                    <p class="text-xs text-gray-500">Rejected: Insufficient leave balance</p>
-                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -211,7 +232,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900">Recent Payslips</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All</button>
+            <a href="{{ route('selfservice.payslip') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -227,39 +248,41 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach([
-                        ['month' => 'November 2024', 'basic' => 2500000, 'allowances' => 500000, 'deductions' => 595000, 'net' => 2405000, 'status' => 'Paid'],
-                        ['month' => 'October 2024', 'basic' => 2500000, 'allowances' => 500000, 'deductions' => 595000, 'net' => 2405000, 'status' => 'Paid'],
-                        ['month' => 'September 2024', 'basic' => 2500000, 'allowances' => 450000, 'deductions' => 580000, 'net' => 2370000, 'status' => 'Paid'],
-                        ['month' => 'August 2024', 'basic' => 2500000, 'allowances' => 500000, 'deductions' => 595000, 'net' => 2405000, 'status' => 'Paid'],
-                        ['month' => 'July 2024', 'basic' => 2400000, 'allowances' => 400000, 'deductions' => 560000, 'net' => 2240000, 'status' => 'Paid']
-                    ] as $payslip)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ $payslip['month'] }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            TZS {{ number_format($payslip['basic'], 0) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            TZS {{ number_format($payslip['allowances'], 0) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            TZS {{ number_format($payslip['deductions'], 0) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                            TZS {{ number_format($payslip['net'], 0) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                {{ $payslip['status'] }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900">Download</button>
-                        </td>
-                    </tr>
-                    @endforeach
+                    @if($recentPayslips->count() > 0)
+                        @foreach($recentPayslips as $payslip)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ \Carbon\Carbon::parse($payslip->pay_date)->format('F Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                TZS {{ number_format($payslip->basic_salary, 0) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                TZS {{ number_format($payslip->allowances + $payslip->bonuses, 0) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                TZS {{ number_format($payslip->total_deductions, 0) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                TZS {{ number_format($payslip->net_pay, 0) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {!! $payslip->status_badge !!}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button class="text-indigo-600 hover:text-indigo-900">Download</button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    @else
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                <i data-feather="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                                <p>No payslip records found.</p>
+                                <p class="text-sm mt-2">Your payslips will appear here once processed.</p>
+                            </td>
+                        </tr>
+                    @endif
                 </tbody>
             </table>
         </div>

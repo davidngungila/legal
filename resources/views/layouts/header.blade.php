@@ -17,6 +17,17 @@
         
         <!-- Right Section -->
         <div class="flex items-center space-x-4">
+            <!-- Current Client Display -->
+            @if($currentClient)
+            <div class="hidden md:flex items-center space-x-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                <i data-feather="briefcase" class="w-4 h-4 text-green-600"></i>
+                <div class="text-sm">
+                    <span class="text-xs text-gray-500">Current:</span>
+                    <span class="font-medium text-green-800">{{ $currentClient->name }}</span>
+                </div>
+            </div>
+            @endif
+            
             <!-- Notifications -->
             <div class="relative">
                 <button onclick="toggleNotifications()" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">

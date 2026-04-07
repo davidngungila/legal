@@ -11,11 +11,22 @@
             <p class="text-gray-600 mt-2">Manage new employee onboarding process</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="briefcase" class="w-5 h-5 text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Current Client</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ $client->name ?? 'No Client Selected' }}</p>
+                    </div>
+                </div>
+            </div>
             <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Report
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button onclick="showStartOnboardingModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="user-plus" class="w-4 h-4 inline mr-2"></i>
                 Start Onboarding
             </button>
@@ -29,9 +40,9 @@
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+3</span>
+                <span class="text-sm text-green-600 font-medium">+{{ $stats['new_hires_this_month'] }}</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">12</h3>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['active_onboarding'] }}</h3>
             <p class="text-gray-600 text-sm">Active Onboarding</p>
         </div>
 
@@ -40,32 +51,32 @@
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">95%</span>
+                <span class="text-sm text-green-600 font-medium">{{ $stats['completion_rate'] }}%</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">8</h3>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['completed_this_month'] }}</h3>
             <p class="text-gray-600 text-sm">Completed This Month</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="clock" class="w-6 h-6 text-yellow-600"></i>
+                    <i data-feather="file-text" class="w-6 h-6 text-yellow-600"></i>
                 </div>
-                <span class="text-sm text-orange-600 font-medium">2</span>
+                <span class="text-sm text-yellow-600 font-medium">Pending</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">3</h3>
-            <p class="text-gray-600 text-sm">Pending Tasks</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['pending_documentation'] }}</h3>
+            <p class="text-gray-600 text-sm">Pending Documentation</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="calendar" class="w-6 h-6 text-purple-600"></i>
+                    <i data-feather="trending-up" class="w-6 h-6 text-purple-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">-2 days</span>
+                <span class="text-sm text-purple-600 font-medium">Total</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">5</h3>
-            <p class="text-gray-600 text-sm">Avg. Onboarding Days</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['total_employees'] }}</h3>
+            <p class="text-gray-600 text-sm">Total Employees</p>
         </div>
     </div>
 

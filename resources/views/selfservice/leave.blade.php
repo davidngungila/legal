@@ -11,7 +11,7 @@
             <p class="text-gray-600 mt-2">Request annual, sick, or emergency leave</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <a href="{{ route('selfservice') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <a href="{{ route('selfservice.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="arrow-left" class="w-4 h-4 inline mr-2"></i>
                 Back to Self Service
             </a>
@@ -69,11 +69,49 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <h2 class="text-xl font-bold text-gray-900 mb-6">Leave Application Details</h2>
         
-        <form id="leaveForm" class="space-y-6">
+        <form method="POST" action="{{ route('selfservice.leave.store') }}" class="space-y-6">
+            @csrf
+            @if(session('success'))
+                <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if($errors->any())
+                <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ $errors->first() }}
+                </div>
+            @endif
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Leave Type *</label>
-                    <select name="leave_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Leave Title *</label>
+                    <input type="text" id="title" name="title" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="e.g., Annual Leave Request">
+                </div>
+                
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                    <input type="date" id="start_date" name="start_date" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
+                    <input type="date" id="end_date" name="end_date" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="leave_type" class="block text-sm font-medium text-gray-700 mb-2">Leave Type *</label>
+                    <select id="leave_type" name="leave_type" required 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Leave Type</option>
                         <option value="annual">Annual Leave</option>
                         <option value="sick">Sick Leave</option>
@@ -83,55 +121,13 @@
                         <option value="compassionate">Compassionate Leave</option>
                     </select>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
-                    <select name="priority" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select Priority</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                    <input type="date" name="start_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                    <input type="date" name="end_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Leave *</label>
-                <textarea name="reason" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Please provide detailed reason for your leave request..."></textarea>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Information</label>
-                <textarea name="additional_info" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Any additional information that may be relevant to your leave request..."></textarea>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact (if applicable)</label>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" name="emergency_name" placeholder="Contact Name" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <input type="tel" name="emergency_phone" placeholder="Phone Number" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <input type="text" name="emergency_relation" placeholder="Relationship" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-                <input type="checkbox" name="acknowledgement" required class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                <label for="acknowledgement" class="text-sm text-gray-700">
-                    I acknowledge that I have read and understood the company's leave policy and Tanzania Labour Act requirements.
-                </label>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Reason for Leave *</label>
+                <textarea id="description" name="description" rows="4" required 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                          placeholder="Please provide detailed reason for your leave request..."></textarea>
             </div>
             
             <div class="flex justify-end space-x-3">
@@ -150,125 +146,41 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-gray-900">Recent Leave Requests</h2>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All History</button>
+            <a href="{{ route('selfservice') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All History</a>
         </div>
         
         <div class="space-y-4">
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Approved</span>
-                    <span class="text-xs text-gray-500">5 days ago</span>
+            @if($employee && $employee->selfServiceRequests->where('request_type', 'leave')->count() > 0)
+                @foreach($employee->selfServiceRequests->where('request_type', 'leave')->take(3) as $request)
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        {!! $request->status_badge !!}
+                        <span class="text-xs text-gray-500">{{ $request->created_at->diffForHumans() }}</span>
+                    </div>
+                    <p class="font-medium text-gray-900 mb-1">{{ $request->title }}</p>
+                    @if($request->start_date && $request->end_date)
+                        <p class="text-sm text-gray-600 mb-2">{{ $request->start_date }} - {{ $request->end_date }} ({{ $request->days_requested ?? 'N/A' }} days)</p>
+                    @endif
+                    <p class="text-xs text-gray-500">
+                        @if($request->status === 'approved')
+                            Approved by: {{ $request->approver->name ?? 'HR Manager' }}
+                        @elseif($request->status === 'pending')
+                            Awaiting approval from: Department Manager
+                        @elseif($request->status === 'rejected')
+                            Rejected: {{ $request->rejection_reason ?? 'Not specified' }}
+                        @endif
+                    </p>
                 </div>
-                <p class="font-medium text-gray-900 mb-1">Annual Leave</p>
-                <p class="text-sm text-gray-600 mb-2">15 Nov 2024 - 19 Nov 2024 (5 days)</p>
-                <p class="text-xs text-gray-500">Approved by: Sarah Williams (HR Manager)</p>
-            </div>
-
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">Pending</span>
-                    <span class="text-xs text-gray-500">2 days ago</span>
+                @endforeach
+            @else
+                <div class="text-center py-8 text-gray-500">
+                    <i data-feather="calendar" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                    <p>No leave requests found.</p>
+                    <p class="text-sm mt-2">Submit your first leave request to see it here.</p>
                 </div>
-                <p class="font-medium text-gray-900 mb-1">Sick Leave</p>
-                <p class="text-sm text-gray-600 mb-2">28 Nov 2024 - 29 Nov 2024 (2 days)</p>
-                <p class="text-xs text-gray-500">Awaiting approval from: Department Manager</p>
-            </div>
-
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">Rejected</span>
-                    <span class="text-xs text-gray-500">2 weeks ago</span>
-                </div>
-                <p class="font-medium text-gray-900 mb-1">Annual Leave</p>
-                <p class="text-sm text-gray-600 mb-2">10 Dec 2024 - 20 Dec 2024 (10 days)</p>
-                <p class="text-xs text-gray-500">Rejected: Insufficient leave balance</p>
-            </div>
+            @endif
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-// Form submission
-document.getElementById('leaveForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    // Show loading
-    showNotification('Submitting leave request...', 'info');
-    
-    // Simulate API call
-    setTimeout(() => {
-        showNotification('Leave request submitted successfully! Reference: LEAVE-2024-' + Math.floor(Math.random() * 1000), 'success');
-        
-        // Reset form
-        this.reset();
-        
-        // Update leave balance (simulation)
-        updateLeaveBalance();
-    }, 1500);
-});
-
-// Update leave balance (simulation)
-function updateLeaveBalance() {
-    // This would normally fetch from API
-    const leaveBalances = document.querySelectorAll('.text-2xl');
-    if (leaveBalances.length > 0) {
-        const currentValue = parseInt(leaveBalances[0].textContent);
-        const newValue = Math.max(0, currentValue - 1);
-        leaveBalances[0].textContent = newValue;
-    }
-}
-
-// Notification function
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-    
-    const colors = {
-        success: 'bg-green-500 text-white',
-        error: 'bg-red-500 text-white',
-        warning: 'bg-yellow-500 text-white',
-        info: 'bg-blue-500 text-white'
-    };
-    
-    notification.className += ' ' + colors[type] || colors.info;
-    notification.innerHTML = `
-        <div class="flex items-center">
-            <i data-feather="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Re-initialize feather icons
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
-    
-    // Animate in
-    setTimeout(() => {
-        notification.classList.remove('translate-x-full');
-    }, 100);
-    
-    // Auto remove
-    setTimeout(() => {
-        notification.classList.add('translate-x-full');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Initialize feather icons
-if (typeof feather !== 'undefined') {
-    feather.replace();
-}
-</script>
-@endpush
 
 @endsection
