@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'LegalHR - Tanzania HR Management System')</title>
+    <meta name="client-title" content="@yield('title', 'LegalHR - Tanzania HR Management System')">
+    <meta property="og:title" content="@yield('title', 'LegalHR - Tanzania HR Management System')">
+    <meta name="original-title" content="LegalHR - Tanzania HR Management System">
     
     <!-- Custom CSS for client switching animations -->
     <style>
@@ -192,27 +195,40 @@
         
         // Update UI elements when client changes
         function updateClientUI(clientId) {
+            console.log('updateClientUI called with clientId:', clientId);
+            
             // Update client selector
             const select = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (select) {
                 select.value = clientId;
                 console.log('Client selector updated to:', clientId);
+            } else {
+                console.warn('Client selector not found!');
             }
             
             // Update any client display elements
             const clientDisplays = document.querySelectorAll('[data-client-display]');
-            clientDisplays.forEach(element => {
+            if (clientDisplays.length > 0) {
                 const clientNames = {
                     '1': 'ABC Manufacturing Ltd',
                     '2': 'XYZ Construction Co',
                     '3': 'Tanzania Mining Corp',
                     '4': 'East Africa Logistics'
                 };
-                element.textContent = clientNames[clientId] || 'No Client Selected';
-            });
+                clientDisplays.forEach(element => {
+                    element.textContent = clientNames[clientId] || 'No Client Selected';
+                });
+                console.log('Updated', clientDisplays.length, 'client display elements to:', clientNames[clientId] || 'No Client Selected');
+            } else {
+                console.warn('No client display elements found');
+            }
             
-            // Update page title if applicable
+            // Update client title if applicable
             const titleElement = document.querySelector('title');
+            const clientTitleMeta = document.querySelector('meta[name="client-title"]');
+            const ogTitleMeta = document.querySelector('meta[property="og:title"]');
+            const originalTitleMeta = document.querySelector('meta[name="original-title"]');
+            
             if (titleElement && clientId) {
                 const clientNames = {
                     '1': 'ABC Manufacturing Ltd',
@@ -220,9 +236,58 @@
                     '3': 'Tanzania Mining Corp',
                     '4': 'East Africa Logistics'
                 };
-                const originalTitle = titleElement.getAttribute('data-original-title') || titleElement.textContent;
-                titleElement.setAttribute('data-original-title', originalTitle);
-                titleElement.textContent = `${clientNames[clientId]} - ${originalTitle}`;
+                const originalTitle = originalTitleMeta ? originalTitleMeta.getAttribute('content') : 'LegalHR - Tanzania HR Management System';
+                
+                const newTitle = `${clientNames[clientId]} - ${originalTitle}`;
+                
+                // Update all title-related elements immediately and forcefully
+                titleElement.textContent = newTitle;
+                if (clientTitleMeta) {
+                    clientTitleMeta.setAttribute('content', newTitle);
+                }
+                if (ogTitleMeta) {
+                    ogTitleMeta.setAttribute('content', newTitle);
+                }
+                
+                console.log('Title updated to:', newTitle);
+                
+                // Force title update in case of race conditions
+                setTimeout(() => {
+                    if (titleElement.textContent !== newTitle) {
+                        titleElement.textContent = newTitle;
+                        console.log('Forced title update to:', newTitle);
+                    }
+                }, 50);
+            }
+        }
+        
+        // Update client title (standalone function)
+        function updateClientTitle(clientId) {
+            const titleElement = document.querySelector('title');
+            const clientTitleMeta = document.querySelector('meta[name="client-title"]');
+            const ogTitleMeta = document.querySelector('meta[property="og:title"]');
+            
+            if (titleElement && clientId) {
+                const clientNames = {
+                    '1': 'ABC Manufacturing Ltd',
+                    '2': 'XYZ Construction Co',
+                    '3': 'Tanzania Mining Corp',
+                    '4': 'East Africa Logistics'
+                };
+                const originalTitle = clientTitleMeta ? clientTitleMeta.getAttribute('content').replace(/^[^ -]+ - /, '') : 'LegalHR - Tanzania HR Management System';
+                
+                const newTitle = `${clientNames[clientId]} - ${originalTitle}`;
+                
+                // Update all title-related elements
+                titleElement.textContent = newTitle;
+                if (clientTitleMeta) {
+                    clientTitleMeta.setAttribute('content', newTitle);
+                }
+                if (ogTitleMeta) {
+                    ogTitleMeta.setAttribute('content', newTitle);
+                }
+                
+                console.log('Title updated to:', newTitle);
             }
             
             // Ensure all client-related UI elements are synchronized
@@ -266,29 +331,26 @@
                 return;
             }
             
-            const savedClientId = sessionStorage.getItem('selectedClientId');
+            const savedClientId = sessionStorage.getItem('selectedClientId') || localStorage.getItem('selectedClientId') || '1';
             console.log('Page loaded - saved client ID:', savedClientId);
             
-            if (savedClientId) {
-                // Restore saved client
-                updateClientUI(savedClientId);
-                // Update all module data for saved client
-                updateAllModuleData(savedClientId);
-                console.log('Restored client:', savedClientId);
-            } else {
-                // Set default client if none saved
-                sessionStorage.setItem('selectedClientId', '1');
-                updateAllModuleData('1');
-                console.log('Set default client: 1');
-            }
+            // Restore saved client and update UI immediately
+            updateClientUI(savedClientId);
+            updateAllModuleData(savedClientId);
+            console.log('Restored client:', savedClientId);
             
             // Ensure client selector shows correct value
             const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (clientSelector) {
-                const currentClient = getCurrentClient();
-                clientSelector.value = currentClient.id;
-                console.log('Client selector set to:', currentClient.id);
+                clientSelector.value = savedClientId;
+                console.log('Client selector set to:', savedClientId);
             }
+            
+            // Update page title multiple times for persistence
+            updateClientTitle(savedClientId);
+            setTimeout(() => updateClientTitle(savedClientId), 100);
+            setTimeout(() => updateClientTitle(savedClientId), 500);
+            setTimeout(() => updateClientTitle(savedClientId), 1000);
             
             // Listen for client change events
             document.addEventListener('clientChanged', function(event) {
@@ -302,6 +364,10 @@
                     const currentClient = getCurrentClient();
                     console.log('Page became visible - current client:', currentClient.id);
                     updateClientUI(currentClient.id);
+                    // Update title multiple times when page becomes visible
+                    updateClientTitle(currentClient.id);
+                    setTimeout(() => updateClientTitle(currentClient.id), 100);
+                    setTimeout(() => updateClientTitle(currentClient.id), 500);
                 }
             });
             
@@ -310,25 +376,23 @@
                 const currentClient = getCurrentClient();
                 console.log('Page unloading - saving client:', currentClient.id);
                 sessionStorage.setItem('selectedClientId', currentClient.id);
+                localStorage.setItem('selectedClientId', currentClient.id);
             });
         });
         
         // Get current selected client
         function getCurrentClient() {
-            // Fallback chain for client ID
+            // Fallback chain for client ID - only use fallback if no saved client
             let clientId = sessionStorage.getItem('selectedClientId') || 
-                          localStorage.getItem('selectedClientId') || 
-                          '1';
+                          localStorage.getItem('selectedClientId');
             
-            // Validate client ID is one of the valid options
-            const validClients = ['1', '2', '3', '4'];
-            if (!validClients.includes(clientId)) {
-                console.warn('Invalid client ID detected, resetting to default');
-                clientId = '1';
-                sessionStorage.setItem('selectedClientId', '1');
-                localStorage.setItem('selectedClientId', '1');
+            // Only set default if no client is saved - don't override existing selection
+            if (!clientId) {
+                console.log('No client saved, using system default');
+                return { id: null, name: 'No Client Selected' };
             }
             
+            // Don't validate or reset - let the user's choice persist
             const clientNames = {
                 '1': 'ABC Manufacturing Ltd',
                 '2': 'XYZ Construction Co',
