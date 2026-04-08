@@ -3,7 +3,7 @@
 @section('title', 'Help & Support - LegalHR Tanzania')
 
 @section('content')
-<div class="max-w-7xl mx-auto p-6">
+<div class="p-6">
     <!-- Header -->
     <div class="mb-8">
         <div class="flex items-center justify-between">
@@ -32,21 +32,115 @@
                 <p class="text-indigo-100">Search for help articles, tutorials, and documentation</p>
             </div>
             <div class="relative">
-                <input type="text" placeholder="Search for help articles, tutorials, and more..." 
+                <input type="text" id="help-search" placeholder="Search for help articles, tutorials, and more..." 
                        class="w-full px-6 py-4 text-lg rounded-lg border-0 focus:outline-none focus:ring-4 focus:ring-white/30">
                 <i data-feather="search" class="w-6 h-6 text-gray-400 absolute left-4 top-4"></i>
-                <button class="absolute right-2 top-2 px-6 py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                <button onclick="searchHelp()" class="absolute right-2 top-2 px-6 py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                     Search
                 </button>
             </div>
             <div class="flex flex-wrap gap-2 mt-4 justify-center">
                 <span class="text-sm text-indigo-100">Popular searches:</span>
-                <button class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Payroll setup</button>
-                <button class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Leave management</button>
-                <button class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Employee onboarding</button>
-                <button class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Compliance reports</button>
+                <button onclick="quickSearch('Payroll setup')" class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Payroll setup</button>
+                <button onclick="quickSearch('Leave management')" class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Leave management</button>
+                <button onclick="quickSearch('Employee onboarding')" class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Employee onboarding</button>
+                <button onclick="quickSearch('Compliance reports')" class="px-3 py-1 bg-white/20 text-white rounded-full text-sm hover:bg-white/30 transition-colors">Compliance reports</button>
             </div>
         </div>
+    </div>
+
+    <!-- Support Tickets Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Tickets</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $ticketStats['total'] }}</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i data-feather="help-circle" class="w-6 h-6 text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Open Tickets</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ $ticketStats['open'] }}</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <i data-feather="clock" class="w-6 h-6 text-yellow-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">In Progress</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ $ticketStats['in_progress'] }}</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i data-feather="loader" class="w-6 h-6 text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Resolved</p>
+                    <p class="text-2xl font-bold text-green-600">{{ $ticketStats['resolved'] }}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Support Tickets -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Recent Support Tickets</h3>
+            <button onclick="showCreateTicketModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                Create Ticket
+            </button>
+        </div>
+        @if($tickets->count() > 0)
+        <div class="space-y-4">
+            @foreach($tickets as $ticket)
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="viewTicket('{{ $ticket->ticket_number }}')">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <span class="px-2 py-1 bg-{{ $ticket->getStatusColor() }}-100 text-{{ $ticket->getStatusColor() }}-800 text-xs font-semibold rounded">
+                                {{ $ticket->status }}
+                            </span>
+                            <span class="px-2 py-1 bg-{{ $ticket->getPriorityColor() }}-100 text-{{ $ticket->getPriorityColor() }}-800 text-xs font-semibold rounded">
+                                {{ $ticket->priority }}
+                            </span>
+                            <span class="text-sm text-gray-500">#{{ $ticket->ticket_number }}</span>
+                        </div>
+                        <h4 class="font-medium text-gray-900 mb-1">{{ $ticket->subject }}</h4>
+                        <p class="text-sm text-gray-600 mb-2">{{ Str::limit($ticket->description, 100) }}</p>
+                        <div class="flex items-center space-x-4 text-xs text-gray-500">
+                            <span>{{ $ticket->created_at->format('M j, Y g:i A') }}</span>
+                            <span>{{ $ticket->category }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <i data-feather="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @else
+        <div class="text-center py-8">
+            <i data-feather="inbox" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+            <p class="text-gray-600">No support tickets yet. Create your first ticket to get help!</p>
+        </div>
+        @endif
     </div>
 
     <!-- Quick Help Categories -->
@@ -353,3 +447,597 @@ function toggleFAQ(button) {
 }
 </script>
 @endsection
+
+@push('scripts')
+<script>
+// Help & Support Management System
+class HelpManager {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.initializeFeather();
+    }
+
+    setupEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('help-search');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.searchHelp();
+                }
+            });
+        }
+
+        // Live chat button
+        const liveChatBtn = document.querySelector('button:has(.feather-message-circle)');
+        if (liveChatBtn) {
+            liveChatBtn.addEventListener('click', () => this.startLiveChat());
+        }
+
+        // Call support button
+        const callSupportBtn = document.querySelector('button:has(.feather-phone)');
+        if (callSupportBtn) {
+            callSupportBtn.addEventListener('click', () => this.callSupport());
+        }
+    }
+
+    async searchHelp() {
+        const query = document.getElementById('help-search').value.trim();
+        
+        if (!query) {
+            this.showNotification('Please enter a search term', 'warning');
+            return;
+        }
+
+        try {
+            this.showLoading('Searching...');
+            
+            const response = await fetch('/help/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ q: query })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.displaySearchResults(result.articles, result.query);
+            } else {
+                this.showNotification(result.message || 'Search failed', 'error');
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            this.showNotification('An error occurred while searching', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    quickSearch(query) {
+        document.getElementById('help-search').value = query;
+        this.searchHelp();
+    }
+
+    displaySearchResults(articles, query) {
+        // Create search results modal
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Search Results</h3>
+                            <p class="text-sm text-gray-600 mt-1">Found ${articles.length} results for "${query}"</p>
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i data-feather="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    ${articles.length > 0 ? this.renderSearchResults(articles) : this.renderNoResults(query)}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        feather.replace();
+    }
+
+    renderSearchResults(articles) {
+        return `
+            <div class="space-y-4">
+                ${articles.map(article => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="helpManager.viewArticle(${article.id})">
+                        <div class="flex items-start space-x-4">
+                            <div class="p-2 bg-indigo-100 rounded-lg">
+                                <i data-feather="file-text" class="w-5 h-5 text-indigo-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900 mb-1">${article.title}</h4>
+                                <p class="text-sm text-gray-600 mb-2">${article.description}</p>
+                                <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                    <span class="px-2 py-1 bg-gray-100 rounded">${article.category}</span>
+                                    <span>${article.views} views</span>
+                                    <span>Updated ${article.last_updated}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    renderNoResults(query) {
+        return `
+            <div class="text-center py-8">
+                <i data-feather="search" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                <p class="text-gray-600 mb-4">No results found for "${query}"</p>
+                <p class="text-sm text-gray-500 mb-4">Try searching with different keywords or browse our help categories below.</p>
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Browse Help Articles
+                </button>
+            </div>
+        `;
+    }
+
+    async viewArticle(articleId) {
+        try {
+            const response = await fetch(`/help/article/${articleId}`);
+            const result = await response.json();
+
+            if (result.success) {
+                this.displayArticle(result.article);
+            } else {
+                this.showNotification('Article not found', 'error');
+            }
+        } catch (error) {
+            console.error('Article view error:', error);
+            this.showNotification('Failed to load article', 'error');
+        }
+    }
+
+    displayArticle(article) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">${article.title}</h3>
+                            <p class="text-sm text-gray-600 mt-1">${article.category} · ${article.views} views</p>
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i data-feather="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="prose max-w-none">
+                        <p>${article.content}</p>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-gray-500">Last updated: ${article.last_updated}</p>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm">
+                                    <i data-feather="thumbs-up" class="w-4 h-4 mr-1"></i>
+                                    Helpful
+                                </button>
+                                <button class="px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm">
+                                    <i data-feather="share" class="w-4 h-4 mr-1"></i>
+                                    Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        feather.replace();
+    }
+
+    showCreateTicketModal() {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-900">Create Support Ticket</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i data-feather="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <form id="create-ticket-form" class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
+                            <input type="text" name="subject" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                                <select name="category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">Select category</option>
+                                    <option value="technical">Technical Issues</option>
+                                    <option value="billing">Billing & Payments</option>
+                                    <option value="payroll">Payroll Issues</option>
+                                    <option value="compliance">Compliance Questions</option>
+                                    <option value="feature_request">Feature Request</option>
+                                    <option value="bug_report">Bug Report</option>
+                                    <option value="account">Account Issues</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
+                                <select name="priority" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">Select priority</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                            <textarea name="description" required rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Please describe your issue in detail..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Attachments (optional)</label>
+                            <input type="file" name="attachments" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1">Maximum 5 files, 2MB each</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                            Create Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        feather.replace();
+        
+        // Handle form submission
+        modal.querySelector('#create-ticket-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.createTicket(new FormData(e.target));
+        });
+    }
+
+    async createTicket(formData) {
+        try {
+            this.showLoading('Creating ticket...');
+            
+            const response = await fetch('/help/ticket', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification('Support ticket created successfully!', 'success');
+                document.querySelector('.fixed').remove(); // Close modal
+                // Refresh the page to show the new ticket
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                this.showNotification(result.message || 'Failed to create ticket', 'error');
+            }
+        } catch (error) {
+            console.error('Create ticket error:', error);
+            this.showNotification('An error occurred while creating ticket', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async viewTicket(ticketNumber) {
+        try {
+            const response = await fetch(`/help/ticket/${ticketNumber}`);
+            const result = await response.json();
+
+            if (result.success) {
+                this.displayTicket(result.ticket);
+            } else {
+                this.showNotification('Ticket not found', 'error');
+            }
+        } catch (error) {
+            console.error('Ticket view error:', error);
+            this.showNotification('Failed to load ticket', 'error');
+        }
+    }
+
+    displayTicket(ticket) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">${ticket.subject}</h3>
+                            <p class="text-sm text-gray-600 mt-1">Ticket #${ticket.ticket_number}</p>
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i data-feather="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <span class="px-2 py-1 bg-${ticket.getStatusColor()}-100 text-${ticket.getStatusColor()}-800 text-xs font-semibold rounded">
+                                ${ticket.status}
+                            </span>
+                            <span class="px-2 py-1 bg-${ticket.getPriorityColor()}-100 text-${ticket.getPriorityColor()}-800 text-xs font-semibold rounded">
+                                ${ticket.priority}
+                            </span>
+                            <span class="text-sm text-gray-500">${ticket.category}</span>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-gray-900">${ticket.description}</p>
+                        </div>
+                        <div class="border-t pt-4">
+                            <h4 class="font-semibold text-gray-900 mb-3">Responses</h4>
+                            ${ticket.responses.length > 0 ? this.renderTicketResponses(ticket.responses) : '<p class="text-gray-500">No responses yet.</p>'}
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t">
+                        <form id="add-response-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Add Response</label>
+                                <textarea name="message" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Type your response..."></textarea>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                    Add Response
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        feather.replace();
+        
+        // Handle response form submission
+        modal.querySelector('#add-response-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.addResponse(ticket.ticket_number, new FormData(e.target));
+        });
+    }
+
+    renderTicketResponses(responses) {
+        return `
+            <div class="space-y-3">
+                ${responses.map(response => `
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-900">${response.user.name}</span>
+                            <span class="text-xs text-gray-500">${response.getFormattedTime()}</span>
+                        </div>
+                        <p class="text-gray-700 text-sm">${response.message}</p>
+                        <span class="text-xs text-gray-500 mt-1">${response.getResponseType()}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async addResponse(ticketNumber, formData) {
+        try {
+            this.showLoading('Adding response...');
+            
+            const response = await fetch(`/help/ticket/${ticketNumber}/response`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification('Response added successfully!', 'success');
+                // Refresh the ticket view
+                this.viewTicket(ticketNumber);
+            } else {
+                this.showNotification(result.message || 'Failed to add response', 'error');
+            }
+        } catch (error) {
+            console.error('Add response error:', error);
+            this.showNotification('An error occurred while adding response', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    startLiveChat() {
+        this.showNotification('Live chat is coming soon! For now, please create a support ticket.', 'info');
+    }
+
+    callSupport() {
+        // Create contact modal
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-md w-full">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-900">Contact Support</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i data-feather="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <i data-feather="phone" class="w-5 h-5 text-indigo-600"></i>
+                            <div>
+                                <p class="font-medium text-gray-900">Phone Support</p>
+                                <p class="text-sm text-gray-600">+255 22 123 4567</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-feather="mail" class="w-5 h-5 text-indigo-600"></i>
+                            <div>
+                                <p class="font-medium text-gray-900">Email Support</p>
+                                <p class="text-sm text-gray-600">support@legalhr.co.tz</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-feather="message-circle" class="w-5 h-5 text-indigo-600"></i>
+                            <div>
+                                <p class="font-medium text-gray-900">WhatsApp Support</p>
+                                <p class="text-sm text-gray-600">+255 754 123 456</p>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t">
+                            <p class="text-sm text-gray-600"><strong>Office Hours:</strong> Monday - Friday, 8:00 AM - 6:00 PM EAT</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        feather.replace();
+    }
+
+    showLoading(message) {
+        const btn = document.querySelector('button:has(.feather-plus)');
+        if (btn) {
+            btn.innerHTML = `<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> ${message}`;
+            btn.disabled = true;
+            feather.replace();
+        }
+    }
+
+    hideLoading() {
+        const btn = document.querySelector('button:has(.feather-loader)');
+        if (btn) {
+            btn.innerHTML = '<i data-feather="plus" class="w-4 h-4 mr-2"></i> Create Ticket';
+            btn.disabled = false;
+            feather.replace();
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Remove existing notifications
+        document.querySelectorAll('.notification-toast').forEach(n => n.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `notification-toast fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transform transition-all duration-500 translate-x-full`;
+        
+        const styles = {
+            success: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white',
+            error: 'bg-gradient-to-r from-red-500 to-pink-600 text-white',
+            warning: 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white',
+            info: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+        };
+        
+        const icons = {
+            success: 'check-circle',
+            error: 'x-circle',
+            warning: 'alert-triangle',
+            info: 'info'
+        };
+        
+        notification.className += ' ' + styles[type] || styles.info;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    <i data-feather="${icons[type] || 'info'}" class="w-6 h-6"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold">${message}</p>
+                    <p class="text-xs opacity-75 mt-1">${new Date().toLocaleTimeString()}</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+            notification.classList.add('translate-x-0');
+        }, 100);
+        
+        // Auto remove
+        setTimeout(() => {
+            notification.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 4000);
+    }
+
+    initializeFeather() {
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+}
+
+// Global functions for onclick handlers
+let helpManager;
+
+function searchHelp() {
+    helpManager.searchHelp();
+}
+
+function quickSearch(query) {
+    helpManager.quickSearch(query);
+}
+
+function showCreateTicketModal() {
+    helpManager.showCreateTicketModal();
+}
+
+function viewTicket(ticketNumber) {
+    helpManager.viewTicket(ticketNumber);
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    helpManager = new HelpManager();
+});
+</script>
+@endpush

@@ -3,7 +3,7 @@
 @section('title', 'Settings - LegalHR Tanzania')
 
 @section('content')
-<div class="max-w-7xl mx-auto p-6">
+<div class="p-6">
     <!-- Header -->
     <div class="mb-8">
         <div class="flex items-center justify-between">
@@ -80,22 +80,22 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-                            <input type="text" value="John Doe" class="form-input">
+                            <input type="text" name="display_name" value="{{ $user->first_name }} {{ $user->last_name }}" class="form-input" data-setting-field="general">
                             <p class="text-xs text-gray-500 mt-1">This name will be displayed throughout the system</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Default Language</label>
-                            <select class="form-select">
-                                <option selected>English</option>
-                                <option>Swahili</option>
+                            <select name="language" class="form-select" data-setting-field="general">
+                                <option value="en" {{ $settings->language === 'en' ? 'selected' : '' }}>English</option>
+                                <option value="sw" {{ $settings->language === 'sw' ? 'selected' : '' }}>Swahili</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
-                            <select class="form-select">
-                                <option selected>East Africa Time (EAT) - UTC+3</option>
-                                <option>Central Africa Time (CAT) - UTC+2</option>
-                                <option>West Africa Time (WAT) - UTC+1</option>
+                            <select name="timezone" class="form-select" data-setting-field="general">
+                                <option value="Africa/Dar_es_Salaam" {{ $settings->timezone === 'Africa/Dar_es_Salaam' ? 'selected' : '' }}>East Africa Time (EAT) - UTC+3</option>
+                                <option value="Africa/Lagos" {{ $settings->timezone === 'Africa/Lagos' ? 'selected' : '' }}>Central Africa Time (CAT) - UTC+2</option>
+                                <option value="Africa/Abidjan" {{ $settings->timezone === 'Africa/Abidjan' ? 'selected' : '' }}>West Africa Time (WAT) - UTC+1</option>
                             </select>
                         </div>
                         <div>
@@ -333,11 +333,28 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Number Format</label>
-                            <select class="form-select">
-                                <option selected>1,234,567.89</option>
-                                <option>1.234.567,89</option>
-                                <option>1 234 567.89</option>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+                            <select name="date_format" class="form-select" data-setting-field="general">
+                                <option value="d/m/Y" {{ $settings->date_format === 'd/m/Y' ? 'selected' : '' }}>DD/MM/YYYY</option>
+                                <option value="m/d/Y" {{ $settings->date_format === 'm/d/Y' ? 'selected' : '' }}>MM/DD/YYYY</option>
+                                <option value="Y-m-d" {{ $settings->date_format === 'Y-m-d' ? 'selected' : '' }}>YYYY-MM-DD</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Time Format</label>
+                            <select name="time_format" class="form-select" data-setting-field="general">
+                                <option value="24" {{ $settings->time_format === '24' ? 'selected' : '' }}>24-hour</option>
+                                <option value="12" {{ $settings->time_format === '12' ? 'selected' : '' }}>12-hour</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                            <select name="currency" class="form-select" data-setting-field="general">
+                                <option value="TZS" {{ $settings->currency === 'TZS' ? 'selected' : '' }}>TZS - Tanzanian Shilling</option>
+                                <option value="USD" {{ $settings->currency === 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
+                                <option value="EUR" {{ $settings->currency === 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
                             </select>
                         </div>
 
@@ -591,5 +608,462 @@ window.addEventListener('scroll', function() {
     });
 });
 </script>
+
+@push('scripts')
+<script>
+// Settings Management System
+class SettingsManager {
+    constructor() {
+        this.settings = {};
+        this.originalSettings = {};
+        this.autoSaveTimer = null;
+        this.init();
+    }
+
+    init() {
+        this.loadSettings();
+        this.setupEventListeners();
+        this.setupAutoSave();
+        this.initializeFeather();
+    }
+
+    setupEventListeners() {
+        // Save all changes button
+        const saveBtn = document.querySelector('button:has(.feather-save)');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveAllSettings());
+        }
+
+        // Reset to default button
+        const resetBtn = document.querySelector('button:has(.feather-refresh-cw)');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetToDefault());
+        }
+
+        // Settings field changes
+        document.querySelectorAll('[data-setting-field]').forEach(field => {
+            field.addEventListener('input', () => this.markAsChanged(field));
+            field.addEventListener('change', () => this.markAsChanged(field));
+        });
+
+        // Section-specific save buttons
+        this.setupSectionSaveButtons();
+    }
+
+    setupSectionSaveButtons() {
+        const sections = ['general', 'notifications', 'privacy', 'appearance', 'security', 'data', 'integrations'];
+        
+        sections.forEach(section => {
+            const saveBtn = document.querySelector(`#${section} button:has-text("Save")`);
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => this.saveSection(section));
+            }
+        });
+    }
+
+    setupAutoSave() {
+        document.querySelectorAll('[data-setting-field]').forEach(field => {
+            field.addEventListener('input', () => {
+                clearTimeout(this.autoSaveTimer);
+                this.autoSaveTimer = setTimeout(() => this.autoSave(), 3000);
+            });
+        });
+    }
+
+    async loadSettings() {
+        try {
+            const response = await fetch('/settings/data', {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                this.settings = result.settings;
+                this.originalSettings = JSON.parse(JSON.stringify(result.settings));
+                this.populateFormFields();
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+    }
+
+    populateFormFields() {
+        // General settings
+        this.populateField('display_name', this.settings.display_name);
+        this.populateField('language', this.settings.language);
+        this.populateField('timezone', this.settings.timezone);
+        this.populateField('date_format', this.settings.date_format);
+        this.populateField('time_format', this.settings.time_format);
+        this.populateField('currency', this.settings.currency);
+
+        // Notification settings
+        this.populateCheckbox('notification_email', this.settings.notification_email);
+        this.populateCheckbox('notification_push', this.settings.notification_push);
+        this.populateCheckbox('notification_sms', this.settings.notification_sms);
+
+        // Privacy settings
+        this.populateField('privacy_profile_visibility', this.settings.privacy_profile_visibility);
+        this.populateField('privacy_activity_visibility', this.settings.privacy_activity_visibility);
+
+        // Appearance settings
+        this.populateField('theme', this.settings.theme);
+        this.populateField('dashboard_layout', this.settings.dashboard_layout);
+
+        // Security settings
+        this.populateCheckbox('two_factor_enabled', this.settings.two_factor_enabled);
+        this.populateField('session_timeout', this.settings.session_timeout);
+        this.populateCheckbox('auto_logout', this.settings.auto_logout);
+
+        // Data settings
+        this.populateField('data_export_format', this.settings.data_export_format);
+
+        // Preferences (JSON field)
+        if (this.settings.preferences) {
+            Object.keys(this.settings.preferences).forEach(key => {
+                const field = document.querySelector(`[name="${key}"]`);
+                if (field) {
+                    if (field.type === 'checkbox') {
+                        field.checked = this.settings.preferences[key];
+                    } else {
+                        field.value = this.settings.preferences[key];
+                    }
+                }
+            });
+        }
+    }
+
+    populateField(fieldName, value) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && value !== undefined) {
+            field.value = value;
+        }
+    }
+
+    populateCheckbox(fieldName, value) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && value !== undefined) {
+            field.checked = value;
+        }
+    }
+
+    async saveAllSettings() {
+        const allSettings = this.collectAllSettings();
+        
+        try {
+            this.showLoading('Saving all settings...');
+            
+            // Save each section
+            await this.saveSection('general');
+            await this.saveSection('notifications');
+            await this.saveSection('privacy');
+            await this.saveSection('appearance');
+            await this.saveSection('security');
+            await this.saveSection('data');
+            await this.saveSection('integrations');
+            
+            this.showNotification('All settings saved successfully!', 'success');
+            this.clearChangedFields();
+        } catch (error) {
+            console.error('Save settings error:', error);
+            this.showNotification('Failed to save settings', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async saveSection(section) {
+        const sectionData = this.collectSectionData(section);
+        
+        const response = await fetch(`/settings/${section}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(sectionData)
+        });
+
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to save section');
+        }
+
+        return result;
+    }
+
+    collectSectionData(section) {
+        const sectionFields = document.querySelectorAll(`#${section} [data-setting-field="${section}"]`);
+        const data = {};
+        
+        sectionFields.forEach(field => {
+            if (field.type === 'checkbox') {
+                data[field.name] = field.checked;
+            } else if (field.type === 'radio') {
+                if (field.checked) {
+                    data[field.name] = field.value;
+                }
+            } else {
+                data[field.name] = field.value;
+            }
+        });
+
+        // Collect preferences for this section
+        const preferenceFields = document.querySelectorAll(`#${section} [data-preference]`);
+        if (preferenceFields.length > 0) {
+            data.preferences = {};
+            preferenceFields.forEach(field => {
+                if (field.type === 'checkbox') {
+                    data.preferences[field.name] = field.checked;
+                } else {
+                    data.preferences[field.name] = field.value;
+                }
+            });
+        }
+
+        return data;
+    }
+
+    collectAllSettings() {
+        const allFields = document.querySelectorAll('[data-setting-field]');
+        const data = {};
+        
+        allFields.forEach(field => {
+            if (field.type === 'checkbox') {
+                data[field.name] = field.checked;
+            } else if (field.type === 'radio') {
+                if (field.checked) {
+                    data[field.name] = field.value;
+                }
+            } else {
+                data[field.name] = field.value;
+            }
+        });
+
+        return data;
+    }
+
+    async resetToDefault() {
+        if (!confirm('Are you sure you want to reset all settings to their default values? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            this.showLoading('Resetting to default...');
+            
+            const response = await fetch('/settings/reset', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification('Settings reset to default successfully!', 'success');
+                await this.loadSettings(); // Reload settings
+                this.clearChangedFields();
+            } else {
+                this.showNotification(result.message || 'Failed to reset settings', 'error');
+            }
+        } catch (error) {
+            console.error('Reset settings error:', error);
+            this.showNotification('An error occurred while resetting settings', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async exportSettings() {
+        try {
+            this.showLoading('Exporting settings...');
+            
+            const response = await fetch('/settings/export', {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Create and download JSON file
+                const dataStr = JSON.stringify(result, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = `settings-export-${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                this.showNotification('Settings exported successfully!', 'success');
+            } else {
+                this.showNotification(result.message || 'Failed to export settings', 'error');
+            }
+        } catch (error) {
+            console.error('Export settings error:', error);
+            this.showNotification('An error occurred while exporting settings', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    markAsChanged(field) {
+        field.classList.add('border-yellow-400');
+        field.classList.add('ring-2', 'ring-yellow-200');
+        
+        // Show save indicator
+        this.showSaveIndicator();
+    }
+
+    clearChangedFields() {
+        document.querySelectorAll('[data-setting-field]').forEach(field => {
+            field.classList.remove('border-yellow-400', 'ring-2', 'ring-yellow-200');
+        });
+        
+        this.hideSaveIndicator();
+    }
+
+    showSaveIndicator() {
+        let indicator = document.getElementById('save-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'save-indicator';
+            indicator.className = 'fixed bottom-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            indicator.innerHTML = '<i data-feather="alert-triangle" class="w-4 h-4 inline mr-2"></i>Unsaved changes';
+            document.body.appendChild(indicator);
+            feather.replace();
+        }
+    }
+
+    hideSaveIndicator() {
+        const indicator = document.getElementById('save-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    async autoSave() {
+        const changedFields = document.querySelectorAll('[data-setting-field].border-yellow-400');
+        if (changedFields.length === 0) return;
+
+        try {
+            // Collect data from changed fields
+            const data = {};
+            changedFields.forEach(field => {
+                if (field.type === 'checkbox') {
+                    data[field.name] = field.checked;
+                } else {
+                    data[field.name] = field.value;
+                }
+            });
+
+            // Determine section from first changed field
+            const section = changedFields[0].closest('[id^="general"], [id^="notifications"], [id^="privacy"], [id^="appearance"], [id^="security"], [id^="data"], [id^="integrations"]').id;
+            
+            if (section) {
+                const sectionName = section.replace('-', '');
+                await this.saveSection(sectionName);
+                this.showNotification('Changes auto-saved', 'info');
+            }
+        } catch (error) {
+            console.error('Auto-save error:', error);
+        }
+    }
+
+    showLoading(message) {
+        const btn = document.querySelector('button:has(.feather-save)');
+        if (btn) {
+            btn.innerHTML = `<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> ${message}`;
+            btn.disabled = true;
+            feather.replace();
+        }
+    }
+
+    hideLoading() {
+        const btn = document.querySelector('button:has(.feather-loader)');
+        if (btn) {
+            btn.innerHTML = '<i data-feather="save" class="w-4 h-4 mr-2"></i> Save All Changes';
+            btn.disabled = false;
+            feather.replace();
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Remove existing notifications
+        document.querySelectorAll('.notification-toast').forEach(n => n.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `notification-toast fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transform transition-all duration-500 translate-x-full`;
+        
+        const styles = {
+            success: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white',
+            error: 'bg-gradient-to-r from-red-500 to-pink-600 text-white',
+            warning: 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white',
+            info: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+        };
+        
+        const icons = {
+            success: 'check-circle',
+            error: 'x-circle',
+            warning: 'alert-triangle',
+            info: 'info'
+        };
+        
+        notification.className += ' ' + styles[type] || styles.info;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    <i data-feather="${icons[type] || 'info'}" class="w-6 h-6"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold">${message}</p>
+                    <p class="text-xs opacity-75 mt-1">${new Date().toLocaleTimeString()}</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+            notification.classList.add('translate-x-0');
+        }, 100);
+        
+        // Auto remove
+        setTimeout(() => {
+            notification.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 4000);
+    }
+
+    initializeFeather() {
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    window.settingsManager = new SettingsManager();
+});
+</script>
 @endpush
+
 @endsection

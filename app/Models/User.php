@@ -92,6 +92,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's settings.
+     */
+    public function settings()
+    {
+        return $this->hasOne(UserSetting::class);
+    }
+
+    /**
+     * Get the user's support tickets.
+     */
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
+    /**
      * Get users for the current client.
      */
     public static function forCurrentClient()

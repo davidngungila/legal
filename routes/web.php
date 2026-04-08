@@ -13,6 +13,9 @@ use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\HelpController;
 
 /*
 |--------------------------------------------------------------------------
@@ -341,17 +344,36 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     });
 
     // Profile and Settings
-    Route::get('/profile', function () {
-        return view('profile.index');
-    })->name('profile');
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.delete');
+    Route::get('/profile/activity', [ProfileController::class, 'activityLog'])->name('profile.activity');
+    Route::get('/profile/export', [ProfileController::class, 'export'])->name('profile.export');
 
-    Route::get('/settings', function () {
-        return view('settings.index');
-    })->name('settings');
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+    Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
+    Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
+    Route::post('/settings/privacy', [SettingsController::class, 'updatePrivacy'])->name('settings.privacy');
+    Route::post('/settings/appearance', [SettingsController::class, 'updateAppearance'])->name('settings.appearance');
+    Route::post('/settings/security', [SettingsController::class, 'updateSecurity'])->name('settings.security');
+    Route::post('/settings/data', [SettingsController::class, 'updateDataStorage'])->name('settings.data');
+    Route::post('/settings/integrations', [SettingsController::class, 'updateIntegrations'])->name('settings.integrations');
+    Route::post('/settings/reset', [SettingsController::class, 'resetToDefault'])->name('settings.reset');
+    Route::get('/settings/export', [SettingsController::class, 'export'])->name('settings.export');
+    Route::get('/settings/data', [SettingsController::class, 'getSettings'])->name('settings.data');
 
-    Route::get('/help', function () {
-        return view('help.index');
-    })->name('help');
+    Route::get('/help', [HelpController::class, 'index'])->name('help');
+    Route::post('/help/search', [HelpController::class, 'search'])->name('help.search');
+    Route::post('/help/ticket', [HelpController::class, 'createTicket'])->name('help.ticket.create');
+    Route::get('/help/tickets', [HelpController::class, 'getTickets'])->name('help.tickets');
+    Route::get('/help/ticket/{ticketNumber}', [HelpController::class, 'getTicket'])->name('help.ticket');
+    Route::post('/help/ticket/{ticketNumber}/response', [HelpController::class, 'addResponse'])->name('help.ticket.response');
+    Route::post('/help/ticket/{ticketNumber}/close', [HelpController::class, 'closeTicket'])->name('help.ticket.close');
+    Route::get('/help/article/{id}', [HelpController::class, 'getArticle'])->name('help.article');
+    Route::get('/help/stats', [HelpController::class, 'getStats'])->name('help.stats');
+    Route::get('/help/contact', [HelpController::class, 'getContactInfo'])->name('help.contact');
 });
 
 // Default route - redirect to dashboard

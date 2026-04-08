@@ -13,14 +13,23 @@ class OrganizationController extends Controller
      */
     public function setup()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         
-        if (!$currentClient) {
-            return redirect()->route('clients.index')
-                ->with('error', 'Please select a client first.');
+        if (!$clientId) {
+            // Get first available client as default
+            $firstClient = Client::orderBy('created_at', 'desc')->first();
+            if ($firstClient) {
+                session(['current_client_id' => $firstClient->id, 'current_client_name' => $firstClient->name]);
+                $clientId = $firstClient->id;
+            }
         }
 
-        $client = Client::find($currentClient['id']);
+        if (!$clientId) {
+            return redirect()->route('clients.index')
+                ->with('error', 'No clients available. Please create a client first.');
+        }
+
+        $client = Client::find($clientId);
         
         if (!$client) {
             return redirect()->route('clients.index')
@@ -35,13 +44,13 @@ class OrganizationController extends Controller
      */
     public function update(Request $request)
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         
-        if (!$currentClient) {
+        if (!$clientId) {
             return response()->json(['error' => 'Please select a client first.'], 400);
         }
 
-        $client = Client::find($currentClient['id']);
+        $client = Client::find($clientId);
         
         if (!$client) {
             return response()->json(['error' => 'Client not found.'], 404);
@@ -83,13 +92,13 @@ class OrganizationController extends Controller
      */
     public function stats()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         
-        if (!$currentClient) {
+        if (!$clientId) {
             return response()->json(['error' => 'Please select a client first.'], 400);
         }
 
-        $client = Client::find($currentClient['id']);
+        $client = Client::find($clientId);
         
         if (!$client) {
             return response()->json(['error' => 'Client not found.'], 404);
