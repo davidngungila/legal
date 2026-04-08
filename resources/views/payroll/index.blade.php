@@ -50,7 +50,7 @@
     <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-6 text-white mb-8">
         <div class="flex items-center justify-between">
             <div>
-                <h3 class="text-xl font-semibold mb-2">Payroll Compliance Status - <span id="currentClientName">ABC Manufacturing Ltd</span></h3>
+                <h3 class="text-xl font-semibold mb-2">Payroll Compliance Status - <span id="currentClientName">{{ $currentClient->name }}</span></h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     <div id="payeContainer">
                         <p class="text-green-100 text-sm">PAYE Filing</p>
@@ -1348,154 +1348,8 @@ function filterPayrollData() {
 }
 
 function generatePayslip(empId) {
-    const employee = payrollData.find(emp => emp.empId === empId);
-    if (!employee) return;
-    
-    const payslipContent = `
-        <div class="payslip-container">
-            <!-- Header -->
-            <div class="text-center mb-8 border-b-2 border-gray-800 pb-4">
-                <h1 class="text-2xl font-bold text-gray-900">SALARY SLIP</h1>
-                <p class="text-lg text-gray-600">For the Month of ${employee.monthOfPayment}</p>
-            </div>
-            
-            <!-- Employee Details -->
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">EMPLOYEES DETAILS</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Emp ID:</span>
-                        <span class="font-medium">${employee.empId}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Name:</span>
-                        <span class="font-medium">${employee.name}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Emp. Title:</span>
-                        <span class="font-medium">${employee.title}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Emp. Department:</span>
-                        <span class="font-medium">${employee.department}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Emp. Shift:</span>
-                        <span class="font-medium">${employee.shift}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Joining Date:</span>
-                        <span class="font-medium">${employee.joiningDate}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Remuneration Details -->
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">REMUNERATIONS DETAILS</h3>
-                <div class="space-y-2">
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Basic Salary:</span>
-                        <span class="font-medium">TZS ${employee.basicSalary.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">OT. Pay:</span>
-                        <span class="font-medium">TZS ${employee.otPay.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Holiday Pay:</span>
-                        <span class="font-medium">TZS ${employee.holidayPay.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-800 pt-2">
-                        <span>Gross Pay:</span>
-                        <span>TZS ${employee.grossPay.toLocaleString()}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Deductions -->
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">DEDUCTIONS</h3>
-                <div class="space-y-2">
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">PAYE:</span>
-                        <span class="font-medium">TZS ${employee.paye.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">NSSF:</span>
-                        <span class="font-medium">TZS ${employee.nssf.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">HESLB:</span>
-                        <span class="font-medium">TZS ${employee.heslb.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Other Deductions:</span>
-                        <span class="font-medium">TZS ${employee.otherDed.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-800 pt-2">
-                        <span>Total Deduction:</span>
-                        <span>TZS ${employee.totalDeduction.toLocaleString()}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Net Pay -->
-            <div class="mb-8">
-                <div class="flex justify-between py-4 font-bold text-xl border-t-2 border-gray-800 border-b-2 border-gray-800">
-                    <span>NET PAY:</span>
-                    <span class="text-green-600">TZS ${employee.netPay.toLocaleString()}</span>
-                </div>
-            </div>
-            
-            <!-- Employer Contributions -->
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">EMPLOYER CONTRIBUTIONS</h3>
-                <div class="space-y-2">
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">Employer NSSF:</span>
-                        <span class="font-medium">TZS ${employee.employerNSSF.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">SDL:</span>
-                        <span class="font-medium">TZS ${employee.sdl.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-gray-600">WCF:</span>
-                        <span class="font-medium">TZS ${employee.wcf.toLocaleString()}</span>
-                    </div>
-                    <div class="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-800 pt-2">
-                        <span>Total Cost to Company:</span>
-                        <span>TZS ${employee.totalCost.toLocaleString()}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Footer -->
-            <div class="mt-12 pt-4 border-t border-gray-300">
-                <div class="grid grid-cols-3 gap-8 text-sm text-gray-600">
-                    <div>
-                        <p class="font-semibold text-gray-900">Prepared by:</p>
-                        <p>HR Department</p>
-                        <p>${new Date().toLocaleDateString()}</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="font-semibold text-gray-900">Authorized by:</p>
-                        <p>_________________________</p>
-                        <p>Finance Manager</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-semibold text-gray-900">Employee Signature:</p>
-                        <p>_________________________</p>
-                        <p>${employee.name}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('payslipContent').innerHTML = payslipContent;
-    document.getElementById('payslipModal').classList.remove('hidden');
+    // Direct redirect to payslip page instead of showing modal
+    window.location.href = `/payroll/payslip?empId=${empId}`;
 }
 
 function closePayslipModal() {
@@ -1901,18 +1755,7 @@ function generateComprehensiveReport() {
     closeBulkModal();
 }
 
-// Update the generatePayslip function to store current employee
-const originalGeneratePayslip = generatePayslip;
-generatePayslip = function(empId) {
-    const employee = payrollData.find(emp => emp.empId === empId);
-    if (!employee) return;
-    
-    // Store current employee for view full page functionality
-    window.currentPayslipEmployee = employee;
-    
-    // Call original function
-    originalGeneratePayslip(empId);
-};
+// Generate payslip function now directly redirects to payslip page - no popup behavior
 
 // Override the global switchClient function to handle payroll data switching
 if (typeof switchClient !== 'undefined') {

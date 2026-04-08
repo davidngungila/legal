@@ -33,10 +33,10 @@ class DashboardController extends Controller
         // Get alerts for current client
         $alerts = $this->getAlerts($currentClient->id);
         
-        // Get client information
-        $client = Client::find($currentClient->id);
+        // Get client information (use currentClient directly)
+        $client = $currentClient;
 
-        return view('dashboard', compact('stats', 'recentActivities', 'alerts', 'client'));
+        return view('dashboard', compact('stats', 'recentActivities', 'alerts', 'currentClient'));
     }
 
     /**

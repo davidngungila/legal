@@ -55,6 +55,47 @@
     
     <!-- Global Functions -->
     <script>
+        // Live client data from database
+        @php
+            $liveClientData = $currentClient ? [
+                'id' => $currentClient->id,
+                'name' => $currentClient->name,
+                'email' => $currentClient->email,
+                'industry' => $currentClient->industry,
+                'employee_count' => $currentClient->employee_count,
+                'status' => $currentClient->status
+            ] : null;
+        @endphp
+        window.liveClientData = @json($liveClientData);
+
+        // All available clients from database
+        @php
+            $allClients = \App\Models\Client::orderBy('name')->get()->map(function($client) {
+                return [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'email' => $client->email,
+                    'industry' => $client->industry,
+                    'employee_count' => $client->employee_count,
+                    'status' => $client->status
+                ];
+            })->toArray();
+        @endphp
+        window.allClients = @json($allClients);
+
+        // Helper function to get client name by ID from live data
+        function getClientNameById(clientId) {
+            if (!clientId) return 'No Client Selected';
+            const client = window.allClients.find(c => c.id == clientId);
+            return client ? client.name : 'Unknown Client';
+        }
+
+        // Helper function to get client object by ID from live data
+        function getClientById(clientId) {
+            if (!clientId) return null;
+            return window.allClients.find(c => c.id == clientId);
+        }
+
         // Client switching function (available on all pages)
         function switchClient(clientId) {
             if (typeof showNotification === 'undefined') {
@@ -89,28 +130,23 @@
             
             // Trigger data refresh for components that need client-specific data
             setTimeout(() => {
-                const clientNames = {
-                    '1': 'ABC Manufacturing Ltd',
-                    '2': 'XYZ Construction Co',
-                    '3': 'Tanzania Mining Corp',
-                    '4': 'East Africa Logistics'
-                };
-                
                 // Show success notification with more details
-                showNotification(`Successfully switched to ${clientNames[clientId]}`, 'success');
+                showNotification(`Successfully switched to ${getClientNameById(clientId)}`, 'success');
                 
                 // Show additional context notification
                 setTimeout(() => {
-                    const data = companyData[clientId];
-                    showNotification(`Now viewing ${data.organization.employees} employees, ${data.organization.departments} departments`, 'info', 4000);
+                    const client = getClientById(clientId);
+                    if (client) {
+                        showNotification(`Now viewing ${client.employee_count} employees in ${client.industry} industry`, 'info', 4000);
+                    }
                 }, 1000);
                 
                 // Trigger custom event for other components to listen to
                 document.dispatchEvent(new CustomEvent('clientChanged', {
                     detail: {
                         clientId: clientId,
-                        clientName: clientNames[clientId],
-                        organization: companyData[clientId].organization
+                        clientName: getClientNameById(clientId),
+                        organization: getClientById(clientId)
                     }
                 }));
                 
@@ -209,16 +245,11 @@
             // Update any client display elements
             const clientDisplays = document.querySelectorAll('[data-client-display]');
             if (clientDisplays.length > 0) {
-                const clientNames = {
-                    '1': 'ABC Manufacturing Ltd',
-                    '2': 'XYZ Construction Co',
-                    '3': 'Tanzania Mining Corp',
-                    '4': 'East Africa Logistics'
-                };
+                const clientName = getClientNameById(clientId);
                 clientDisplays.forEach(element => {
-                    element.textContent = clientNames[clientId] || 'No Client Selected';
+                    element.textContent = clientName;
                 });
-                console.log('Updated', clientDisplays.length, 'client display elements to:', clientNames[clientId] || 'No Client Selected');
+                console.log('Updated', clientDisplays.length, 'client display elements to:', clientName);
             } else {
                 console.warn('No client display elements found');
             }
@@ -230,15 +261,10 @@
             const originalTitleMeta = document.querySelector('meta[name="original-title"]');
             
             if (titleElement && clientId) {
-                const clientNames = {
-                    '1': 'ABC Manufacturing Ltd',
-                    '2': 'XYZ Construction Co',
-                    '3': 'Tanzania Mining Corp',
-                    '4': 'East Africa Logistics'
-                };
                 const originalTitle = originalTitleMeta ? originalTitleMeta.getAttribute('content') : 'LegalHR - Tanzania HR Management System';
+                const clientName = getClientNameById(clientId);
                 
-                const newTitle = `${clientNames[clientId]} - ${originalTitle}`;
+                const newTitle = `${clientName} - ${originalTitle}`;
                 
                 // Update all title-related elements immediately and forcefully
                 titleElement.textContent = newTitle;
@@ -268,15 +294,10 @@
             const ogTitleMeta = document.querySelector('meta[property="og:title"]');
             
             if (titleElement && clientId) {
-                const clientNames = {
-                    '1': 'ABC Manufacturing Ltd',
-                    '2': 'XYZ Construction Co',
-                    '3': 'Tanzania Mining Corp',
-                    '4': 'East Africa Logistics'
-                };
                 const originalTitle = clientTitleMeta ? clientTitleMeta.getAttribute('content').replace(/^[^ -]+ - /, '') : 'LegalHR - Tanzania HR Management System';
+                const clientName = getClientNameById(clientId);
                 
-                const newTitle = `${clientNames[clientId]} - ${originalTitle}`;
+                const newTitle = `${clientName} - ${originalTitle}`;
                 
                 // Update all title-related elements
                 titleElement.textContent = newTitle;
@@ -307,15 +328,8 @@
             clientElements.forEach(selector => {
                 const elements = document.querySelectorAll(selector);
                 elements.forEach(element => {
-                    const clientNames = {
-                        '1': 'ABC Manufacturing Ltd',
-                        '2': 'XYZ Construction Co',
-                        '3': 'Tanzania Mining Corp',
-                        '4': 'East Africa Logistics'
-                    };
-                    
                     if (element.hasAttribute('data-client-display')) {
-                        element.textContent = clientNames[clientId];
+                        element.textContent = getClientNameById(clientId);
                     }
                 });
             });
@@ -331,26 +345,46 @@
                 return;
             }
             
-            const savedClientId = sessionStorage.getItem('selectedClientId') || localStorage.getItem('selectedClientId') || '1';
-            console.log('Page loaded - saved client ID:', savedClientId);
+            // Use live current client data from server, fallback to saved storage, then default to first available client
+            let savedClientId = sessionStorage.getItem('selectedClientId') || localStorage.getItem('selectedClientId');
             
-            // Restore saved client and update UI immediately
-            updateClientUI(savedClientId);
-            updateAllModuleData(savedClientId);
-            console.log('Restored client:', savedClientId);
+            // If we have live client data from server, use it as priority
+            if (window.liveClientData && window.liveClientData.id) {
+                savedClientId = window.liveClientData.id;
+                console.log('Using live client data from server:', savedClientId);
+            } else if (savedClientId) {
+                console.log('Using saved client ID from storage:', savedClientId);
+            } else if (window.allClients && window.allClients.length > 0) {
+                savedClientId = window.allClients[0].id;
+                console.log('Using first available client:', savedClientId);
+            } else {
+                savedClientId = null;
+                console.log('No client data available');
+            }
             
+            // Only restore if we have a valid client ID
+            if (savedClientId) {
+                // Restore saved client and update UI immediately
+                updateClientUI(savedClientId);
+                updateAllModuleData(savedClientId);
+                console.log('Restored client:', savedClientId);
+            }
             // Ensure client selector shows correct value
             const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
-            if (clientSelector) {
+            if (clientSelector && savedClientId) {
                 clientSelector.value = savedClientId;
                 console.log('Client selector set to:', savedClientId);
             }
             
             // Update page title multiple times for persistence
-            updateClientTitle(savedClientId);
-            setTimeout(() => updateClientTitle(savedClientId), 100);
-            setTimeout(() => updateClientTitle(savedClientId), 500);
-            setTimeout(() => updateClientTitle(savedClientId), 1000);
+            if (savedClientId) {
+                updateClientTitle(savedClientId);
+            }
+            if (savedClientId) {
+                setTimeout(() => updateClientTitle(savedClientId), 100);
+                setTimeout(() => updateClientTitle(savedClientId), 500);
+                setTimeout(() => updateClientTitle(savedClientId), 1000);
+            }
             
             // Listen for client change events
             document.addEventListener('clientChanged', function(event) {
@@ -392,17 +426,10 @@
                 return { id: null, name: 'No Client Selected' };
             }
             
-            // Don't validate or reset - let the user's choice persist
-            const clientNames = {
-                '1': 'ABC Manufacturing Ltd',
-                '2': 'XYZ Construction Co',
-                '3': 'Tanzania Mining Corp',
-                '4': 'East Africa Logistics'
-            };
-            
+            // Return live client data
             return {
                 id: clientId,
-                name: clientNames[clientId]
+                name: getClientNameById(clientId)
             };
         }
         
@@ -426,173 +453,63 @@
         // Auto-validate client state every 30 seconds
         setInterval(validateClientPersistence, 30000);
         
-        // Company-specific data structures
-        const companyData = {
-            '1': { // ABC Manufacturing Ltd
+        // Dynamic company data generation from live database
+        function getCompanyData(clientId) {
+            const client = getClientById(clientId);
+            if (!client) return null;
+            
+            // Generate dynamic data based on client information
+            const employeeCount = client.employee_count || 100;
+            const baseSalary = client.industry === 'Mining' ? 250000 : 
+                              client.industry === 'Construction' ? 150000 : 
+                              client.industry === 'Manufacturing' ? 180000 : 120000;
+            
+            return {
                 organization: {
-                    name: 'ABC Manufacturing Ltd',
-                    industry: 'Manufacturing',
-                    employees: 248,
-                    departments: 8,
-                    locations: 3,
-                    founded: '2015'
+                    name: client.name,
+                    industry: client.industry,
+                    employees: employeeCount,
+                    departments: Math.max(3, Math.floor(employeeCount / 30)),
+                    locations: Math.max(1, Math.floor(employeeCount / 50)),
+                    founded: '2015' // Default or could be added to database
                 },
                 employeeManagement: {
-                    total: 248,
-                    active: 235,
-                    onLeave: 8,
-                    probation: 5,
-                    newHires: 12,
-                    turnover: 3.2
+                    total: employeeCount,
+                    active: Math.floor(employeeCount * 0.95),
+                    onLeave: Math.floor(employeeCount * 0.03),
+                    probation: Math.floor(employeeCount * 0.02),
+                    newHires: Math.floor(employeeCount * 0.05),
+                    turnover: (Math.random() * 2 + 2).toFixed(1)
                 },
                 timeAttendance: {
-                    todayPresent: 235,
-                    todayAbsent: 8,
-                    todayLate: 5,
-                    weeklyHours: 9800,
-                    overtime: 120,
-                    attendanceRate: 94.8
+                    todayPresent: Math.floor(employeeCount * 0.95),
+                    todayAbsent: Math.floor(employeeCount * 0.03),
+                    todayLate: Math.floor(employeeCount * 0.02),
+                    weeklyHours: employeeCount * 40,
+                    overtime: Math.floor(employeeCount * 0.4),
+                    attendanceRate: (94 + Math.random() * 2).toFixed(1)
                 },
                 payroll: {
-                    monthlyPayroll: 'TZS 45.2M',
-                    lastProcessed: 'Nov 2024',
-                    pendingApprovals: 3,
-                    avgSalary: 'TZS 182K',
-                    bonusBudget: 'TZS 2.3M'
+                    monthlyPayroll: `TZS ${(employeeCount * baseSalary / 1000000).toFixed(1)}M`,
+                    lastProcessed: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                    pendingApprovals: Math.floor(Math.random() * 5) + 1,
+                    avgSalary: `TZS ${Math.floor(baseSalary / 1000)}K`,
+                    bonusBudget: `TZS ${(employeeCount * baseSalary * 0.05 / 1000000).toFixed(1)}M`
                 },
                 criticalModule: {
-                    activeCases: 7,
-                    pendingInvestigations: 2,
-                    resolvedThisMonth: 5,
-                    complianceScore: 87,
-                    riskLevel: 'Medium'
+                    activeCases: Math.floor(Math.random() * 10) + 1,
+                    pendingInvestigations: Math.floor(Math.random() * 3),
+                    resolvedThisMonth: Math.floor(Math.random() * 8) + 1,
+                    complianceScore: Math.floor(85 + Math.random() * 10),
+                    riskLevel: client.industry === 'Construction' ? 'High' : 
+                              client.industry === 'Mining' ? 'Medium' : 'Low'
                 }
-            },
-            '2': { // XYZ Construction Co
-                organization: {
-                    name: 'XYZ Construction Co',
-                    industry: 'Construction',
-                    employees: 186,
-                    departments: 6,
-                    locations: 5,
-                    founded: '2012'
-                },
-                employeeManagement: {
-                    total: 186,
-                    active: 172,
-                    onLeave: 9,
-                    probation: 5,
-                    newHires: 8,
-                    turnover: 4.1
-                },
-                timeAttendance: {
-                    todayPresent: 172,
-                    todayAbsent: 9,
-                    todayLate: 7,
-                    weeklyHours: 7200,
-                    overtime: 180,
-                    attendanceRate: 92.5
-                },
-                payroll: {
-                    monthlyPayroll: 'TZS 38.7M',
-                    lastProcessed: 'Nov 2024',
-                    pendingApprovals: 5,
-                    avgSalary: 'TZS 208K',
-                    bonusBudget: 'TZS 1.9M'
-                },
-                criticalModule: {
-                    activeCases: 12,
-                    pendingInvestigations: 4,
-                    resolvedThisMonth: 3,
-                    complianceScore: 79,
-                    riskLevel: 'High'
-                }
-            },
-            '3': { // Tanzania Mining Corp
-                organization: {
-                    name: 'Tanzania Mining Corp',
-                    industry: 'Mining',
-                    employees: 312,
-                    departments: 10,
-                    locations: 4,
-                    founded: '2008'
-                },
-                employeeManagement: {
-                    total: 312,
-                    active: 298,
-                    onLeave: 11,
-                    probation: 3,
-                    newHires: 15,
-                    turnover: 2.8
-                },
-                timeAttendance: {
-                    todayPresent: 298,
-                    todayAbsent: 11,
-                    todayLate: 3,
-                    weeklyHours: 12400,
-                    overtime: 95,
-                    attendanceRate: 95.5
-                },
-                payroll: {
-                    monthlyPayroll: 'TZS 62.1M',
-                    lastProcessed: 'Nov 2024',
-                    pendingApprovals: 2,
-                    avgSalary: 'TZS 199K',
-                    bonusBudget: 'TZS 3.1M'
-                },
-                criticalModule: {
-                    activeCases: 5,
-                    pendingInvestigations: 1,
-                    resolvedThisMonth: 8,
-                    complianceScore: 91,
-                    riskLevel: 'Low'
-                }
-            },
-            '4': { // East Africa Logistics
-                organization: {
-                    name: 'East Africa Logistics',
-                    industry: 'Logistics',
-                    employees: 156,
-                    departments: 5,
-                    locations: 8,
-                    founded: '2016'
-                },
-                employeeManagement: {
-                    total: 156,
-                    active: 148,
-                    onLeave: 6,
-                    probation: 2,
-                    newHires: 6,
-                    turnover: 3.5
-                },
-                timeAttendance: {
-                    todayPresent: 148,
-                    todayAbsent: 6,
-                    todayLate: 4,
-                    weeklyHours: 6200,
-                    overtime: 85,
-                    attendanceRate: 94.9
-                },
-                payroll: {
-                    monthlyPayroll: 'TZS 31.4M',
-                    lastProcessed: 'Nov 2024',
-                    pendingApprovals: 1,
-                    avgSalary: 'TZS 201K',
-                    bonusBudget: 'TZS 1.6M'
-                },
-                criticalModule: {
-                    activeCases: 4,
-                    pendingInvestigations: 2,
-                    resolvedThisMonth: 6,
-                    complianceScore: 85,
-                    riskLevel: 'Medium'
-                }
-            }
-        };
+            };
+        }
         
         // Update all module data when client changes
         function updateAllModuleData(clientId) {
-            const data = companyData[clientId];
+            const data = getCompanyData(clientId);
             if (!data) return;
             
             // Update Organization section
@@ -851,57 +768,46 @@
         
         // Update client-specific data throughout the application
         function updateClientData(clientId) {
-            const clients = {
-                '1': {
-                    name: 'ABC Manufacturing Ltd',
-                    employees: 248,
-                    payroll: 'TZS 45.2M',
-                    compliance: 94
-                },
-                '2': {
-                    name: 'XYZ Construction Co',
-                    employees: 156,
-                    payroll: 'TZS 28.7M',
-                    compliance: 91
-                },
-                '3': {
-                    name: 'Tanzania Mining Corp',
-                    employees: 412,
-                    payroll: 'TZS 78.9M',
-                    compliance: 88
-                },
-                '4': {
-                    name: 'East Africa Logistics',
-                    employees: 89,
-                    payroll: 'TZS 15.3M',
-                    compliance: 96
-                }
-            };
-            
-            const client = clients[clientId];
+            const client = getClientById(clientId);
             if (client) {
+                // Generate dynamic payroll data based on client info
+                const baseSalary = client.industry === 'Mining' ? 250000 : 
+                                 client.industry === 'Construction' ? 150000 : 
+                                 client.industry === 'Manufacturing' ? 180000 : 120000;
+                const monthlyPayroll = `TZS ${(client.employee_count * baseSalary / 1000000).toFixed(1)}M`;
+                const complianceScore = Math.floor(85 + Math.random() * 10);
+                
                 // Update dashboard stats
-                const employeeCount = document.querySelector('.text-2xl');
-                if (employeeCount && employeeCount.textContent.includes('248')) {
-                    employeeCount.textContent = client.employees;
-                }
+                const employeeCountElements = document.querySelectorAll('.text-2xl');
+                employeeCountElements.forEach(element => {
+                    if (element.textContent.includes('248') || element.textContent.includes('employees')) {
+                        element.textContent = client.employee_count;
+                    }
+                });
                 
                 // Update payroll amount
-                const payrollAmount = document.querySelector('.text-2xl');
-                if (payrollAmount && payrollAmount.textContent.includes('45.2M')) {
-                    payrollAmount.textContent = client.payroll;
-                }
+                const payrollAmountElements = document.querySelectorAll('.text-2xl');
+                payrollAmountElements.forEach(element => {
+                    if (element.textContent.includes('45.2M') || element.textContent.includes('TZS') && element.textContent.includes('M')) {
+                        element.textContent = monthlyPayroll;
+                    }
+                });
                 
                 // Update compliance score
-                const complianceScore = document.querySelector('.text-5xl');
-                if (complianceScore && complianceScore.textContent.includes('94')) {
-                    complianceScore.textContent = client.compliance + '%';
-                }
+                const complianceScoreElements = document.querySelectorAll('.text-5xl, .text-4xl');
+                complianceScoreElements.forEach(element => {
+                    if (element.textContent.includes('94') || element.textContent.includes('%')) {
+                        element.textContent = complianceScore + '%';
+                    }
+                });
                 
                 // Update company name in headers
-                const companyNames = document.querySelectorAll('.font-manrope');
+                const companyNames = document.querySelectorAll('.font-manrope, .company-name');
                 companyNames.forEach(element => {
-                    if (element.textContent.includes('ABC Manufacturing Ltd')) {
+                    if (element.textContent.includes('ABC Manufacturing Ltd') || 
+                        element.textContent.includes('XYZ Construction') ||
+                        element.textContent.includes('Tanzania Mining') ||
+                        element.textContent.includes('East Africa Logistics')) {
                         element.textContent = client.name;
                     }
                 });

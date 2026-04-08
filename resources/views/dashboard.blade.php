@@ -18,7 +18,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-gray-500">Current Client</p>
-                        <p class="text-sm font-semibold text-gray-900" data-client-display>{{ $client->name ?? 'No Client Selected' }}</p>
+                        <p class="text-sm font-semibold text-gray-900" data-client-display>{{ $currentClient?->name ?? 'No Client Selected' }}</p>
                     </div>
                 </div>
             </div>
@@ -84,19 +84,19 @@
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Industry:</span>
-                    <span class="text-sm font-medium">{{ $client->industry ?? 'Not specified' }}</span>
+                    <span class="text-sm font-medium">{{ $currentClient?->industry ?? 'Not specified' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Departments:</span>
-                    <span class="text-sm font-medium">{{ $client->departments_count ?? 8 }}</span>
+                    <span class="text-sm font-medium">{{ $currentClient?->departments_count ?? 8 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Locations:</span>
-                    <span class="text-sm font-medium">{{ $client->locations_count ?? 3 }}</span>
+                    <span class="text-sm font-medium">{{ $currentClient?->locations_count ?? 3 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Founded:</span>
-                    <span class="text-sm font-medium">{{ $client->founded_year ?? '2015' }}</span>
+                    <span class="text-sm font-medium">{{ $currentClient?->founded_year ?? '2015' }}</span>
                 </div>
             </div>
         </div>
@@ -464,13 +464,8 @@ if (typeof window.switchClient !== 'function') {
         modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
         modalOverlay.id = 'clientSwitchModal';
         
-        const clients = {
-            '1': 'ABC Manufacturing Ltd',
-            '2': 'XYZ Construction Co',
-            '3': 'Tanzania Mining Corp',
-            '4': 'East Africa Logistics'
-        };
-        const clientName = clients[clientId] || 'Unknown Client';
+        // Use live client data from window.allClients
+        const clientName = getClientNameById ? getClientNameById(clientId) : 'Unknown Client';
         
         modalOverlay.innerHTML = `
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
