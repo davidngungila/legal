@@ -40,7 +40,7 @@ class ClientSwitchController extends Controller
         
         if (!$clientId) {
             // Get first available client as default
-            $firstClient = Client::orderBy('created_at', 'desc')->first();
+            $firstClient = $this->getFirstAvailableClient();
             if ($firstClient) {
                 Session::put('current_client_id', $firstClient->id);
                 Session::put('current_client_name', $firstClient->name);
@@ -50,16 +50,47 @@ class ClientSwitchController extends Controller
 
         if ($clientId) {
             $client = Client::find($clientId);
-            return response()->json([
-                'success' => true,
-                'client' => $client
-            ]);
+            if (!$client) {
+                // Client no longer exists, get a new default
+                $firstClient = $this->getFirstAvailableClient();
+                if ($firstClient) {
+                    Session::put('current_client_id', $firstClient->id);
+                    Session::put('current_client_name', $firstClient->name);
+                    $client = $firstClient;
+                }
+            }
+            
+            if ($client) {
+                return response()->json([
+                    'success' => true,
+                    'client' => $client
+                ]);
+            }
         }
 
         return response()->json([
             'success' => false,
             'message' => 'No clients available'
         ]);
+    }
+    
+    /**
+     * Get the first available client for the current user
+     */
+    private function getFirstAvailableClient()
+    {
+        // If user is authenticated, try to get their first assigned client
+        if (auth()->check()) {
+            $user = auth()->user();
+            $firstClient = $user->clients()->first();
+            
+            if ($firstClient) {
+                return $firstClient;
+            }
+        }
+        
+        // Fallback to any available client
+        return Client::orderBy('created_at', 'desc')->first();
     }
 
     /**

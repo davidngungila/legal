@@ -49,7 +49,7 @@ Route::middleware(['guest', 'web'])->group(function () {
 Route::middleware(['web'])->post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes (require authentication)
-Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class])->group(function () {
+Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, \App\Http\Middleware\SetCurrentClient::class, \App\Http\Middleware\FilterByCurrentClient::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

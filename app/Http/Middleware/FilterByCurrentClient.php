@@ -19,17 +19,18 @@ class FilterByCurrentClient
     {
         $clientId = Session::get('current_client_id');
         
-        if ($clientId) {
-            // Add global scope to filter models by current client
-            // This will be applied to models that use the BelongsToCurrentClient trait
-            app()->singleton('current_client_id', function () use ($clientId) {
-                return $clientId;
-            });
-        } else {
-            // Ensure the singleton exists even if no client is set
-            app()->singleton('current_client_id', function () {
-                return null;
-            });
+        // Always set the singleton to prevent errors in models
+        app()->singleton('current_client_id', function () use ($clientId) {
+            return $clientId;
+        });
+        
+        // If no client is available, add a flash message to inform the user
+        if (!$clientId && auth()->check()) {
+            // Only add the message once to avoid repetition
+            if (!session()->has('client_missing_warning')) {
+                session()->flash('warning', 'No client context available. Please select a client from the dropdown.');
+                session()->flash('client_missing_warning', true);
+            }
         }
 
         return $next($request);
