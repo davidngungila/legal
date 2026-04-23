@@ -14,34 +14,34 @@
         
         <div class="text-center z-10">
             <!-- Logo Section -->
-            <div class="mb-8">
-                <div class="w-36 h-36 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-40 h-40 object-contain">
+            <div class="mb-6 md:mb-8">
+                <div class="w-28 h-28 md:w-36 md:h-36 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-2xl">
+                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-20 h-20 md:w-40 md:h-40 object-contain">
                 </div>
             </div>
             
             <!-- System Info -->
-            <div class="mb-8">
-                <h1 class="text-4xl font-bold mb-2">Orvion</h1>
-                <p class="text-xl opacity-90">HR Management System</p>
+            <div class="mb-6 md:mb-8">
+                <h1 class="text-2xl md:text-4xl font-bold mb-2">Orvion</h1>
+                <p class="text-lg md:text-xl opacity-90">HR Management System</p>
             </div>
             
-            <div class="space-y-4 text-lg">
-                <div class="flex items-center justify-center space-x-3">
-                    <i data-feather="check-circle" class="w-5 h-5"></i>
-                    <span>Complete HR Management</span>
+            <div class="space-y-3 md:space-y-4 text-base md:text-lg">
+                <div class="flex items-center justify-center space-x-2 md:space-x-3">
+                    <i data-feather="check-circle" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    <span class="text-sm md:text-base">Complete HR Management</span>
                 </div>
-                <div class="flex items-center justify-center space-x-3">
-                    <i data-feather="shield" class="w-5 h-5"></i>
-                    <span>Labor Compliant</span>
+                <div class="flex items-center justify-center space-x-2 md:space-x-3">
+                    <i data-feather="shield" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    <span class="text-sm md:text-base">Labor Compliant</span>
                 </div>
-                <div class="flex items-center justify-center space-x-3">
-                    <i data-feather="users" class="w-5 h-5"></i>
-                    <span>Employee Self Service</span>
+                <div class="flex items-center justify-center space-x-2 md:space-x-3">
+                    <i data-feather="users" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    <span class="text-sm md:text-base">Employee Self Service</span>
                 </div>
-                <div class="flex items-center justify-center space-x-3">
-                    <i data-feather="bar-chart-2" class="w-5 h-5"></i>
-                    <span>Advanced Analytics</span>
+                <div class="flex items-center justify-center space-x-2 md:space-x-3">
+                    <i data-feather="bar-chart-2" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    <span class="text-sm md:text-base">Advanced Analytics</span>
                 </div>
             </div>
         </div>
@@ -50,9 +50,17 @@
     <!-- Right Side - Login Form -->
     <div class="login-right">
         <div class="login-form">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                <p class="text-gray-600">Sign in to your LegalHR account</p>
+            <!-- Mobile Logo Section (shown only on small phones) -->
+            <div class="mobile-logo">
+                <div class="mobile-logo-container">
+                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo">
+                </div>
+                <h1>Orvion</h1>
+            </div>
+            
+            <div class="text-center mb-6 md:mb-8">
+                <h2 class="text-xl md:text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                <p class="text-sm md:text-base text-gray-600">Sign in to your LegalHR account</p>
             </div>
             
             @if(session('error'))

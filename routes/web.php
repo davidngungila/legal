@@ -16,6 +16,8 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ContractController;
 
 /*
 |--------------------------------------------------------------------------
@@ -374,6 +376,34 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/help/article/{id}', [HelpController::class, 'getArticle'])->name('help.article');
     Route::get('/help/stats', [HelpController::class, 'getStats'])->name('help.stats');
     Route::get('/help/contact', [HelpController::class, 'getContactInfo'])->name('help.contact');
+
+    // Employee Management Routes
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
+    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+    Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+    Route::post('/employees/{employee}/generate-contract', [EmployeeController::class, 'generateContract'])->name('employees.generate.contract');
+    Route::get('/employees/export', [EmployeeController::class, 'export'])->name('employees.export');
+    Route::get('/employees/search', [EmployeeController::class, 'search'])->name('employees.search');
+    Route::get('/employees/statistics', [EmployeeController::class, 'statistics'])->name('employees.statistics');
+
+    // Contract Management Routes
+    Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
+    Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
+    Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
+    Route::get('/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
+    Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
+    Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
+    Route::delete('/contracts/{contract}', [ContractController::class, 'destroy'])->name('contracts.destroy');
+    Route::post('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
+    Route::post('/contracts/{contract}/terminate', [ContractController::class, 'terminate'])->name('contracts.terminate');
+    Route::post('/contracts/{contract}/renew', [ContractController::class, 'renew'])->name('contracts.renew');
+    Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
+    Route::get('/contracts/expiring', [ContractController::class, 'expiringSoon'])->name('contracts.expiring');
+    Route::get('/contracts/statistics', [ContractController::class, 'statistics'])->name('contracts.statistics');
 });
 
 // Default route - redirect to dashboard

@@ -14,14 +14,13 @@ trait BelongsToCurrentClient
     {
         static::addGlobalScope('current_client', function (Builder $builder) {
             try {
-                $clientId = app('current_client_id');
+                $clientId = session('current_client_id');
                 
                 if ($clientId && method_exists(static::class, 'filterByClient')) {
                     static::filterByClient($builder, $clientId);
                 }
             } catch (\Exception $e) {
-                // If the singleton doesn't exist, skip filtering
-                // This can happen during authentication or when no client is set
+                // Fail silently - this prevents errors during testing or when client is not set
             }
         });
     }

@@ -31,6 +31,8 @@
         .login-container {
             display: flex;
             height: 100vh;
+            min-height: 100vh;
+            position: relative;
         }
         
         .login-left {
@@ -41,9 +43,10 @@
             justify-content: center;
             align-items: center;
             color: white;
-            padding: 3rem;
+            padding: 2rem;
             position: relative;
             overflow: hidden;
+            min-height: 100vh;
         }
         
         .login-left::before {
@@ -62,13 +65,148 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 3rem;
+            padding: 2rem;
             background: #f8fafc;
+            min-height: 100vh;
         }
         
         .login-form {
             width: 100%;
             max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .login-left {
+                flex: none;
+                padding: 1.5rem;
+                min-height: 40vh;
+                position: relative;
+            }
+            
+            .login-right {
+                flex: none;
+                padding: 1.5rem;
+                min-height: 60vh;
+            }
+            
+            .login-form {
+                max-width: 100%;
+                padding: 0 1rem;
+            }
+        }
+        
+        /* Small Mobile Styles */
+        @media (max-width: 480px) {
+            .login-container {
+                flex-direction: column;
+                height: 100vh;
+                min-height: 100vh;
+            }
+            
+            .login-left {
+                display: none; /* Hide branding section on small phones */
+            }
+            
+            .login-right {
+                flex: 1;
+                padding: 1rem;
+                min-height: 100vh;
+                background: #f8fafc;
+            }
+            
+            .login-form {
+                padding: 0 0.5rem;
+                max-width: 100%;
+            }
+            
+            /* Add mobile logo */
+            .mobile-logo {
+                display: block;
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            
+            .mobile-logo-container {
+                width: 4rem;
+                height: 4rem;
+                background: white;
+                border-radius: 0.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 0.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            
+            .mobile-logo img {
+                width: 3.5rem;
+                height: 3.5rem;
+                object-fit: contain;
+            }
+            
+            .mobile-logo h1 {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #040344;
+                margin-top: 0.5rem;
+            }
+            
+            .text-3xl {
+                font-size: 1.75rem !important;
+                line-height: 1.2 !important;
+            }
+            
+            .text-xl {
+                font-size: 1rem !important;
+            }
+            
+            .space-y-6 > * + * {
+                margin-top: 1rem !important;
+            }
+        }
+        
+        /* Show mobile logo only on small screens */
+        .mobile-logo {
+            display: none;
+        }
+        
+        /* Tablet Styles */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .login-left {
+                padding: 2rem;
+            }
+            
+            .login-right {
+                padding: 2rem;
+            }
+        }
+        
+        /* Large Desktop Styles */
+        @media (min-width: 1025px) {
+            .login-container {
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            
+            .login-left {
+                padding: 3rem;
+            }
+            
+            .login-right {
+                padding: 3rem;
+            }
+            
+            .login-form {
+                max-width: 450px;
+            }
         }
         
         .form-input {

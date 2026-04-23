@@ -81,11 +81,11 @@ class Attendance extends Model
     }
 
     /**
-     * Get attendances for the current client.
+     * Get attendance records for current client.
      */
     public static function forCurrentClient()
     {
-        $clientId = app('current_client_id');
+        $clientId = session('current_client_id');
         if (!$clientId) {
             return static::query();
         }

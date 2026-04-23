@@ -17,12 +17,23 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $currentClient = view()->shared('currentClient');
+        // Get current client directly from session to ensure synchronization
+        $clientId = session('current_client_id');
         
-        if (!$currentClient) {
+        if (!$clientId) {
             return redirect()->route('clients.index')
                 ->with('error', 'Please select a client first.');
         }
+        
+        $currentClient = Client::find($clientId);
+        
+        if (!$currentClient) {
+            return redirect()->route('clients.index')
+                ->with('error', 'Selected client not found.');
+        }
+        
+        // Share with views to ensure consistency
+        view()->share('currentClient', $currentClient);
 
         // Get statistics for current client
         $stats = $this->getClientStats($currentClient->id);

@@ -29,7 +29,7 @@ class SetCurrentClient
             }
         }
 
-        // Share current client with all views
+        // Share current client with all views - always refresh from session to ensure consistency
         $clientId = Session::get('current_client_id');
         if ($clientId) {
             $currentClient = Client::find($clientId);

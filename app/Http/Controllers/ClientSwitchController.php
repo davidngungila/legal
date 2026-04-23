@@ -23,6 +23,9 @@ class ClientSwitchController extends Controller
         // Store the current client in session
         Session::put('current_client_id', $clientId);
         Session::put('current_client_name', $client->name);
+        
+        // Also share with views immediately for this request
+        view()->share('currentClient', $client);
 
         return response()->json([
             'success' => true,

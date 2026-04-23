@@ -112,14 +112,11 @@ class User extends Authenticatable
      */
     public static function forCurrentClient()
     {
-        $clientId = app('current_client_id');
+        $clientId = session('current_client_id');
         if (!$clientId) {
             return static::query();
         }
 
-        return static::whereHas('clients', function ($query) use ($clientId) {
-            $query->where('clients.id', $clientId)
-                  ->where('client_user.is_active', true);
-        });
+        return static::where('client_id', $clientId);
     }
 }

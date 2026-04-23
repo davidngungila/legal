@@ -108,11 +108,11 @@ class SelfService extends Model
     }
 
     /**
-     * Get self-service requests for the current client.
+     * Get self-service requests for current client.
      */
     public static function forCurrentClient()
     {
-        $clientId = app('current_client_id');
+        $clientId = session('current_client_id');
         if (!$clientId) {
             return static::query();
         }

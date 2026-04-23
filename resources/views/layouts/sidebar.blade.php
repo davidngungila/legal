@@ -1,3 +1,4 @@
+
 <!-- Sidebar -->
 <aside id="sidebar" class="w-64 bg-gradient-to-b from-[#040344] to-[#040344] text-white flex-shrink-0 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full fixed lg:relative h-full z-30 flex flex-col">
     <!-- Logo Section -->
@@ -296,9 +297,12 @@ async function switchClient(clientId) {
             currentClientId = clientId;
             showNotification(data.message, 'success');
             
-            // Reload the page to refresh data for the new client
+            // Clear any cached data and reload the page to refresh data for the new client
             setTimeout(() => {
-                window.location.reload();
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.clear();
+                }
+                window.location.href = window.location.href;
             }, 1000);
         } else {
             showNotification('Failed to switch client', 'error');

@@ -128,47 +128,14 @@
             // Update all module data for the new client
             updateAllModuleData(clientId);
             
-            // Trigger data refresh for components that need client-specific data
+            // Force page reload after client switch to ensure server-side updates
             setTimeout(() => {
-                // Show success notification with more details
-                showNotification(`Successfully switched to ${getClientNameById(clientId)}`, 'success');
-                
-                // Show additional context notification
-                setTimeout(() => {
-                    const client = getClientById(clientId);
-                    if (client) {
-                        showNotification(`Now viewing ${client.employee_count} employees in ${client.industry} industry`, 'info', 4000);
-                    }
-                }, 1000);
-                
-                // Trigger custom event for other components to listen to
-                document.dispatchEvent(new CustomEvent('clientChanged', {
-                    detail: {
-                        clientId: clientId,
-                        clientName: getClientNameById(clientId),
-                        organization: getClientById(clientId)
-                    }
-                }));
-                
-                // Reload data if there are data tables on the page
-                if (typeof loadEmployees === 'function') {
-                    loadEmployees();
+                // Clear any cached data and reload the page
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.clear();
                 }
-                if (typeof loadPermissions === 'function') {
-                    loadPermissions();
-                }
-                if (typeof filterEmployees === 'function') {
-                    filterEmployees();
-                }
-                
-                // Remove loading state and transitions
-                setTimeout(() => {
-                    showClientSwitchingLoader(false);
-                    document.body.classList.remove('client-switching');
-                    
-                    // Add completion animation
-                    addClientSwitchCompletionEffect();
-                }, 800);
+                // Reload the page to ensure all server-side data is updated
+                window.location.href = window.location.href;
             }, 500);
         }
         

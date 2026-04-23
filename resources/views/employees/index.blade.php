@@ -34,7 +34,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Total Employees</p>
-                    <p class="text-2xl font-bold text-gray-900">248</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['total'] ?? 0 }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
@@ -46,7 +46,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Active</p>
-                    <p class="text-2xl font-bold text-gray-900">235</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['active'] ?? 0 }}</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
@@ -58,7 +58,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">On Leave</p>
-                    <p class="text-2xl font-bold text-gray-900">8</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['on_leave'] ?? 0 }}</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                     <i data-feather="calendar" class="w-6 h-6 text-yellow-600"></i>
@@ -70,7 +70,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Probation</p>
-                    <p class="text-2xl font-bold text-gray-900">5</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['probation'] ?? 0 }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <i data-feather="clock" class="w-6 h-6 text-purple-600"></i>
@@ -143,7 +143,81 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <!-- Employee rows will be dynamically inserted here by JavaScript -->
+                    @forelse($employees as $employee)
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                        <span class="text-indigo-600 font-medium">{{ substr($employee->first_name, 0, 1) }}{{ substr($employee->last_name, 0, 1) }}</span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ $employee->full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ $employee->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $employee->employee_id }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $employee->department }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $employee->position }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ $employee->employment_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $employee->hire_date ? $employee->hire_date->format('M d, Y') : 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @php
+                                $statusColor = match($employee->status) {
+                                    'active' => 'green',
+                                    'on_leave' => 'yellow',
+                                    'suspended' => 'red',
+                                    'terminated' => 'gray',
+                                    'probation' => 'blue',
+                                    default => 'gray'
+                                };
+                            @endphp
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                {{ ucfirst($employee->status) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('employees.show', $employee->id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                    <i data-feather="eye" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{{ route('employees.edit', $employee->id) }}" class="text-blue-600 hover:text-blue-900">
+                                    <i data-feather="edit-2" class="w-4 h-4"></i>
+                                </a>
+                                <button onclick="generateContract({{ $employee->id }})" class="text-green-600 hover:text-green-900" title="Generate Contract">
+                                    <i data-feather="file-text" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteEmployee({{ $employee->id }})" class="text-red-600 hover:text-red-900">
+                                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i data-feather="users" class="w-12 h-12 text-gray-400 mb-2"></i>
+                                <p class="text-lg font-medium">No employees found</p>
+                                <p class="text-sm">Get started by adding your first employee</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -151,44 +225,17 @@
         <!-- Pagination -->
         <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
             <div class="flex-1 flex justify-between sm:hidden">
-                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    Previous
-                </button>
-                <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    Next
-                </button>
+                {{ $employees->links() }}
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm text-gray-700">
-                        Showing <span class="font-medium">1</span> to <span class="font-medium">5</span> of
-                        <span class="font-medium">248</span> results
+                        Showing <span class="font-medium">{{ $employees->firstItem() }}</span> to <span class="font-medium">{{ $employees->lastItem() }}</span> of
+                        <span class="font-medium">{{ $employees->total() }}</span> results
                     </p>
                 </div>
                 <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <i data-feather="chevron-left" class="w-4 h-4"></i>
-                        </button>
-                        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-50 text-sm font-medium text-indigo-600">
-                            1
-                        </button>
-                        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            2
-                        </button>
-                        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            3
-                        </button>
-                        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            ...
-                        </button>
-                        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            50
-                        </button>
-                        <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <i data-feather="chevron-right" class="w-4 h-4"></i>
-                        </button>
-                    </nav>
+                    {{ $employees->links() }}
                 </div>
             </div>
         </div>
@@ -197,280 +244,183 @@
 
 @push('scripts')
 <script>
-// Sample employee data with all fields and client assignments
-const employees = [
-    {
-        name: 'John Doe',
-        email: 'john.doe@company.com',
-        id: 'EMP001',
-        department: 'IT',
-        position: 'Senior Developer',
-        type: 'Permanent',
-        start_date: '2022-01-15',
-        status: 'active',
-        clientId: '1' // ABC Manufacturing Ltd
-    },
-    {
-        name: 'Jane Smith',
-        email: 'jane.smith@company.com',
-        id: 'EMP002',
-        department: 'HR',
-        position: 'HR Manager',
-        type: 'Permanent',
-        start_date: '2021-03-20',
-        status: 'active',
-        clientId: '1' // ABC Manufacturing Ltd
-    },
-    {
-        name: 'Michael Johnson',
-        email: 'michael.j@company.com',
-        id: 'EMP003',
-        department: 'Finance',
-        position: 'Accountant',
-        type: 'Contract',
-        start_date: '2022-06-10',
-        status: 'active',
-        clientId: '2' // XYZ Construction Co
-    },
-    {
-        name: 'Sarah Williams',
-        email: 'sarah.w@company.com',
-        id: 'EMP004',
-        department: 'Operations',
-        position: 'Operations Manager',
-        type: 'Permanent',
-        start_date: '2020-11-05',
-        status: 'on_leave',
-        clientId: '2' // XYZ Construction Co
-    },
-    {
-        name: 'David Brown',
-        email: 'david.b@company.com',
-        id: 'EMP005',
-        department: 'Sales',
-        position: 'Sales Executive',
-        type: 'Probation',
-        start_date: '2023-01-10',
-        status: 'active',
-        clientId: '3' // Tanzania Mining Corp
-    },
-    {
-        name: 'Emily Chen',
-        email: 'emily.chen@company.com',
-        id: 'EMP006',
-        department: 'IT',
-        position: 'Software Engineer',
-        type: 'Permanent',
-        start_date: '2022-08-15',
-        status: 'active',
-        clientId: '3' // Tanzania Mining Corp
-    },
-    {
-        name: 'Robert Wilson',
-        email: 'robert.w@company.com',
-        id: 'EMP007',
-        department: 'Operations',
-        position: 'Logistics Manager',
-        type: 'Permanent',
-        start_date: '2021-12-01',
-        status: 'active',
-        clientId: '4' // East Africa Logistics
-    },
-    {
-        name: 'Lisa Anderson',
-        email: 'lisa.a@company.com',
-        id: 'EMP008',
-        department: 'Finance',
-        position: 'Finance Director',
-        type: 'Permanent',
-        start_date: '2020-05-20',
-        status: 'active',
-        clientId: '4' // East Africa Logistics
-    }
-];
-
-let filteredEmployees = [];
-
-// Initialize filters
+// Initialize Feather icons
 document.addEventListener('DOMContentLoaded', function() {
-    // Listen for client changes
-    document.addEventListener('clientChanged', function(event) {
-        console.log('Client changed, reloading employees for:', event.detail.clientId);
-        loadEmployees();
-    });
-    
-    // Add event listeners to all filter inputs using IDs
-    const searchInput = document.getElementById('employeeSearch');
-    const departmentSelect = document.getElementById('departmentFilter');
-    const employmentTypeSelect = document.getElementById('employmentTypeFilter');
-    const statusSelect = document.getElementById('statusFilter');
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', filterEmployees);
-    }
-    
-    if (departmentSelect) {
-        departmentSelect.addEventListener('change', filterEmployees);
-    }
-    
-    if (employmentTypeSelect) {
-        employmentTypeSelect.addEventListener('change', filterEmployees);
-    }
-    
-    if (statusSelect) {
-        statusSelect.addEventListener('change', filterEmployees);
-    }
-    
-    // Initial render
-    loadEmployees();
+    feather.replace();
 });
 
-function loadEmployees() {
-    // Get current client
-    const currentClient = getCurrentClient();
-    
-    // Filter employees by current client
-    filteredEmployees = employees.filter(employee => employee.clientId === currentClient.id);
-    
-    // Apply existing filters
-    filterEmployees();
+// Function to generate contract for employee
+function generateContract(employeeId) {
+    if (confirm('Are you sure you want to generate a contract for this employee?')) {
+        fetch(`/employees/${employeeId}/generate-contract`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Contract generated successfully!');
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating the contract.');
+        });
+    }
 }
 
+// Function to delete employee
+function deleteEmployee(employeeId) {
+    if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/employees/${employeeId}`;
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        const methodField = document.createElement('input');
+        methodField.type = 'hidden';
+        methodField.name = '_method';
+        methodField.value = 'DELETE';
+        
+        form.appendChild(csrfToken);
+        form.appendChild(methodField);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Function to export employees
+function exportEmployees() {
+    window.open('/employees/export', '_blank');
+}
+
+// Function to search employees
+function searchEmployees() {
+    const searchValue = document.getElementById('employeeSearch').value;
+    const url = new URL(window.location);
+    
+    if (searchValue) {
+        url.searchParams.set('search', searchValue);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    window.location.href = url.toString();
+}
+
+// Function to filter employees
 function filterEmployees() {
-    // Use getElementById for reliable selection
-    const searchInput = document.getElementById('employeeSearch');
-    const departmentSelect = document.getElementById('departmentFilter');
-    const employmentTypeSelect = document.getElementById('employmentTypeFilter');
-    const statusSelect = document.getElementById('statusFilter');
+    const department = document.getElementById('departmentFilter').value;
+    const employmentType = document.getElementById('employmentTypeFilter').value;
+    const status = document.getElementById('statusFilter').value;
     
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-    const selectedDepartment = departmentSelect ? departmentSelect.value : '';
-    const selectedEmploymentType = employmentTypeSelect ? employmentTypeSelect.value : '';
-    const selectedStatus = statusSelect ? statusSelect.value : '';
+    const url = new URL(window.location);
     
-    // Get current client and filter by client first
-    const currentClient = getCurrentClient();
-    let clientFilteredEmployees = employees.filter(employee => employee.clientId === currentClient.id);
+    if (department) url.searchParams.set('department', department);
+    else url.searchParams.delete('department');
     
-    console.log('Filter values:', { searchTerm, selectedDepartment, selectedEmploymentType, selectedStatus, currentClient: currentClient.id });
+    if (employmentType) url.searchParams.set('employment_type', employmentType);
+    else url.searchParams.delete('employment_type');
     
-    filteredEmployees = clientFilteredEmployees.filter(employee => {
-        const matchesSearch = !searchTerm || 
-            employee.name.toLowerCase().includes(searchTerm) ||
-            employee.email.toLowerCase().includes(searchTerm) ||
-            employee.id.toLowerCase().includes(searchTerm) ||
-            employee.position.toLowerCase().includes(searchTerm);
-        
-        const matchesDepartment = !selectedDepartment || employee.department === selectedDepartment;
-        const matchesEmploymentType = !selectedEmploymentType || employee.type === selectedEmploymentType;
-        const matchesStatus = !selectedStatus || 
-            (selectedStatus === 'Active' && employee.status === 'active') ||
-            (selectedStatus === 'On Leave' && employee.status === 'on_leave') ||
-            (selectedStatus === 'Suspended' && employee.status === 'suspended') ||
-            (selectedStatus === 'Terminated' && employee.status === 'terminated');
-        
-        return matchesSearch && matchesDepartment && matchesEmploymentType && matchesStatus;
-    });
+    if (status) url.searchParams.set('status', status);
+    else url.searchParams.delete('status');
     
-    console.log('Filtered employees:', filteredEmployees.length);
-    renderEmployees();
+    window.location.href = url.toString();
 }
 
-function renderEmployees() {
-    const tbody = document.querySelector('tbody');
-    if (!tbody) return;
+// Event listeners for search and filters
+document.getElementById('employeeSearch')?.addEventListener('input', function(e) {
+    if (e.target.value === '') {
+        searchEmployees();
+    }
+});
+
+document.getElementById('employeeSearch')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchEmployees();
+    }
+});
+
+document.getElementById('departmentFilter')?.addEventListener('change', filterEmployees);
+document.getElementById('employmentTypeFilter')?.addEventListener('change', filterEmployees);
+document.getElementById('statusFilter')?.addEventListener('change', filterEmployees);
+
+// Export button functionality
+document.querySelector('button:has(.fa-download)')?.addEventListener('click', exportEmployees);
+
+// Add Employee button functionality
+document.querySelector('button:has(.fa-user-plus)')?.addEventListener('click', function() {
+    window.location.href = '/employees/create';
+});
+
+// Function to show employee details modal
+function showEmployeeModal(employeeId) {
+    fetch(`/employees/${employeeId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            // Create and show modal with employee details
+            console.log('Employee details:', data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// Function to refresh employee list
+function refreshEmployeeList() {
+    window.location.reload();
+}
+
+// Function to add bulk operations
+function selectAllEmployees() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="employee_ids[]"]');
+    const selectAllCheckbox = document.querySelector('input[type="checkbox"][name="select_all"]');
     
-    tbody.innerHTML = '';
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+// Function to handle bulk actions
+function performBulkAction(action) {
+    const selectedEmployees = Array.from(document.querySelectorAll('input[type="checkbox"][name="employee_ids[]"]:checked'))
+        .map(checkbox => checkbox.value);
     
-    if (filteredEmployees.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
-                    <div class="flex flex-col items-center">
-                        <i data-feather="users" class="w-12 h-12 text-gray-300 mb-3"></i>
-                        <p class="text-lg font-medium">No employees found</p>
-                        <p class="text-sm">Try adjusting your search criteria</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        feather.replace();
+    if (selectedEmployees.length === 0) {
+        alert('Please select at least one employee.');
         return;
     }
     
-    filteredEmployees.forEach(employee => {
-        const statusBadge = getStatusBadge(employee.status);
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50';
-        row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                    <div class="h-10 w-10 flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span class="text-sm font-medium text-gray-600">${employee.name.split(' ').map(n => n[0]).join('')}</span>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">${employee.name}</div>
-                        <div class="text-sm text-gray-500">${employee.email}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${employee.id}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${employee.department}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${employee.position}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${employee.type}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(employee.start_date)}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div class="flex space-x-2">
-                    <button class="text-indigo-600 hover:text-indigo-900" title="View">
-                        <i data-feather="eye" class="w-4 h-4"></i>
-                    </button>
-                    <button class="text-blue-600 hover:text-blue-900" title="Edit">
-                        <i data-feather="edit-2" class="w-4 h-4"></i>
-                    </button>
-                    <button class="text-green-600 hover:text-green-900" title="Documents">
-                        <i data-feather="file-text" class="w-4 h-4"></i>
-                    </button>
-                    <button class="text-purple-600 hover:text-purple-900" title="Performance">
-                        <i data-feather="trending-up" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    // Re-initialize feather icons
-    feather.replace();
-    
-    // Update pagination info
-    updatePaginationInfo();
+    // Implement bulk action functionality
+    console.log(`Bulk ${action} for employees:`, selectedEmployees);
 }
 
-function getStatusBadge(status) {
-    const badges = {
-        'active': '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>',
-        'on_leave': '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">On Leave</span>',
-        'suspended': '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>',
-        'terminated': '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Terminated</span>'
-    };
-    return badges[status] || badges['active'];
+// Function to show statistics
+function showStatistics() {
+    fetch('/employees/statistics')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Employee statistics:', data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function updatePaginationInfo() {
-    const paginationInfo = document.querySelector('p.text-sm.text-gray-700');
-    if (paginationInfo) {
-        const showingCount = Math.min(filteredEmployees.length, 5);
-        paginationInfo.innerHTML = `Showing <span class="font-medium">1</span> to <span class="font-medium">${showingCount}</span> of <span class="font-medium">${filteredEmployees.length}</span> results`;
-    }
-}
+// Initialize tooltips and other UI elements
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Employee management system initialized');
+});
 </script>
 @endpush
 @endsection
