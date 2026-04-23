@@ -330,17 +330,53 @@
         @endphp
         window.allClients = @json($allClients);
 
-        // Helper function to get client name by ID from live data
+        // Helper function to get client name by ID
         function getClientNameById(clientId) {
             if (!clientId) return 'No Client Selected';
-            const client = window.allClients.find(c => c.id == clientId);
-            return client ? client.name : 'Unknown Client';
+            
+            // First try to find in allClients array
+            if (window.allClients && window.allClients.length > 0) {
+                const client = window.allClients.find(c => c.id == clientId);
+                if (client) return client.name;
+            }
+            
+            // Then try to find in liveClientData
+            if (window.liveClientData && window.liveClientData.id == clientId) {
+                return window.liveClientData.name;
+            }
+            
+            // Try to get from current client
+            const currentClient = getCurrentClient();
+            if (currentClient && currentClient.id == clientId) {
+                return currentClient.name;
+            }
+            
+            // Return default instead of Unknown Client
+            return 'LegalHR - Tanzania HR Management System';
         }
 
         // Helper function to get client object by ID from live data
         function getClientById(clientId) {
             if (!clientId) return null;
-            return window.allClients.find(c => c.id == clientId);
+            
+            // First try to find in allClients array
+            if (window.allClients && window.allClients.length > 0) {
+                const client = window.allClients.find(c => c.id == clientId);
+                if (client) return client;
+            }
+            
+            // Then try to find in liveClientData
+            if (window.liveClientData && window.liveClientData.id == clientId) {
+                return window.liveClientData;
+            }
+            
+            // Try to get from current client
+            const currentClient = getCurrentClient();
+            if (currentClient && currentClient.id == clientId) {
+                return currentClient;
+            }
+            
+            return null;
         }
 
         // Client switching function (available on all pages)
@@ -507,26 +543,44 @@
             const clientTitleMeta = document.querySelector('meta[name="client-title"]');
             const ogTitleMeta = document.querySelector('meta[property="og:title"]');
             
-            if (titleElement && clientId) {
-                const originalTitle = clientTitleMeta ? clientTitleMeta.getAttribute('content').replace(/^[^ -]+ - /, '') : 'LegalHR - Tanzania HR Management System';
-                const clientName = getClientNameById(clientId);
+            if (titleElement) {
+                let clientName = '';
                 
-                const newTitle = `${clientName} - ${originalTitle}`;
+                // Try to get client from live data
+                if (clientId && window.liveClientData && window.liveClientData.id == clientId) {
+                    clientName = window.liveClientData.name;
+                } else {
+                    // Fallback to getCurrentClient
+                    const currentClient = getCurrentClient();
+                    clientName = currentClient.name;
+                }
                 
-                // Update all title-related elements
+                // Ensure we never show Unknown Client - use getClientNameById instead
+                if (clientId && (!clientName || clientName === 'Unknown Client')) {
+                    clientName = getClientNameById(clientId);
+                }
+                
+                // Final fallback to prevent Unknown Client
+                if (!clientName || clientName === 'Unknown Client' || clientName === 'No Client Selected') {
+                    clientName = 'LegalHR - Tanzania HR Management System';
+                }
+                
+                // Always update title with available client name
+                const newTitle = clientName && clientName !== 'LegalHR - Tanzania HR Management System' 
+                    ? `${clientName} - LegalHR Tanzania`
+                    : 'LegalHR - Tanzania HR Management System';
+                
                 titleElement.textContent = newTitle;
+                
                 if (clientTitleMeta) {
-                    clientTitleMeta.setAttribute('content', newTitle);
+                    clientTitleMeta.content = newTitle;
                 }
                 if (ogTitleMeta) {
-                    ogTitleMeta.setAttribute('content', newTitle);
+                    ogTitleMeta.content = newTitle;
                 }
                 
                 console.log('Title updated to:', newTitle);
             }
-            
-            // Ensure all client-related UI elements are synchronized
-            synchronizeClientElements(clientId);
         }
         
         // Synchronize all client-related elements across the page
@@ -632,22 +686,60 @@
             });
         });
         
+        // Initialize client title on page load
+        function initializeClientTitle() {
+            const currentClient = getCurrentClient();
+            console.log('Initializing client title for:', currentClient.name);
+            
+            // Update title immediately
+            updateClientTitle(currentClient.id);
+            
+            // Also update after a short delay to ensure all elements are loaded
+            setTimeout(() => updateClientTitle(currentClient.id), 100);
+            setTimeout(() => updateClientTitle(currentClient.id), 500);
+            
+            // Store current client info for persistence
+            sessionStorage.setItem('selectedClientId', currentClient.id);
+            localStorage.setItem('selectedClientId', currentClient.id);
+        }
+        
         // Get current selected client
         function getCurrentClient() {
-            // Fallback chain for client ID - only use fallback if no saved client
+            // Enhanced fallback chain for client ID
             let clientId = sessionStorage.getItem('selectedClientId') || 
                           localStorage.getItem('selectedClientId');
             
-            // Only set default if no client is saved - don't override existing selection
-            if (!clientId) {
-                console.log('No client saved, using system default');
-                return { id: null, name: 'No Client Selected' };
+            // Try to get from URL parameters (for direct links)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlClientId = urlParams.get('client_id');
+            if (urlClientId) {
+                clientId = urlClientId;
+                // Save to both storage methods
+                sessionStorage.setItem('selectedClientId', clientId);
+                localStorage.setItem('selectedClientId', clientId);
             }
             
-            // Return live client data
+            // If still no client ID, use live data if available
+            if (!clientId && window.liveClientData) {
+                clientId = window.liveClientData.id;
+                // Save to both storage methods
+                sessionStorage.setItem('selectedClientId', clientId);
+                localStorage.setItem('selectedClientId', clientId);
+            }
+            
+            // Find client in live data
+            if (clientId && window.liveClientData && window.liveClientData.id == clientId) {
+                return window.liveClientData;
+            }
+            
+            // Return default client if no specific client found
             return {
-                id: clientId,
-                name: getClientNameById(clientId)
+                id: clientId || 'default',
+                name: 'LegalHR - Tanzania HR Management System',
+                email: '',
+                industry: 'HR Management',
+                employee_count: 0,
+                status: 'active'
             };
         }
         

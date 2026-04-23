@@ -204,6 +204,35 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update user settings.
+     */
+    public function updateSettings(Request $request)
+    {
+        $user = Auth::user();
+        $settings = $user->settings ?? UserSetting::createForUser($user->id);
+
+        $validated = $request->validate([
+            'theme' => ['required', 'string', 'in:light,dark,auto'],
+            'language' => ['required', 'string', 'in:en,sw'],
+            'timezone' => ['required', 'string'],
+            'notification_email' => ['boolean'],
+            'notification_push' => ['boolean'],
+            'notification_sms' => ['boolean'],
+            'two_factor_enabled' => ['boolean'],
+            'auto_logout' => ['boolean'],
+            'session_timeout' => ['integer', 'min:5', 'max:480'],
+        ]);
+
+        $settings->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Settings updated successfully!',
+            'settings' => $settings
+        ]);
+    }
+
+    /**
      * Export user profile data.
      */
     public function export()

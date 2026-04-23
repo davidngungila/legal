@@ -356,6 +356,7 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo');
     Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.delete');
+    Route::post('/profile/settings', [ProfileController::class, 'updateSettings'])->name('profile.settings');
     Route::get('/profile/activity', [ProfileController::class, 'activityLog'])->name('profile.activity');
     Route::get('/profile/export', [ProfileController::class, 'export'])->name('profile.export');
 
