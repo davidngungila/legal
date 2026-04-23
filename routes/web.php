@@ -18,6 +18,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\PayrollController;
 
 /*
 |--------------------------------------------------------------------------
@@ -123,12 +124,16 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
     // Payroll Routes
     Route::prefix('payroll')->group(function () {
-        Route::get('/', function () {
-            return view('payroll.index');
-        })->name('payroll.index');
+        Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('/upload', [PayrollController::class, 'showUploadForm'])->name('payroll.upload');
+        Route::post('/upload', [PayrollController::class, 'uploadCsv'])->name('payroll.upload.csv');
+        Route::get('/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
         Route::get('/payslip', function () {
             return view('payroll.payslip');
         })->name('payroll.payslip');
+        Route::get('/{id}', [PayrollController::class, 'show'])->name('payroll.show');
+        Route::put('/{id}/status', [PayrollController::class, 'updateStatus'])->name('payroll.update.status');
+        Route::delete('/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
     });
 
     Route::prefix('compensation')->group(function () {

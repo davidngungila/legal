@@ -9,8 +9,195 @@
     <meta property="og:title" content="@yield('title', 'LegalHR - Tanzania HR Management System')">
     <meta name="original-title" content="LegalHR - Tanzania HR Management System">
     
-    <!-- Custom CSS for client switching animations -->
+    <!-- Custom CSS for page transition animations -->
     <style>
+        /* Page transition animations */
+        .page-transition-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .page-transition-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .page-transition-exit {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .page-transition-exit-active {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Fade animations for content */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .fade-in-down {
+            animation: fadeInDown 0.6s ease-out;
+        }
+        
+        .slide-in-left {
+            animation: slideInLeft 0.5s ease-out;
+        }
+        
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from { 
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from { 
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Link hover transitions */
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #040344, #4f46e5);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        /* Card hover animations */
+        .hover-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .hover-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Button transitions */
+        .btn-transition {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-transition::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-transition:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Loading overlay for page transitions */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .page-loader.active {
+            display: flex;
+        }
+        
+        .page-loader-content {
+            text-align: center;
+        }
+        
+        .page-loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #040344;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Client switching animations */
         .client-switching {
             pointer-events: none;
         }
@@ -39,6 +226,66 @@
         
         .loader-backdrop {
             backdrop-filter: blur(2px);
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Main content area transitions */
+        .main-content {
+            transition: all 0.3s ease;
+        }
+        
+        /* Sidebar transitions */
+        .sidebar-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Form input transitions */
+        .form-input-transition {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input-transition:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(4, 3, 68, 0.15);
+        }
+        
+        /* Modal transitions */
+        .modal-backdrop {
+            transition: all 0.3s ease;
+        }
+        
+        .modal-content {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Table row hover transitions */
+        .table-row-hover {
+            transition: all 0.2s ease;
+        }
+        
+        .table-row-hover:hover {
+            background-color: #f9fafb;
+            transform: translateX(4px);
+        }
+        
+        /* Notification animations */
+        .notification-slide {
+            animation: notificationSlide 0.4s ease-out;
+        }
+        
+        @keyframes notificationSlide {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
     </style>
     
@@ -304,8 +551,12 @@
             console.log('Client elements synchronized for:', clientId);
         }
         
-        // Initialize client selection on page load
+        // Initialize page transitions and client selection on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize page transition system
+            if (document.getElementById('main-content')) {
+                window.pageTransitions = new PageTransitions();
+            }
             // Debug: Check if sessionStorage is available
             if (typeof Storage === 'undefined') {
                 console.error('SessionStorage not available - client persistence may not work');
@@ -716,8 +967,10 @@
                 @include('layouts.header')
                 
                 <!-- Main Content -->
-                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-                    @yield('content')
+                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 main-content fade-in" id="main-content">
+                    <div class="page-transition-content">
+                        @yield('content')
+                    </div>
                     
                     <!-- Footer inside scrollable content -->
                     @include('layouts.footer')
@@ -732,6 +985,162 @@
     <script>
         // Initialize Feather Icons
         feather.replace();
+        
+        // Page transition system
+        class PageTransitions {
+            constructor() {
+                this.mainContent = document.getElementById('main-content');
+                this.pageLoader = null;
+                this.init();
+            }
+            
+            init() {
+                this.createPageLoader();
+                this.setupNavigationListeners();
+                this.setupFormSubmissions();
+                this.addInitialAnimations();
+            }
+            
+            createPageLoader() {
+                this.pageLoader = document.createElement('div');
+                this.pageLoader.className = 'page-loader';
+                this.pageLoader.innerHTML = `
+                    <div class="page-loader-content">
+                        <div class="page-loader-spinner"></div>
+                        <p class="text-gray-600">Loading...</p>
+                    </div>
+                `;
+                document.body.appendChild(this.pageLoader);
+            }
+            
+            showLoader() {
+                if (this.pageLoader) {
+                    this.pageLoader.classList.add('active');
+                }
+            }
+            
+            hideLoader() {
+                if (this.pageLoader) {
+                    this.pageLoader.classList.remove('active');
+                }
+            }
+            
+            setupNavigationListeners() {
+                // Handle all navigation links
+                document.addEventListener('click', (e) => {
+                    const link = e.target.closest('a');
+                    if (link && link.href && !link.href.includes('#') && 
+                        !link.href.includes('javascript:') && 
+                        !link.href.includes('mailto:') && 
+                        !link.target && 
+                        !link.hasAttribute('data-no-transition')) {
+                        
+                        e.preventDefault();
+                        this.navigateToPage(link.href);
+                    }
+                });
+                
+                // Handle sidebar navigation
+                const sidebarLinks = document.querySelectorAll('.sidebar a');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        if (link.href && !link.href.includes('#')) {
+                            e.preventDefault();
+                            this.navigateToPage(link.href);
+                        }
+                    });
+                });
+            }
+            
+            setupFormSubmissions() {
+                // Handle form submissions with loading states
+                const forms = document.querySelectorAll('form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', (e) => {
+                        if (!form.hasAttribute('data-no-transition')) {
+                            this.showLoader();
+                        }
+                    });
+                });
+            }
+            
+            async navigateToPage(url) {
+                this.showLoader();
+                
+                // Add exit animation
+                if (this.mainContent) {
+                    this.mainContent.classList.add('page-transition-exit-active');
+                }
+                
+                // Navigate after animation
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 300);
+            }
+            
+            addInitialAnimations() {
+                // Add entrance animations to page elements
+                const animatedElements = document.querySelectorAll('.hover-card, .btn-transition, .nav-link');
+                animatedElements.forEach((element, index) => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        element.style.transition = 'all 0.5s ease';
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, 100 + (index * 50));
+                });
+                
+                // Add hover effects to cards
+                const cards = document.querySelectorAll('.bg-white.rounded-lg, .bg-white.rounded-xl');
+                cards.forEach(card => {
+                    card.classList.add('hover-card');
+                });
+                
+                // Add button transitions
+                const buttons = document.querySelectorAll('button, .btn');
+                buttons.forEach(button => {
+                    button.classList.add('btn-transition');
+                });
+                
+                // Add form input transitions
+                const inputs = document.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    input.classList.add('form-input-transition');
+                });
+                
+                // Add table row hover effects
+                const tableRows = document.querySelectorAll('tbody tr');
+                tableRows.forEach(row => {
+                    row.classList.add('table-row-hover');
+                });
+            }
+        }
+        
+        // Notification system with animations
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.createElement('div');
+            notification.className = `notification-slide fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">&times;</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'notificationSlide 0.4s ease-out reverse';
+                setTimeout(() => notification.remove(), 400);
+            }, duration);
+        }
         
         // Update client-specific data throughout the application
         function updateClientData(clientId) {

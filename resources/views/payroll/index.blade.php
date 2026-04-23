@@ -39,10 +39,10 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Report
             </button>
-            <button onclick="showImportModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                <i data-feather="upload" class="w-4 h-4 inline mr-2"></i>
-                Import Payroll
-            </button>
+            <a href="{{ route('payroll.upload') }}" class="btn-transition px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 inline-flex items-center">
+                <i data-feather="upload" class="w-4 h-4 mr-2"></i>
+                Upload CSV
+            </a>
         </div>
     </div>
 

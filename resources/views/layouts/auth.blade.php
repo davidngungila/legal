@@ -77,34 +77,9 @@
         }
         
         /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
-            .login-container {
-                flex-direction: column;
-                height: auto;
-                min-height: 100vh;
-            }
-            
-            .login-left {
-                flex: none;
-                padding: 1.5rem;
-                min-height: 40vh;
-                position: relative;
-            }
-            
-            .login-right {
-                flex: none;
-                padding: 1.5rem;
-                min-height: 60vh;
-            }
-            
-            .login-form {
-                max-width: 100%;
-                padding: 0 1rem;
-            }
-        }
         
         /* Small Mobile Styles */
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
             .login-container {
                 flex-direction: column;
                 height: 100vh;
@@ -112,7 +87,7 @@
             }
             
             .login-left {
-                display: none; /* Hide branding section on small phones */
+                display: none; /* Hide branding section on mobile phones */
             }
             
             .login-right {
@@ -287,6 +262,110 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-20px); }
         }
+        
+        /* Auth page transitions */
+        .auth-page-transition {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: authPageEnter 0.8s ease-out forwards;
+        }
+        
+        @keyframes authPageEnter {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Form input transitions */
+        .auth-form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .auth-form-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(4, 3, 68, 0.15);
+        }
+        
+        /* Button transitions for auth */
+        .auth-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .auth-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Link transitions */
+        .auth-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #040344;
+            transition: width 0.3s ease;
+        }
+        
+        .auth-link:hover::after {
+            width: 100%;
+        }
+        
+        /* Logo transitions */
+        .mobile-logo {
+            transition: all 0.5s ease;
+        }
+        
+        .mobile-logo img {
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-logo:hover img {
+            transform: scale(1.1);
+        }
+        
+        /* Form container transitions */
+        .login-form {
+            transition: all 0.3s ease;
+        }
+        
+        /* Error/success message transitions */
+        .auth-message {
+            animation: messageSlide 0.4s ease-out;
+        }
+        
+        @keyframes messageSlide {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -295,6 +374,50 @@
     <script>
         // Initialize Feather Icons
         feather.replace();
+        
+        // Auth page transitions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add page transition class to login container
+            const loginContainer = document.querySelector('.login-container');
+            if (loginContainer) {
+                loginContainer.classList.add('auth-page-transition');
+            }
+            
+            // Add transition classes to form elements
+            const formInputs = document.querySelectorAll('.form-input');
+            formInputs.forEach(input => {
+                input.classList.add('auth-form-input');
+            });
+            
+            const buttons = document.querySelectorAll('.btn-primary');
+            buttons.forEach(button => {
+                button.classList.add('auth-btn');
+            });
+            
+            const links = document.querySelectorAll('a:not(.mobile-logo a)');
+            links.forEach(link => {
+                link.classList.add('auth-link');
+            });
+            
+            // Add transition to messages
+            const messages = document.querySelectorAll('.bg-red-100, .bg-green-100');
+            messages.forEach(message => {
+                message.classList.add('auth-message');
+            });
+            
+            // Add entrance animations to form elements
+            const formElements = document.querySelectorAll('.login-form > *');
+            formElements.forEach((element, index) => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    element.style.transition = 'all 0.5s ease';
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, 100 + (index * 100));
+            });
+        });
     </script>
 </body>
 </html>
