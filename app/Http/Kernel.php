@@ -54,15 +54,17 @@ class Kernel extends HttpKernel
      */
     protected $middlewareAliases = [
         'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
-        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
-        'can' => \Illuminate\Auth\Middleware\Authorize::class,
+        'auth.basic' => \App\Http\Middleware\AuthenticateWithBasicAuth::class,
+        'auth.session' => \App\Http\Middleware\AuthenticateSession::class,
+        'cache.headers' => \App\Http\Middleware\SetCacheHeaders::class,
+        'can' => \App\Http\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+        'password.confirm' => \App\Http\Middleware\RequirePassword::class,
         'signed' => \App\Http\Middleware\ValidateSignature::class,
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'throttle' => \App\Http\Middleware\ThrottleRequests::class,
+        'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         'share.user' => \App\Http\Middleware\ShareCurrentUser::class,
+        'set.client' => \App\Http\Middleware\SetCurrentClient::class,
+        'filter.client' => \App\Http\Middleware\FilterByCurrentClient::class,
     ];
 }

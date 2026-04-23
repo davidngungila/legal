@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employees', function (Blueprint $table) {
+        // Skip creating employees table if it already exists
+        if (!Schema::hasTable('employees')) {
+            Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->string('employee_id')->unique(); // Employee number like EMP001
@@ -47,7 +49,8 @@ return new class extends Migration
             $table->index(['client_id', 'position']);
             $table->index(['email']);
             $table->index(['employee_id']);
-        });
+            });
+        }
     }
 
     /**
