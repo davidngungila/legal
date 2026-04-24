@@ -19,6 +19,7 @@ use App\Http\Controllers\HelpController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\ComplianceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -158,9 +159,10 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
     // Compliance Routes
     Route::prefix('compliance')->group(function () {
-        Route::get('/', function () {
-            return view('compliance.index');
-        })->name('compliance.index');
+        Route::get('/', [ComplianceController::class, 'index'])->name('compliance.index');
+        Route::post('/audit', [ComplianceController::class, 'runAudit'])->name('compliance.audit');
+        Route::get('/reports', [ComplianceController::class, 'getReports'])->name('compliance.reports');
+        Route::get('/download', [ComplianceController::class, 'downloadReport'])->name('compliance.download');
     });
 
     // Training Routes

@@ -483,6 +483,331 @@
 
 @push('scripts')
 <script>
+// Compliance Management System
+class ComplianceManager {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.loadComplianceData();
+    }
+
+    setupEventListeners() {
+        // Run Audit button - find by text content
+        const auditBtn = Array.from(document.querySelectorAll('button')).find(btn => 
+            btn.textContent.includes('Run Audit')
+        );
+        if (auditBtn) {
+            auditBtn.addEventListener('click', () => this.runComplianceAudit());
+        }
+
+        // Download Reports button - find by text content
+        const downloadBtn = Array.from(document.querySelectorAll('button')).find(btn => 
+            btn.textContent.includes('Download Reports')
+        );
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => this.downloadReports());
+        }
+
+        // View Report buttons - find by text content
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.textContent.includes('View Report')) {
+                btn.addEventListener('click', (e) => this.viewReport(btn));
+            }
+        });
+    }
+
+    async loadComplianceData() {
+        try {
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                console.error('CSRF token not found');
+                return;
+            }
+            
+            const response = await fetch('/compliance/reports', {
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken.content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            console.log('Load data response status:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Compliance data loaded:', data);
+                this.updateComplianceUI(data);
+            } else {
+                console.error('Failed to load compliance data:', response.status);
+            }
+        } catch (error) {
+            console.error('Error loading compliance data:', error);
+        }
+    }
+
+    async runComplianceAudit() {
+        try {
+            this.showLoading('Running compliance audit...');
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                throw new Error('CSRF token not found');
+            }
+            
+            const response = await fetch('/compliance/audit', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken.content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            console.log('Audit response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Audit result:', result);
+
+            if (result.success) {
+                this.showNotification('Compliance audit completed successfully!', 'success');
+                this.displayAuditResults(result.results);
+            } else {
+                this.showNotification(result.error || 'Failed to run audit', 'error');
+            }
+        } catch (error) {
+            console.error('Audit error:', error);
+            this.showNotification(`Audit error: ${error.message}`, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async downloadReports() {
+        try {
+            this.showLoading('Generating reports...');
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                throw new Error('CSRF token not found');
+            }
+            
+            const response = await fetch('/compliance/download', {
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken.content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            console.log('Download response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Download result:', result);
+
+            if (result.success) {
+                this.showNotification('Reports downloaded successfully!', 'success');
+                // Create a sample report for download
+                const reportData = {
+                    title: 'Compliance Report',
+                    date: new Date().toLocaleDateString(),
+                    overall_score: 94,
+                    risk_level: 'LOW',
+                    areas: [
+                        { name: 'Labour Law Compliance', score: 95 },
+                        { name: 'Tax Compliance', score: 92 },
+                        { name: 'Social Security', score: 88 },
+                        { name: 'Health & Safety', score: 96 }
+                    ]
+                };
+                this.downloadFile(reportData, 'compliance-report.json');
+            } else {
+                this.showNotification(result.error || 'Failed to download reports', 'error');
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            this.showNotification(`Download error: ${error.message}`, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    viewReport(button) {
+        // Create report modal with blur backdrop
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 modal-backdrop-blur z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Compliance Report Details</h2>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-900 mb-2">Executive Summary</h3>
+                        <p class="text-gray-600">Overall compliance score: 94% - Excellent standing with minimal risk exposure.</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-900 mb-2">Key Findings</h3>
+                        <ul class="text-gray-600 space-y-1">
+                            <li>• Labour law compliance: 95% - Fully compliant</li>
+                            <li>• Tax compliance: 92% - Minor improvements needed</li>
+                            <li>• Social security: 88% - Review required</li>
+                            <li>• Health & safety: 96% - Exceeds standards</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-900 mb-2">Recommendations</h3>
+                        <ul class="text-gray-600 space-y-1">
+                            <li>• Improve social security documentation</li>
+                            <li>• Schedule quarterly compliance reviews</li>
+                            <li>• Update employee training records</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="window.print()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                        <i data-feather="printer" class="w-4 h-4 mr-2"></i>Print
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    displayAuditResults(results) {
+        // Create audit results modal
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 modal-backdrop-blur z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Audit Results</h2>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                        <h3 class="font-semibold text-green-900 mb-2">Overall Score: ${results.overall_score}%</h3>
+                        <p class="text-green-700">Risk Level: ${results.risk_level}</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-3">Areas Assessed</h3>
+                        <div class="space-y-2">
+                            ${results.areas_assessed.map(area => `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <span class="font-medium">${area.name}</span>
+                                    <span class="text-sm font-medium ${area.score >= 90 ? 'text-green-600' : 'text-yellow-600'}">${area.score}%</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    updateComplianceUI(data) {
+        // Update compliance scores and data in the UI
+        // This would update the dashboard with real data
+        console.log('Compliance data loaded:', data);
+    }
+
+    downloadFile(data, filename) {
+        // Simulate file download
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
+    showLoading(message = 'Loading...') {
+        const existing = document.querySelector('.compliance-loading');
+        if (existing) existing.remove();
+        
+        const loading = document.createElement('div');
+        loading.className = 'compliance-loading fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-50';
+        loading.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <div class="animate-spin">
+                    <i data-feather="loader" class="w-5 h-5 text-indigo-600"></i>
+                </div>
+                <span class="text-gray-700">${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(loading);
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    hideLoading() {
+        const loading = document.querySelector('.compliance-loading');
+        if (loading) loading.remove();
+    }
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+            'bg-blue-500 text-white'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+}
+
+// Initialize compliance manager
+document.addEventListener('DOMContentLoaded', function() {
+    window.complianceManager = new ComplianceManager();
+});
+
 // Fallback switchClient function if main app.js is not loaded
 if (typeof switchClient === 'undefined') {
     function switchClient(clientId) {

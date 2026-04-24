@@ -40,7 +40,7 @@
                     </div>
                     
                     <!-- Photo Preview Modal -->
-                    <div id="photo-preview-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+                    <div id="photo-preview-modal" class="fixed inset-0 modal-backdrop-blur z-50 hidden flex items-center justify-center p-4">
                         <div class="bg-white rounded-xl max-w-lg w-full p-6">
                             <h3 class="text-xl font-bold text-gray-900 mb-4">Preview Photo</h3>
                             <div class="mb-4">
@@ -702,8 +702,14 @@ class ProfileManager {
         fileSize.textContent = this.formatFileSize(file.size);
         fileType.textContent = file.type;
 
+        // Show modal with blur backdrop
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        
+        // Add body blur for enhanced effect
+        if (window.modalBlurSystem) {
+            window.modalBlurSystem.addBlurBackdrop();
+        }
 
         // Store the file for upload
         this.currentPhotoFile = file;
@@ -713,6 +719,11 @@ class ProfileManager {
         const modal = document.getElementById('photo-preview-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        
+        // Remove blur backdrop
+        if (window.modalBlurSystem) {
+            window.modalBlurSystem.removeBlurBackdrop();
+        }
         
         // Clear file input
         document.getElementById('photo-upload').value = '';
@@ -754,10 +765,21 @@ class ProfileManager {
             if (result.success) {
                 this.showNotification('Profile photo updated successfully!', 'success');
                 this.updatePhotoDisplay(result.photo_url);
-                this.cancelPhotoUpload();
+                
+                // Close modal and remove blur
+                const modal = document.getElementById('photo-preview-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                if (window.modalBlurSystem) {
+                    window.modalBlurSystem.removeBlurBackdrop();
+                }
                 
                 // Update the user's photo in the UI immediately
                 this.updateUserPhotoInUI(result.photo_url);
+                
+                // Clear file input
+                document.getElementById('photo-upload').value = '';
+                this.currentPhotoFile = null;
             } else {
                 this.showNotification(result.message || 'Failed to update photo', 'error');
             }

@@ -1358,7 +1358,7 @@ class OrganizationSetup {
         
         // Create preview modal
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 modal-backdrop-blur z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
             <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6 border-b border-gray-200">

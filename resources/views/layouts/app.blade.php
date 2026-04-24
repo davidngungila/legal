@@ -161,6 +161,136 @@
         }
         
         /* Loading overlay for page transitions */
+        .page-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+        }
+
+        /* Modal blur effects */
+        .modal-backdrop-blur {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-backdrop-blur-light {
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-backdrop-blur-strong {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Universal modal overlay with blur */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.fade-in {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.fade-out {
+            animation: modalFadeOut 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+                -webkit-backdrop-filter: blur(0px);
+            }
+            to {
+                opacity: 1;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+        }
+
+        @keyframes modalFadeOut {
+            from {
+                opacity: 1;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            to {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+                -webkit-backdrop-filter: blur(0px);
+            }
+        }
+
+        /* Modal content animations */
+        .modal-content {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-content.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Body blur when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        body.modal-open > *:not(.modal-overlay):not(.modal-overlay *) {
+            filter: blur(2px);
+            -webkit-filter: blur(2px);
+            transition: filter 0.3s ease;
+        }
+
+        /* Automatically convert all modal backdrops to blur */
+        .fixed.inset-0.bg-black.bg-opacity-50,
+        .fixed.inset-0.bg-black.bg-opacity-40,
+        .fixed.inset-0.bg-black.bg-opacity-60 {
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            background: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Enhanced backdrop for all modals */
+        .fixed.inset-0.z-50 {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .fixed.inset-0.z-50.bg-black {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Page loader */
         .page-loader {
             position: fixed;
             top: 0;
@@ -605,6 +735,152 @@
             console.log('Client elements synchronized for:', clientId);
         }
         
+        // Universal Modal Blur System
+        class ModalBlurSystem {
+            constructor() {
+                this.activeModals = new Set();
+                this.modalCount = 0;
+            }
+
+            // Show modal with blur effect
+            showModal(modalElement, options = {}) {
+                const {
+                    blurIntensity = 'normal', // light, normal, strong
+                    bodyBlur = true,
+                    animation = 'fade'
+                } = options;
+
+                // Create blur overlay if not exists
+                const overlay = this.createBlurOverlay(blurIntensity);
+                
+                // Add modal to overlay
+                overlay.appendChild(modalElement);
+                document.body.appendChild(overlay);
+
+                // Add body blur class if enabled
+                if (bodyBlur) {
+                    document.body.classList.add('modal-open');
+                }
+
+                // Track active modal
+                this.activeModals.add(modalElement);
+                this.modalCount++;
+
+                // Animate modal appearance
+                this.animateModalIn(modalElement, animation);
+
+                return overlay;
+            }
+
+            // Hide modal with blur effect
+            hideModal(modalElement, callback) {
+                if (!this.activeModals.has(modalElement)) return;
+
+                // Animate modal disappearance
+                this.animateModalOut(modalElement, () => {
+                    // Remove modal from tracking
+                    this.activeModals.delete(modalElement);
+                    this.modalCount--;
+
+                    // Remove body blur class if no more modals
+                    if (this.modalCount === 0) {
+                        document.body.classList.remove('modal-open');
+                    }
+
+                    // Find and remove overlay
+                    const overlay = modalElement.parentElement;
+                    if (overlay && overlay.classList.contains('modal-overlay')) {
+                        overlay.classList.add('fade-out');
+                        setTimeout(() => {
+                            if (overlay.parentNode) {
+                                overlay.parentNode.removeChild(overlay);
+                            }
+                        }, 300);
+                    }
+
+                    // Execute callback if provided
+                    if (callback) callback();
+                });
+            }
+
+            // Create blur overlay
+            createBlurOverlay(intensity) {
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay fade-in';
+                
+                // Apply blur intensity
+                switch (intensity) {
+                    case 'light':
+                        overlay.classList.add('modal-backdrop-blur-light');
+                        break;
+                    case 'strong':
+                        overlay.classList.add('modal-backdrop-blur-strong');
+                        break;
+                    default:
+                        overlay.classList.add('modal-backdrop-blur');
+                }
+
+                // Close on backdrop click
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        const modal = overlay.querySelector('.modal-content, .bg-white, .rounded-lg, .rounded-xl');
+                        if (modal) {
+                            this.hideModal(modal);
+                        }
+                    }
+                });
+
+                return overlay;
+            }
+
+            // Animate modal in
+            animateModalIn(modalElement, animation) {
+                modalElement.classList.add('modal-content');
+                modalElement.style.display = 'block';
+                
+                // Force reflow
+                modalElement.offsetHeight;
+                
+                modalElement.classList.add('show');
+            }
+
+            // Animate modal out
+            animateModalOut(modalElement, callback) {
+                modalElement.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (callback) callback();
+                }, 300);
+            }
+
+            // Quick blur backdrop for simple modals
+            addBlurBackdrop() {
+                document.body.classList.add('modal-open');
+            }
+
+            // Remove blur backdrop
+            removeBlurBackdrop() {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        // Global modal blur system instance
+        window.modalBlurSystem = new ModalBlurSystem();
+
+        // Helper function for quick modal creation with blur
+        window.showModalWithBlur = function(content, options = {}) {
+            const modal = document.createElement('div');
+            modal.innerHTML = content;
+            modal.className = 'modal-content';
+            
+            return window.modalBlurSystem.showModal(modal, options);
+        };
+
+        // Helper function for quick modal removal
+        window.hideModalWithBlur = function(modalElement, callback) {
+            return window.modalBlurSystem.hideModal(modalElement, callback);
+        };
+
         // Initialize page transitions and client selection on page load
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize page transition system
