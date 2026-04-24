@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('contracts', function (Blueprint $table) {
+        if (!Schema::hasTable('contracts')) {
+            Schema::create('contracts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
@@ -45,7 +46,8 @@ return new class extends Migration
             $table->index(['client_id', 'contract_type']);
             $table->index(['client_id', 'end_date']);
             $table->unique(['client_id', 'contract_number']);
-        });
+            });
+        }
     }
 
     /**

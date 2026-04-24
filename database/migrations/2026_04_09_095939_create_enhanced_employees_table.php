@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('enhanced_employees', function (Blueprint $table) {
+        if (!Schema::hasTable('enhanced_employees')) {
+            Schema::create('enhanced_employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->string('employee_id', 50)->unique();
@@ -67,8 +68,8 @@ return new class extends Migration
             $table->json('social_security_info')->nullable();
             $table->json('health_insurance_info')->nullable();
             $table->json('pension_info')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->text('notes')->nullable();
             $table->timestamps();
             
@@ -77,7 +78,8 @@ return new class extends Migration
             $table->index(['client_id', 'employment_type']);
             $table->index(['client_id', 'position']);
             $table->unique(['client_id', 'employee_id']);
-        });
+            });
+        }
     }
 
     /**
