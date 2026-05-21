@@ -372,6 +372,15 @@
         .sidebar-transition {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Prevent transitions on page load */
+        .preload * {
+            -webkit-transition: none !important;
+            -moz-transition: none !important;
+            -ms-transition: none !important;
+            -o-transition: none !important;
+            transition: none !important;
+        }
         
         /* Form input transitions */
         .form-input-transition {
@@ -883,6 +892,11 @@
 
         // Initialize page transitions and client selection on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Remove preload class to enable transitions
+            setTimeout(() => {
+                document.body.classList.remove('preload');
+            }, 100);
+
             // Initialize page transition system
             if (document.getElementById('main-content')) {
                 window.pageTransitions = new PageTransitions();
@@ -1322,7 +1336,7 @@
         }
     </script>
 </head>
-<body class="font-lato bg-gray-50">
+<body class="font-lato bg-gray-50 preload">
     @if(isset($currentUser))
         <!-- Main Application Layout -->
         <div class="flex h-screen overflow-hidden">
@@ -1447,8 +1461,8 @@
             }
             
             addInitialAnimations() {
-                // Add entrance animations to page elements
-                const animatedElements = document.querySelectorAll('.hover-card, .btn-transition, .nav-link');
+                // Add entrance animations to page elements, excluding sidebar
+                const animatedElements = document.querySelectorAll('.hover-card:not(#sidebar *), .btn-transition:not(#sidebar *), .nav-link:not(#sidebar *)');
                 animatedElements.forEach((element, index) => {
                     element.style.opacity = '0';
                     element.style.transform = 'translateY(20px)';
@@ -1460,14 +1474,14 @@
                     }, 100 + (index * 50));
                 });
                 
-                // Add hover effects to cards
-                const cards = document.querySelectorAll('.bg-white.rounded-lg, .bg-white.rounded-xl');
+                // Add hover effects to cards, excluding sidebar
+                const cards = document.querySelectorAll('.bg-white.rounded-lg:not(#sidebar *), .bg-white.rounded-xl:not(#sidebar *)');
                 cards.forEach(card => {
                     card.classList.add('hover-card');
                 });
                 
-                // Add button transitions
-                const buttons = document.querySelectorAll('button, .btn');
+                // Add button transitions, excluding sidebar
+                const buttons = document.querySelectorAll('button:not(#sidebar *), .btn:not(#sidebar *)');
                 buttons.forEach(button => {
                     button.classList.add('btn-transition');
                 });

@@ -17,7 +17,7 @@
         <div class="mt-4">
             <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
             <select id="clientSelector" class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
-                <option value="">Loading clients...</option>
+                <option value="">Select Client...</option>
             </select>
         </div>
     </div>
@@ -62,6 +62,12 @@
                         <a href="{{ route('onboarding.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('onboarding.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="user-check" class="w-4 h-4"></i>
                             <span class="text-sm">Onboarding</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('employment-contracts.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employment-contracts.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="file-text" class="w-4 h-4"></i>
+                            <span class="text-sm">Employment Contracts</span>
                         </a>
                     </li>
                 </ul>
@@ -187,17 +193,95 @@
 </aside>
 
 <script>
+// Immediate icon replacement for sidebar to prevent flicker
+if (typeof feather !== 'undefined') {
+    feather.replace({ 'class': 'sidebar-icon' });
+}
+</script>
+
+<script>
+// Sidebar scroll position preservation
+(function() {
+    const SCROLL_KEY = 'sidebar-scroll';
+    
+    function restoreScroll() {
+        const sidebarNav = document.querySelector('aside#sidebar nav');
+        if (sidebarNav) {
+            const scrollPosition = sessionStorage.getItem(SCROLL_KEY);
+            if (scrollPosition) {
+                sidebarNav.scrollTop = parseInt(scrollPosition, 10);
+            }
+        }
+    }
+
+    function saveScroll() {
+        const sidebarNav = document.querySelector('aside#sidebar nav');
+        if (sidebarNav) {
+            sessionStorage.setItem(SCROLL_KEY, sidebarNav.scrollTop);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarNav = document.querySelector('aside#sidebar nav');
+        if (sidebarNav) {
+            // Restore immediately
+            restoreScroll();
+            
+            // Also restore after a short delay to account for icon loading or layout shifts
+            setTimeout(restoreScroll, 100);
+            setTimeout(restoreScroll, 500);
+
+            // Save on scroll
+            sidebarNav.addEventListener('scroll', saveScroll, { passive: true });
+            
+            // Save when clicking any link in the sidebar
+            sidebarNav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', saveScroll);
+            });
+        }
+    });
+
+    // Final save before page unload
+    window.addEventListener('beforeunload', saveScroll);
+})();
+
 // Client switching functionality
 let currentClientId = null;
 let availableClients = [];
 
-// Load clients on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadAvailableClients();
-    loadCurrentClient();
-});
+// Load clients immediately from global data if available
+(function() {
+    function initClients() {
+        if (window.allClients && window.allClients.length > 0) {
+            availableClients = window.allClients;
+            
+            // Try to get current client from live data or storage
+            if (window.liveClientData) {
+                currentClientId = window.liveClientData.id;
+            } else {
+                currentClientId = sessionStorage.getItem('selectedClientId') || 
+                                localStorage.getItem('selectedClientId') || 
+                                (availableClients.length > 0 ? availableClients[0].id : null);
+            }
+            
+            updateClientSelector();
+        }
+    }
 
-// Load available clients
+    // Initialize immediately if data is already there
+    initClients();
+
+    // Also listen for DOMContentLoaded to ensure elements are ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initClients();
+        
+        // Background refresh if needed, but don't block
+        loadAvailableClients();
+        loadCurrentClient();
+    });
+})();
+
+// Load available clients (background refresh)
 async function loadAvailableClients() {
     try {
         const response = await fetch('/api/client-switch/available', {

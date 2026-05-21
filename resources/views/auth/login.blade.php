@@ -129,6 +129,13 @@
                     <span class="mx-2 text-gray-400">|</span>
                     <a href="{{ route('sample-users') }}" class="text-[#040344] hover:text-[#040344]/80 text-sm font-medium">Sample Users</a>
                 </div>
+                
+                <div class="go-home mt-4">
+                    <a href="{{ route('splash') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                        <i data-feather="home" class="w-4 h-4 mr-2"></i>
+                        Go to Home
+                    </a>
+                </div>
             </div>
         </div>
     </div>

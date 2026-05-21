@@ -25,6 +25,10 @@
                 <i data-feather="user-plus" class="w-4 h-4 inline mr-2"></i>
                 Add Employee
             </button>
+            <a href="{{ route('personnel-id.index') }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors inline-flex items-center">
+                <i data-feather="credit-card" class="w-4 h-4 inline mr-2"></i>
+                Personnel ID
+            </a>
         </div>
     </div>
 

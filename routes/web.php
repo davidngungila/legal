@@ -20,6 +20,19 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\UserRegistrationController;
+use App\Http\Controllers\ClientRegistrationController;
+use App\Http\Controllers\JobVacancyController;
+use App\Http\Controllers\HrCompetencyInterviewController;
+use App\Http\Controllers\TechnicalInterviewController;
+use App\Http\Controllers\EmployeeRegistrationController;
+use App\Http\Controllers\EmployeeDocumentController;
+use App\Http\Controllers\SocialRecordsController;
+use App\Http\Controllers\InductionTrainingController;
+use App\Http\Controllers\PersonnelIdController;
+use App\Http\Controllers\ContractManagementController;
+use App\Http\Controllers\EmploymentContractsController;
+use App\Http\Controllers\WorkflowController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +53,9 @@ Route::get('/', function () {
 // Authentication Routes
 Route::middleware(['guest', 'web'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/splash', function () {
+        return view('auth.splash');
+    })->name('splash');
     Route::get('/sample-users', function () {
         return view('auth.sample-users');
     })->name('sample-users');
@@ -164,6 +180,203 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/reports', [ComplianceController::class, 'getReports'])->name('compliance.reports');
         Route::get('/download', [ComplianceController::class, 'downloadReport'])->name('compliance.download');
     });
+
+    // HRIS - User Registration Routes
+    Route::prefix('user-registration')->name('user-registration.')->group(function () {
+        Route::get('/', [UserRegistrationController::class, 'index'])->name('index');
+        Route::get('/create', [UserRegistrationController::class, 'create'])->name('create');
+        Route::post('/', [UserRegistrationController::class, 'store'])->name('store');
+        Route::get('/{user}/edit', [UserRegistrationController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserRegistrationController::class, 'update'])->name('update');
+        Route::post('/{user}/deactivate', [UserRegistrationController::class, 'deactivate'])->name('deactivate');
+        Route::post('/{user}/activate', [UserRegistrationController::class, 'activate'])->name('activate');
+    });
+
+    // HRIS - Client Registration Routes
+    Route::prefix('client-registration')->name('client-registration.')->group(function () {
+        Route::get('/', [ClientRegistrationController::class, 'index'])->name('index');
+        Route::get('/create', [ClientRegistrationController::class, 'create'])->name('create');
+        Route::post('/', [ClientRegistrationController::class, 'store'])->name('store');
+        Route::get('/{client}/edit', [ClientRegistrationController::class, 'edit'])->name('edit');
+        Route::put('/{client}', [ClientRegistrationController::class, 'update'])->name('update');
+        Route::post('/{client}/deactivate', [ClientRegistrationController::class, 'deactivate'])->name('deactivate');
+        Route::post('/{client}/activate', [ClientRegistrationController::class, 'activate'])->name('activate');
+    });
+
+    // HRIS - Job Vacancy Routes
+    Route::prefix('job-vacancy')->name('job-vacancy.')->group(function () {
+        Route::get('/', [JobVacancyController::class, 'index'])->name('index');
+        Route::get('/create', [JobVacancyController::class, 'create'])->name('create');
+        Route::post('/', [JobVacancyController::class, 'store'])->name('store');
+        Route::get('/{jobVacancy}', [JobVacancyController::class, 'show'])->name('show');
+        Route::get('/{jobVacancy}/edit', [JobVacancyController::class, 'edit'])->name('edit');
+        Route::put('/{jobVacancy}', [JobVacancyController::class, 'update'])->name('update');
+        Route::post('/{jobVacancy}/submit', [JobVacancyController::class, 'submit'])->name('submit');
+        Route::post('/{jobVacancy}/approve', [JobVacancyController::class, 'approve'])->name('approve');
+        Route::post('/{jobVacancy}/reject', [JobVacancyController::class, 'reject'])->name('reject');
+        Route::post('/{jobVacancy}/upload-shortlisted', [JobVacancyController::class, 'uploadShortlistedFile'])->name('upload-shortlisted');
+        Route::post('/{jobVacancy}/upload-signed', [JobVacancyController::class, 'uploadSignedFile'])->name('upload-signed');
+        Route::post('/{jobVacancy}/close', [JobVacancyController::class, 'close'])->name('close');
+    });
+
+    // HRIS - HR Competency Interview Routes
+    Route::prefix('hr-interview')->name('hr-interview.')->group(function () {
+        Route::get('/', [HrCompetencyInterviewController::class, 'index'])->name('index');
+        Route::get('/create', [HrCompetencyInterviewController::class, 'create'])->name('create');
+        Route::post('/', [HrCompetencyInterviewController::class, 'store'])->name('store');
+        Route::get('/{hrCompetencyInterview}', [HrCompetencyInterviewController::class, 'show'])->name('show');
+        Route::get('/{hrCompetencyInterview}/edit', [HrCompetencyInterviewController::class, 'edit'])->name('edit');
+        Route::put('/{hrCompetencyInterview}', [HrCompetencyInterviewController::class, 'update'])->name('update');
+        Route::post('/{hrCompetencyInterview}/submit', [HrCompetencyInterviewController::class, 'submit'])->name('submit');
+        Route::post('/{hrCompetencyInterview}/approve', [HrCompetencyInterviewController::class, 'approve'])->name('approve');
+        Route::post('/{hrCompetencyInterview}/reject', [HrCompetencyInterviewController::class, 'reject'])->name('reject');
+        Route::post('/{hrCompetencyInterview}/upload-signed', [HrCompetencyInterviewController::class, 'uploadSignedFile'])->name('upload-signed');
+        Route::post('/{hrCompetencyInterview}/generate-pdf', [HrCompetencyInterviewController::class, 'generatePdf'])->name('generate-pdf');
+    });
+
+    // HRIS - Technical Interview Routes
+    Route::prefix('technical-interview')->name('technical-interview.')->group(function () {
+        Route::get('/', [TechnicalInterviewController::class, 'index'])->name('index');
+        Route::get('/create', [TechnicalInterviewController::class, 'create'])->name('create');
+        Route::post('/', [TechnicalInterviewController::class, 'store'])->name('store');
+        Route::get('/{technicalInterview}', [TechnicalInterviewController::class, 'show'])->name('show');
+        Route::get('/{technicalInterview}/edit', [TechnicalInterviewController::class, 'edit'])->name('edit');
+        Route::put('/{technicalInterview}', [TechnicalInterviewController::class, 'update'])->name('update');
+        Route::post('/{technicalInterview}/submit', [TechnicalInterviewController::class, 'submit'])->name('submit');
+        Route::post('/{technicalInterview}/approve', [TechnicalInterviewController::class, 'approve'])->name('approve');
+        Route::post('/{technicalInterview}/reject', [TechnicalInterviewController::class, 'reject'])->name('reject');
+        Route::post('/{technicalInterview}/upload-assessment', [TechnicalInterviewController::class, 'uploadAssessmentReport'])->name('upload-assessment');
+        Route::post('/{technicalInterview}/upload-signed', [TechnicalInterviewController::class, 'uploadSignedFile'])->name('upload-signed');
+        Route::post('/{technicalInterview}/generate-pdf', [TechnicalInterviewController::class, 'generatePdf'])->name('generate-pdf');
+    });
+
+    // HRIS - Employee Registration Routes
+    Route::prefix('employee-registration')->name('employee-registration.')->group(function () {
+        Route::get('/', [EmployeeRegistrationController::class, 'index'])->name('index');
+        Route::get('/create', [EmployeeRegistrationController::class, 'create'])->name('create');
+        Route::post('/', [EmployeeRegistrationController::class, 'store'])->name('store');
+        Route::get('/{employeeRegistration}', [EmployeeRegistrationController::class, 'show'])->name('show');
+        Route::get('/{employeeRegistration}/edit', [EmployeeRegistrationController::class, 'edit'])->name('edit');
+        Route::put('/{employeeRegistration}', [EmployeeRegistrationController::class, 'update'])->name('update');
+        Route::post('/{employeeRegistration}/submit', [EmployeeRegistrationController::class, 'submit'])->name('submit');
+        Route::post('/{employeeRegistration}/approve', [EmployeeRegistrationController::class, 'approve'])->name('approve');
+        Route::post('/{employeeRegistration}/reject', [EmployeeRegistrationController::class, 'reject'])->name('reject');
+        Route::post('/{employeeRegistration}/upload-signed', [EmployeeRegistrationController::class, 'uploadSignedDocument'])->name('upload-signed');
+        Route::post('/{employeeRegistration}/generate-pdf', [EmployeeRegistrationController::class, 'generatePdf'])->name('generate-pdf');
+    });
+
+    // HRIS - Employee Document Management Routes
+    Route::prefix('employee-document')->name('employee-document.')->group(function () {
+        Route::get('/', [EmployeeDocumentController::class, 'index'])->name('index');
+        Route::get('/employee/{employee}', [EmployeeDocumentController::class, 'employeeDocuments'])->name('employee-documents');
+        Route::post('/', [EmployeeDocumentController::class, 'store'])->name('store');
+        Route::get('/{employeeDocument}', [EmployeeDocumentController::class, 'show'])->name('show');
+        Route::put('/{employeeDocument}', [EmployeeDocumentController::class, 'update'])->name('update');
+        Route::post('/{employeeDocument}/verify', [EmployeeDocumentController::class, 'verify'])->name('verify');
+        Route::post('/{employeeDocument}/reject', [EmployeeDocumentController::class, 'reject'])->name('reject');
+        Route::delete('/{employeeDocument}', [EmployeeDocumentController::class, 'destroy'])->name('destroy');
+        Route::get('/{employeeDocument}/download', [EmployeeDocumentController::class, 'download'])->name('download');
+        Route::get('/statistics', [EmployeeDocumentController::class, 'statistics'])->name('statistics');
+        Route::get('/requiring-attention', [EmployeeDocumentController::class, 'requiringAttention'])->name('requiring-attention');
+    });
+
+    // HRIS - Social Records Registration Routes
+    Route::prefix('social-records')->name('social-records.')->group(function () {
+        Route::get('/', [SocialRecordsController::class, 'index'])->name('index');
+        Route::get('/employee/{employee}', [SocialRecordsController::class, 'employeeRecords'])->name('employee-records');
+        Route::post('/', [SocialRecordsController::class, 'store'])->name('store');
+        Route::put('/{employee}', [SocialRecordsController::class, 'update'])->name('update');
+        Route::post('/{employee}/generate-report', [SocialRecordsController::class, 'generateReport'])->name('generate-report');
+        Route::get('/statistics', [SocialRecordsController::class, 'statistics'])->name('statistics');
+        Route::get('/missing-records', [SocialRecordsController::class, 'missingRecords'])->name('missing-records');
+        Route::post('/{employee}/upload-document', [SocialRecordsController::class, 'uploadDocument'])->name('upload-document');
+        Route::get('/{employee}/download/{documentType}', [SocialRecordsController::class, 'downloadDocument'])->name('download-document');
+    });
+
+    // HRIS - Induction Training Routes
+    Route::prefix('induction-training')->name('induction-training.')->group(function () {
+        Route::get('/', [InductionTrainingController::class, 'index'])->name('index');
+        Route::get('/employee/{employee}', [InductionTrainingController::class, 'employeeTraining'])->name('employee-training');
+        Route::post('/', [InductionTrainingController::class, 'store'])->name('store');
+        Route::put('/{employee}', [InductionTrainingController::class, 'update'])->name('update');
+        Route::post('/{employee}/generate-certificate', [InductionTrainingController::class, 'generateCertificate'])->name('generate-certificate');
+        Route::get('/statistics', [InductionTrainingController::class, 'statistics'])->name('statistics');
+        Route::get('/requiring-training', [InductionTrainingController::class, 'requiringTraining'])->name('requiring-training');
+        Route::post('/schedule-training', [InductionTrainingController::class, 'scheduleTraining'])->name('schedule-training');
+        Route::post('/{employee}/upload-materials', [InductionTrainingController::class, 'uploadMaterials'])->name('upload-materials');
+        Route::get('/{employee}/download-materials/{materialId}', [InductionTrainingController::class, 'downloadMaterials'])->name('download-materials');
+        Route::get('/calendar', [InductionTrainingController::class, 'calendar'])->name('calendar');
+    });
+
+    // HRIS - Personnel ID Application Routes
+    Route::prefix('personnel-id')->name('personnel-id.')->group(function () {
+        Route::get('/', [PersonnelIdController::class, 'index'])->name('index');
+        Route::get('/employee/{employee}', [PersonnelIdController::class, 'employeeId'])->name('employee-id');
+        Route::post('/', [PersonnelIdController::class, 'store'])->name('store');
+        Route::put('/{employee}', [PersonnelIdController::class, 'update'])->name('update');
+        Route::post('/{employee}/approve', [PersonnelIdController::class, 'approve'])->name('approve');
+        Route::post('/{employee}/reject', [PersonnelIdController::class, 'reject'])->name('reject');
+        Route::post('/{employee}/issue', [PersonnelIdController::class, 'issue'])->name('issue');
+        Route::post('/{employee}/report-lost', [PersonnelIdController::class, 'reportLost'])->name('report-lost');
+        Route::post('/{employee}/generate-card', [PersonnelIdController::class, 'generateCard'])->name('generate-card');
+        Route::get('/statistics', [PersonnelIdController::class, 'statistics'])->name('statistics');
+        Route::get('/requiring-attention', [PersonnelIdController::class, 'requiringAttention'])->name('requiring-attention');
+        Route::post('/{employee}/upload-photo', [PersonnelIdController::class, 'uploadPhoto'])->name('upload-photo');
+    });
+
+    // HRIS - Contract Management Routes
+    Route::prefix('contract-management')->name('contract-management.')->group(function () {
+        Route::get('/', [ContractManagementController::class, 'index'])->name('index');
+        Route::get('/employee/{employee}', [ContractManagementController::class, 'employeeContracts'])->name('employee-contracts');
+        Route::post('/', [ContractManagementController::class, 'store'])->name('store');
+        Route::put('/{employee}', [ContractManagementController::class, 'update'])->name('update');
+        Route::post('/{employee}/activate', [ContractManagementController::class, 'activate'])->name('activate');
+        Route::post('/{employee}/terminate', [ContractManagementController::class, 'terminate'])->name('terminate');
+        Route::post('/{employee}/renew', [ContractManagementController::class, 'renew'])->name('renew');
+        Route::post('/{employee}/generate-report', [ContractManagementController::class, 'generateReport'])->name('generate-report');
+        Route::get('/statistics', [ContractManagementController::class, 'statistics'])->name('statistics');
+        Route::get('/requiring-attention', [ContractManagementController::class, 'requiringAttention'])->name('requiring-attention');
+        Route::post('/{employee}/upload-document', [ContractManagementController::class, 'uploadDocument'])->name('upload-document');
+        Route::get('/{employee}/download-document/{documentType}', [ContractManagementController::class, 'downloadDocument'])->name('download-document');
+        Route::get('/calendar', [ContractManagementController::class, 'calendar'])->name('calendar');
+    });
+
+    // HRIS - Employment Contracts Routes
+    Route::prefix('employment-contracts')->name('employment-contracts.')->group(function () {
+        Route::get('/', [EmploymentContractsController::class, 'index'])->name('index');
+        Route::get('/employee/{employee}', [EmploymentContractsController::class, 'employeeContracts'])->name('employee-contracts');
+        Route::post('/', [EmploymentContractsController::class, 'store'])->name('store');
+        Route::put('/{employee}', [EmploymentContractsController::class, 'update'])->name('update');
+        Route::post('/{employee}/activate', [EmploymentContractsController::class, 'activate'])->name('activate');
+        Route::post('/{employee}/terminate', [EmploymentContractsController::class, 'terminate'])->name('terminate');
+        Route::post('/{employee}/renew', [EmploymentContractsController::class, 'renew'])->name('renew');
+        Route::post('/{employee}/generate-pdf', [EmploymentContractsController::class, 'generatePdf'])->name('generate-pdf');
+        Route::get('/statistics', [EmploymentContractsController::class, 'statistics'])->name('statistics');
+        Route::get('/requiring-attention', [EmploymentContractsController::class, 'requiringAttention'])->name('requiring-attention');
+        Route::post('/{employee}/upload-document', [EmploymentContractsController::class, 'uploadDocument'])->name('upload-document');
+        Route::get('/{employee}/download-document/{documentType}', [EmploymentContractsController::class, 'downloadDocument'])->name('download-document');
+        Route::get('/calendar', [EmploymentContractsController::class, 'calendar'])->name('calendar');
+    });
+
+    // HRIS - Workflow System Routes
+    Route::prefix('workflow')->name('workflow.')->group(function () {
+        Route::get('/', [WorkflowController::class, 'index'])->name('index');
+        Route::get('/statistics', [WorkflowController::class, 'statistics'])->name('statistics');
+        Route::get('/pending-approvals', [WorkflowController::class, 'pendingApprovals'])->name('pending-approvals');
+        Route::get('/history', [WorkflowController::class, 'history'])->name('history');
+        Route::post('/approve', [WorkflowController::class, 'approve'])->name('approve');
+        Route::post('/reject', [WorkflowController::class, 'reject'])->name('reject');
+        Route::post('/forward', [WorkflowController::class, 'forward'])->name('forward');
+        Route::get('/details/{workflowId}', [WorkflowController::class, 'details'])->name('details');
+        Route::post('/add-comment', [WorkflowController::class, 'addComment'])->name('add-comment');
+        Route::get('/calendar', [WorkflowController::class, 'calendar'])->name('calendar');
+        Route::get('/analytics', [WorkflowController::class, 'analytics'])->name('analytics');
+    });
+
+    // HRIS Dashboard Route
+    Route::get('/hris', function () {
+        return view('hris.dashboard');
+    })->name('hris.dashboard');
 
     // Training Routes
     Route::prefix('training')->group(function () {
