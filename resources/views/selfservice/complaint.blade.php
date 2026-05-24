@@ -177,7 +177,7 @@
             </div>
             
             <div class="flex justify-end space-x-3">
-                <a href="{{ route('selfservice') }}" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <a href="{{ route('selfservice.index') }}" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     Cancel
                 </a>
                 <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
@@ -189,10 +189,10 @@
     </div>
 
     <!-- Recent Complaints -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Recent Complaints</h2>
-            <a href="{{ route('selfservice') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All History</a>
+    <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-gray-900">Recent Complaints</h2>
+            <a href="{{ route('selfservice.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View All History</a>
         </div>
         
         <div class="space-y-4">

@@ -1378,9 +1378,11 @@
             
             init() {
                 this.createPageLoader();
+                this.setupBrowserNavigationHandling();
                 this.setupNavigationListeners();
                 this.setupFormSubmissions();
                 this.addInitialAnimations();
+                this.hideLoader();
             }
             
             createPageLoader() {
@@ -1405,6 +1407,23 @@
                 if (this.pageLoader) {
                     this.pageLoader.classList.remove('active');
                 }
+            }
+
+            setupBrowserNavigationHandling() {
+                const cleanup = () => {
+                    this.hideLoader();
+                    if (this.mainContent) {
+                        this.mainContent.classList.remove('page-transition-exit-active');
+                    }
+                    document.body.classList.remove('client-switching');
+                    const clientSwitchLoader = document.getElementById('clientSwitchLoader');
+                    if (clientSwitchLoader) {
+                        clientSwitchLoader.remove();
+                    }
+                };
+
+                window.addEventListener('pageshow', cleanup);
+                window.addEventListener('popstate', cleanup);
             }
             
             setupNavigationListeners() {

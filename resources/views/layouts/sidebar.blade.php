@@ -25,16 +25,68 @@
     <!-- Navigation Menu -->
     <nav class="flex-1 p-4 overflow-y-auto">
         <ul class="space-y-2">
-            <!-- Dashboard -->
+            <!-- General -->
             <li>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">General</div>
                 <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('dashboard') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                     <i data-feather="home" class="w-5 h-5"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
 
+            <!-- Organization -->
             <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">HRIS</div>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Organization</div>
+                <ul class="space-y-1 ml-4">
+                    <li>
+                        <a href="{{ route('organization.setup') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('organization.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="briefcase" class="w-4 h-4"></i>
+                            <span class="text-sm">Company Setup</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('clients.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="globe" class="w-4 h-4"></i>
+                            <span class="text-sm">Clients</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Talent Acquisition -->
+            <li>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Talent Acquisition</div>
+                <ul class="space-y-1 ml-4">
+                    <li>
+                        <a href="{{ route('job-vacancy.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('job-vacancy.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="briefcase" class="w-4 h-4"></i>
+                            <span class="text-sm">Recruitment</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('hr-interview.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('hr-interview.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="message-square" class="w-4 h-4"></i>
+                            <span class="text-sm">HR Interview</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('technical-interview.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('technical-interview.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="cpu" class="w-4 h-4"></i>
+                            <span class="text-sm">Technical Interview</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('onboarding.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('onboarding.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="user-check" class="w-4 h-4"></i>
+                            <span class="text-sm">Onboarding</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Human Resources -->
+            <li>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Human Resources</div>
                 <ul class="space-y-1 ml-4">
                     <li>
                         <a href="{{ route('hris.dashboard') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('hris.dashboard') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
@@ -43,8 +95,14 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('employees.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employees.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="users" class="w-4 h-4"></i>
+                            <span class="text-sm">Employee Master</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('employee-registration.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employee-registration.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-check" class="w-4 h-4"></i>
+                            <i data-feather="user-plus" class="w-4 h-4"></i>
                             <span class="text-sm">Employee Registration</span>
                         </a>
                     </li>
@@ -73,6 +131,19 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('workflow.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('workflow.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="repeat" class="w-4 h-4"></i>
+                            <span class="text-sm">Workflow</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Contracts -->
+            <li>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Contracts</div>
+                <ul class="space-y-1 ml-4">
+                    <li>
                         <a href="{{ route('contract-management.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('contract-management.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="file-text" class="w-4 h-4"></i>
                             <span class="text-sm">Contract Management</span>
@@ -84,92 +155,19 @@
                             <span class="text-sm">Employment Contracts</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('workflow.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('workflow.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="repeat" class="w-4 h-4"></i>
-                            <span class="text-sm">Workflow</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('job-vacancy.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('job-vacancy.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span class="text-sm">Job Vacancy</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('hr-interview.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('hr-interview.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="message-square" class="w-4 h-4"></i>
-                            <span class="text-sm">HR Interview</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('technical-interview.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('technical-interview.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="cpu" class="w-4 h-4"></i>
-                            <span class="text-sm">Technical Interview</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('client-registration.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('client-registration.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span class="text-sm">Client Registration</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('user-registration.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('user-registration.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-plus" class="w-4 h-4"></i>
-                            <span class="text-sm">User Registration</span>
-                        </a>
-                    </li>
                 </ul>
             </li>
-            
-            <!-- Organization & Workforce -->
+
+            <!-- Time & Payroll -->
             <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Organization</div>
-                <a href="{{ route('organization.setup') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('organization.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="briefcase" class="w-5 h-5"></i>
-                    <span>Company Setup</span>
-                </a>
-            </li>
-            
-            <!-- Employee Management -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Employee Management</div>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Time & Payroll</div>
                 <ul class="space-y-1 ml-4">
                     <li>
-                        <a href="{{ route('employees.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employees.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="users" class="w-4 h-4"></i>
-                            <span class="text-sm">Employee Master</span>
+                        <a href="{{ route('attendance.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('attendance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="clock" class="w-4 h-4"></i>
+                            <span class="text-sm">Attendance & Timesheet</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('recruitment.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('recruitment.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-plus" class="w-4 h-4"></i>
-                            <span class="text-sm">Recruitment</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('onboarding.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('onboarding.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-check" class="w-4 h-4"></i>
-                            <span class="text-sm">Onboarding</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            
-            <!-- Time & Attendance -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Time & Attendance</div>
-                <a href="{{ route('attendance.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('attendance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="clock" class="w-5 h-5"></i>
-                    <span>Attendance & Timesheet</span>
-                </a>
-            </li>
-            
-            <!-- Payroll -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Payroll</div>
-                <ul class="space-y-1 ml-4">
                     <li>
                         <a href="{{ route('payroll.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('payroll.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="credit-card" class="w-4 h-4"></i>
@@ -184,90 +182,138 @@
                     </li>
                 </ul>
             </li>
-            
-            <!-- Performance -->
+
+            <!-- Performance & Training -->
             <li>
-                <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('performance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="trending-up" class="w-5 h-5"></i>
-                    <span>Performance Management</span>
-                </a>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Performance & Training</div>
+                <ul class="space-y-1 ml-4">
+                    <li>
+                        <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('performance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="trending-up" class="w-4 h-4"></i>
+                            <span class="text-sm">Performance Management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('training.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('training.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="book-open" class="w-4 h-4"></i>
+                            <span class="text-sm">Training</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
-            
-            <!-- Employee Relations (Critical) -->
+
+            <!-- Legal & Compliance -->
             <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Critical Module</div>
-                <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="alert-triangle" class="w-5 h-5"></i>
-                    <span>Employee Relations & Discipline</span>
-                </a>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Legal & Compliance</div>
+                <ul class="space-y-1 ml-4">
+                    <li>
+                        <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('compliance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="shield" class="w-4 h-4"></i>
+                            <span class="text-sm">Compliance & Legal</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('casemanagement.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="folder" class="w-4 h-4"></i>
+                            <span class="text-sm">Case Management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="alert-triangle" class="w-4 h-4"></i>
+                            <span class="text-sm">Employee Relations</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
-            
-            <!-- Compliance -->
-            <li>
-                <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('compliance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="shield" class="w-5 h-5"></i>
-                    <span>Compliance & Legal</span>
-                </a>
-            </li>
-            
-            <!-- Training -->
-            <li>
-                <a href="{{ route('training.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('training.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="book-open" class="w-5 h-5"></i>
-                    <span>Training & Development</span>
-                </a>
-            </li>
-            
+
             <!-- Analytics -->
             <li>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Insights</div>
                 <a href="{{ route('analytics.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('analytics.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                     <i data-feather="bar-chart-2" class="w-5 h-5"></i>
-                    <span>Workforce Analytics</span>
+                    <span>Analytics</span>
                 </a>
             </li>
-            
-            <!-- Employee Self Service -->
+
+            <!-- Self Service -->
             <li>
-                <a href="{{ route('selfservice.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('selfservice.*') ? 'bg-indigo-700' : '' }}">
-                    <i data-feather="user" class="w-5 h-5"></i>
-                    <span>Employee Self Service</span>
-                </a>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Self Service</div>
+                <ul class="space-y-1 ml-4">
+                    <li>
+                        <a href="{{ route('selfservice.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.index') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="user" class="w-4 h-4"></i>
+                            <span class="text-sm">Overview</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('selfservice.leave') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.leave') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="calendar" class="w-4 h-4"></i>
+                            <span class="text-sm">Leave</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.payslip') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="file" class="w-4 h-4"></i>
+                            <span class="text-sm">Payslip</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('selfservice.contract') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.contract') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="file-text" class="w-4 h-4"></i>
+                            <span class="text-sm">Contract</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('selfservice.complaint') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.complaint') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="message-circle" class="w-4 h-4"></i>
+                            <span class="text-sm">Complaint</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('selfservice.profile') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.profile') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="settings" class="w-4 h-4"></i>
+                            <span class="text-sm">Profile</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
-            
-            <!-- Case Management -->
+
+            <!-- Resources -->
             <li>
-                <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('casemanagement.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="folder" class="w-5 h-5"></i>
-                    <span>Case Management</span>
+                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Resources</div>
+                <a href="{{ route('documents.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('documents.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                    <i data-feather="folder-open" class="w-5 h-5"></i>
+                    <span>Documents & Policies</span>
                 </a>
             </li>
             
-            <!-- Settings -->
+            <!-- Administration -->
             <li>
                 <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Administration</div>
                 <ul class="space-y-1 ml-4">
                     <li>
                         <a href="{{ route('users.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('users.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="settings" class="w-4 h-4"></i>
-                            <span>Users</span>
+                            <i data-feather="users" class="w-4 h-4"></i>
+                            <span class="text-sm">Users</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('roles.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('roles.*') ? 'bg-indigo-700' : '' }}">
+                        <a href="{{ route('user-registration.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('user-registration.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                            <i data-feather="user-plus" class="w-4 h-4"></i>
+                            <span class="text-sm">User Registration</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('roles.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('roles.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="shield" class="w-4 h-4"></i>
-                            <span>Roles</span>
+                            <span class="text-sm">Roles</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('permissions.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors {{ request()->routeIs('permissions.*') ? 'bg-indigo-700' : '' }}">
+                        <a href="{{ route('permissions.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('permissions.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="key" class="w-4 h-4"></i>
-                            <span>Permissions</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('clients.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span>Clients</span>
+                            <span class="text-sm">Permissions</span>
                         </a>
                     </li>
                 </ul>

@@ -113,23 +113,10 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         })->name('permissions.create');
     });
 
-    // Employee Management Routes
-    Route::prefix('employees')->group(function () {
-        Route::get('/', function () {
-            return view('employees.index');
-        })->name('employees.index');
-    });
-
     Route::prefix('recruitment')->group(function () {
         Route::get('/', function () {
             return view('recruitment.index');
         })->name('recruitment.index');
-    });
-
-    Route::prefix('onboarding')->group(function () {
-        Route::get('/', function () {
-            return view('onboarding.index');
-        })->name('onboarding.index');
     });
 
     // Time & Attendance Routes
@@ -392,82 +379,12 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         })->name('analytics.index');
     });
 
-    // Attendance Routes
-    Route::prefix('attendance')->group(function () {
-        Route::get('/', function () {
-            return view('attendance.index');
-        })->name('attendance.index');
-    });
-
-    // Compensation Routes
-    Route::prefix('compensation')->group(function () {
-        Route::get('/', function () {
-            return view('compensation.index');
-        })->name('compensation.index');
-    });
-
-    // Compliance Routes
-    Route::prefix('compliance')->group(function () {
-        Route::get('/', function () {
-            return view('compliance.index');
-        })->name('compliance.index');
-    });
-
-    // Discipline Routes
-    Route::prefix('discipline')->group(function () {
-        Route::get('/', function () {
-            return view('discipline.index');
-        })->name('discipline.index');
-    });
-
-    // Employees Routes
-    Route::prefix('employees')->group(function () {
-        Route::get('/', function () {
-            return view('employees.index');
-        })->name('employees.index');
-    });
-
     // Onboarding Routes
     Route::prefix('onboarding')->group(function () {
         Route::get('/', [OnboardingController::class, 'index'])->name('onboarding.index');
         Route::post('/start', [OnboardingController::class, 'startOnboarding'])->name('onboarding.start');
         Route::post('/complete/{employeeId}', [OnboardingController::class, 'completeOnboarding'])->name('onboarding.complete');
         Route::get('/progress/{employeeId}', [OnboardingController::class, 'getProgress'])->name('onboarding.progress');
-    });
-
-    // Organization Routes
-    Route::prefix('organization')->group(function () {
-        Route::get('/', function () {
-            return view('organization.index');
-        })->name('organization.index');
-    });
-
-    // Payroll Routes
-    Route::prefix('payroll')->group(function () {
-        Route::get('/', function () {
-            return view('payroll.index');
-        })->name('payroll.index');
-    });
-
-    // Performance Routes
-    Route::prefix('performance')->group(function () {
-        Route::get('/', function () {
-            return view('performance.index');
-        })->name('performance.index');
-    });
-
-    // Recruitment Routes
-    Route::prefix('recruitment')->group(function () {
-        Route::get('/', function () {
-            return view('recruitment.index');
-        })->name('recruitment.index');
-    });
-
-    // Training Routes
-    Route::prefix('training')->group(function () {
-        Route::get('/', function () {
-            return view('training.index');
-        })->name('training.index');
     });
 
     // Employee Self Service Routes
@@ -502,13 +419,6 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/category/{category}', [DocumentsController::class, 'byCategory'])->name('documents.category');
         Route::get('/type/{type}', [DocumentsController::class, 'byType'])->name('documents.type');
         Route::post('/search', [DocumentsController::class, 'search'])->name('documents.search');
-    });
-
-    // Admin Routes (Super Admin and HR Admin only)
-    Route::prefix('users')->group(function () {
-        Route::get('/', function () {
-            return view('users.index');
-        })->name('users.index');
     });
 
     // Client Management Routes
@@ -625,9 +535,4 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
     Route::get('/contracts/expiring', [ContractController::class, 'expiringSoon'])->name('contracts.expiring');
     Route::get('/contracts/statistics', [ContractController::class, 'statistics'])->name('contracts.statistics');
-});
-
-// Default route - redirect to dashboard
-Route::get('/', function () {
-    return redirect('/dashboard');
 });
