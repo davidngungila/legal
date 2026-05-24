@@ -85,6 +85,10 @@ class SelfServiceController extends Controller
         ]);
         
         $currentClient = session('current_client');
+        if (!$currentClient) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
         $user = Auth::user();
         
         $employee = Employee::where('client_id', $currentClient['id'])
@@ -149,6 +153,10 @@ class SelfServiceController extends Controller
         ]);
         
         $currentClient = session('current_client');
+        if (!$currentClient) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
         $user = Auth::user();
         
         $employee = Employee::where('client_id', $currentClient['id'])
@@ -200,6 +208,10 @@ class SelfServiceController extends Controller
         ]);
         
         $currentClient = session('current_client');
+        if (!$currentClient) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
         $user = Auth::user();
         
         $employee = Employee::where('client_id', $currentClient['id'])
@@ -255,6 +267,10 @@ class SelfServiceController extends Controller
         ]);
         
         $currentClient = session('current_client');
+        if (!$currentClient) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
         $user = Auth::user();
         
         $employee = Employee::where('client_id', $currentClient['id'])

@@ -27,7 +27,7 @@ class RoleSeeder extends Seeder
                     'notifications.manage', 'notifications.alerts', 'notifications.automated',
                     
                     // Organization & Workforce
-                    'organization.view', 'organization.setup', 'organization.sector', 'organization.structure', 'organization.employment', 'organization.union',
+                    'organization.view', 'organization.sector', 'organization.structure', 'organization.employment', 'organization.union',
                     
                     // Employee Master Data
                     'employees.view', 'employees.create', 'employees.edit', 'employees.delete', 'employees.contract', 'employees.workpermit', 'employees.medical', 'employees.discipline', 'employees.performance', 'employees.promotion', 'employees.training', 'employees.loan', 'employees.nextofkin', 'employees.probation', 'employees.signature',
@@ -97,7 +97,7 @@ class RoleSeeder extends Seeder
                     'notifications.view', 'notifications.manage',
                     
                     // Organization & Workforce
-                    'organization.view', 'organization.setup', 'organization.sector', 'organization.structure', 'organization.employment', 'organization.union',
+                    'organization.view', 'organization.sector', 'organization.structure', 'organization.employment', 'organization.union',
                     
                     // Employee Master Data
                     'employees.view', 'employees.create', 'employees.edit', 'employees.contract', 'employees.workpermit', 'employees.discipline', 'employees.performance', 'employees.promotion', 'employees.training', 'employees.loan', 'employees.nextofkin', 'employees.probation', 'employees.signature',

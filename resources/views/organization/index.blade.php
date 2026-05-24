@@ -11,10 +11,6 @@
             <p class="text-gray-600 mt-2">Manage company structure, departments, and organizational hierarchy</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <a href="{{ route('organization.setup') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <i data-feather="settings" class="w-4 h-4 inline mr-2"></i>
-                Organization Setup
-            </a>
             <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Add Department

@@ -23,6 +23,7 @@ class ClientSwitchController extends Controller
         // Store the current client in session
         Session::put('current_client_id', $clientId);
         Session::put('current_client_name', $client->name);
+        Session::put('current_client', $client);
         
         // Also share with views immediately for this request
         view()->share('currentClient', $client);
@@ -47,6 +48,7 @@ class ClientSwitchController extends Controller
             if ($firstClient) {
                 Session::put('current_client_id', $firstClient->id);
                 Session::put('current_client_name', $firstClient->name);
+                Session::put('current_client', $firstClient);
                 $clientId = $firstClient->id;
             }
         }
@@ -59,6 +61,7 @@ class ClientSwitchController extends Controller
                 if ($firstClient) {
                     Session::put('current_client_id', $firstClient->id);
                     Session::put('current_client_name', $firstClient->name);
+                    Session::put('current_client', $firstClient);
                     $client = $firstClient;
                 }
             }

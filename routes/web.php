@@ -11,7 +11,6 @@ use App\Http\Controllers\TestLoginController;
 use App\Http\Controllers\SelfServiceController;
 use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
@@ -73,12 +72,6 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Organization Routes
-    Route::prefix('organization')->group(function () {
-        Route::get('/setup', [OrganizationController::class, 'setup'])->name('organization.setup');
-        Route::post('/update', [OrganizationController::class, 'update'])->name('organization.update');
-        Route::get('/stats', [OrganizationController::class, 'stats'])->name('organization.stats');
-    });
 
     // User Management Routes
     Route::prefix('users')->group(function () {

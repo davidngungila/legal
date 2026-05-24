@@ -15,7 +15,6 @@ class PermissionSeeder extends Seeder
         $permissions = [
             // MODULE 1: ORGANIZATION & WORKFORCE SETUP
             ['name' => 'organization.view', 'display_name' => 'View Organization', 'group' => 'Organization', 'description' => 'View organization structure and company profile'],
-            ['name' => 'organization.setup', 'display_name' => 'Setup Organization', 'group' => 'Organization', 'description' => 'Setup company profile and organizational structure'],
             ['name' => 'organization.sector', 'display_name' => 'Manage Sector Classification', 'group' => 'Organization', 'description' => 'Manage sector risk classification'],
             ['name' => 'organization.structure', 'display_name' => 'Manage Org Structure', 'group' => 'Organization', 'description' => 'Manage organizational structure'],
             ['name' => 'organization.employment', 'display_name' => 'Manage Employment Categories', 'group' => 'Organization', 'description' => 'Manage employment categories per Tanzania law'],

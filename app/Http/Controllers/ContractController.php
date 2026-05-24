@@ -92,7 +92,7 @@ class ContractController extends Controller
     {
         // Verify contract belongs to current client
         $currentClient = session('current_client');
-        if ($contract->client_id != $currentClient->id) {
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to contract record.');
         }
 
@@ -108,7 +108,7 @@ class ContractController extends Controller
     {
         // Verify contract belongs to current client
         $currentClient = session('current_client');
-        if ($contract->client_id != $currentClient->id) {
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to contract record.');
         }
 
@@ -130,7 +130,7 @@ class ContractController extends Controller
     {
         // Verify contract belongs to current client
         $currentClient = session('current_client');
-        if ($contract->client_id != $currentClient->id) {
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to contract record.');
         }
 
@@ -170,7 +170,7 @@ class ContractController extends Controller
     {
         // Verify contract belongs to current client
         $currentClient = session('current_client');
-        if ($contract->client_id != $currentClient->id) {
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to contract record.');
         }
 
@@ -189,7 +189,7 @@ class ContractController extends Controller
     {
         // Verify contract belongs to current client
         $currentClient = session('current_client');
-        if ($contract->client_id != $currentClient->id) {
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to contract record.');
         }
 

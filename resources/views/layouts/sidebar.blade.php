@@ -123,14 +123,6 @@
                 </ul>
             </li>
             
-            <!-- Organization & Workforce -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Organization</div>
-                <a href="{{ route('organization.setup') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('organization.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="briefcase" class="w-5 h-5"></i>
-                    <span>Company Setup</span>
-                </a>
-            </li>
             
             <!-- Employee Management -->
             <li>

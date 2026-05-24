@@ -111,7 +111,7 @@ class EmployeeController extends Controller
     {
         // Verify employee belongs to current client
         $currentClient = session('current_client');
-        if ($employee->client_id != $currentClient->id) {
+        if (!$currentClient || $employee->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to employee record.');
         }
 
@@ -127,7 +127,7 @@ class EmployeeController extends Controller
     {
         // Verify employee belongs to current client
         $currentClient = session('current_client');
-        if ($employee->client_id != $currentClient->id) {
+        if (!$currentClient || $employee->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to employee record.');
         }
 
@@ -145,7 +145,7 @@ class EmployeeController extends Controller
     {
         // Verify employee belongs to current client
         $currentClient = session('current_client');
-        if ($employee->client_id != $currentClient->id) {
+        if (!$currentClient || $employee->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to employee record.');
         }
 
@@ -207,7 +207,7 @@ class EmployeeController extends Controller
     {
         // Verify employee belongs to current client
         $currentClient = session('current_client');
-        if ($employee->client_id != $currentClient->id) {
+        if (!$currentClient || $employee->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to employee record.');
         }
 

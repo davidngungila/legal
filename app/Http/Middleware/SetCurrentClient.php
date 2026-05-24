@@ -36,10 +36,15 @@ class SetCurrentClient
                 $currentClient = $clientId ? Client::find($clientId) : null;
             }
             
-            // Share current client with all views
+            // Share current client with all views and session
             if ($currentClient) {
                 view()->share('currentClient', $currentClient);
+                Session::put('current_client', $currentClient);
+            } else {
+                Session::forget('current_client');
             }
+        } else {
+            Session::forget('current_client');
         }
 
         return $next($request);
@@ -58,6 +63,7 @@ class SetCurrentClient
             if ($firstClient) {
                 Session::put('current_client_id', $firstClient->id);
                 Session::put('current_client_name', $firstClient->name);
+                Session::put('current_client', $firstClient);
                 return;
             }
         }
@@ -68,6 +74,7 @@ class SetCurrentClient
         if ($firstClient) {
             Session::put('current_client_id', $firstClient->id);
             Session::put('current_client_name', $firstClient->name);
+            Session::put('current_client', $firstClient);
         }
     }
 }
