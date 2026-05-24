@@ -13,21 +13,22 @@ class EmployeeDocument extends Model
     protected $table = 'employee_documents';
 
     protected $fillable = [
-        'employee_registration_id',
+        'employee_id',
         'document_type',
         'document_name',
         'document_number',
         'issuing_authority',
         'issue_date',
         'expiry_date',
-        'document_path',
+        'file_path',
+        'mime_type',
         'file_size',
-        'file_type',
         'status',
         'uploaded_by',
         'verified_by',
         'verified_at',
         'notes',
+        'description',
         'is_required',
         'is_active',
     ];
@@ -38,18 +39,28 @@ class EmployeeDocument extends Model
         'verified_at' => 'datetime',
         'is_required' => 'boolean',
         'is_active' => 'boolean',
+        'file_size' => 'integer',
     ];
 
+    /**
+     * Get the employee that owns the document.
+     */
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(EmployeeRegistration::class, 'employee_registration_id');
+        return $this->belongsTo(Employee::class);
     }
 
+    /**
+     * Get the user who uploaded the document.
+     */
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    /**
+     * Get the user who verified the document.
+     */
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
@@ -57,7 +68,7 @@ class EmployeeDocument extends Model
 
     public function scopeByEmployee($query, $employeeId)
     {
-        return $query->where('employee_registration_id', $employeeId);
+        return $query->where('employee_id', $employeeId);
     }
 
     public function scopeByType($query, $documentType)
@@ -67,7 +78,7 @@ class EmployeeDocument extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', 'active');
     }
 
     public function scopeRequired($query)
@@ -94,109 +105,5 @@ class EmployeeDocument extends Model
     {
         return $query->where('expiry_date', '>', now())
                     ->where('expiry_date', '<=', now()->addDays($days));
-    }
-
-    public function getDocumentTypeLabel()
-    {
-        return match($this->document_type) {
-            'national_id' => 'National ID',
-            'passport' => 'Passport',
-            'birth_certificate' => 'Birth Certificate',
-            'academic_certificate' => 'Academic Certificate',
-            'professional_certificate' => 'Professional Certificate',
-            'medical_certificate' => 'Medical Certificate',
-            'police_clearance' => 'Police Clearance',
-            'reference_letter' => 'Reference Letter',
-            'resume_cv' => 'Resume/CV',
-            'contract' => 'Employment Contract',
-            'other' => 'Other Document',
-            default => 'Unknown'
-        };
-    }
-
-    public function getStatusLabel()
-    {
-        return match($this->status) {
-            'uploaded' => 'Uploaded',
-            'pending_verification' => 'Pending Verification',
-            'verified' => 'Verified',
-            'rejected' => 'Rejected',
-            'expired' => 'Expired',
-            default => 'Unknown'
-        };
-    }
-
-    public function getStatusColor()
-    {
-        return match($this->status) {
-            'uploaded' => 'blue',
-            'pending_verification' => 'yellow',
-            'verified' => 'green',
-            'rejected' => 'red',
-            'expired' => 'gray',
-            default => 'gray'
-        };
-    }
-
-    public function isExpired()
-    {
-        return $this->expiry_date && now()->isAfter($this->expiry_date);
-    }
-
-    public function isExpiringSoon($days = 30)
-    {
-        return $this->expiry_date && 
-               now()->isBefore($this->expiry_date) && 
-               now()->diffInDays($this->expiry_date) <= $days;
-    }
-
-    public function getDaysUntilExpiry()
-    {
-        if ($this->expiry_date) {
-            return now()->diffInDays($this->expiry_date, false);
-        }
-        return null;
-    }
-
-    public function getFileSizeFormatted()
-    {
-        if ($this->file_size) {
-            $bytes = $this->file_size;
-            $units = ['B', 'KB', 'MB', 'GB'];
-            $unitIndex = 0;
-            
-            while ($bytes >= 1024 && $unitIndex < count($units) - 1) {
-                $bytes /= 1024;
-                $unitIndex++;
-            }
-            
-            return round($bytes, 2) . ' ' . $units[$unitIndex];
-        }
-        
-        return 'Unknown';
-    }
-
-    public function canBeVerified()
-    {
-        return $this->status === 'uploaded' || $this->status === 'pending_verification';
-    }
-
-    public function verify(User $verifier)
-    {
-        $this->update([
-            'status' => 'verified',
-            'verified_by' => $verifier->id,
-            'verified_at' => now(),
-        ]);
-    }
-
-    public function reject(User $verifier, $reason)
-    {
-        $this->update([
-            'status' => 'rejected',
-            'verified_by' => $verifier->id,
-            'verified_at' => now(),
-            'notes' => $reason,
-        ]);
     }
 }

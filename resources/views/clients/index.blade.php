@@ -15,7 +15,7 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Clients
             </button>
-            <a href="{{ route('clients.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <a href="{{ route('client-registration.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Add New Client
             </a>
