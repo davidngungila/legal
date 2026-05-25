@@ -1,12 +1,14 @@
 import './bootstrap';
+import feather from 'feather-icons';
+
+// Make feather globally available
+window.feather = feather;
 
 // LegalHR JavaScript Application
 
 // Initialize Feather Icons
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
+    feather.replace();
     
     // Initialize tooltips and popovers
     initializeTooltips();

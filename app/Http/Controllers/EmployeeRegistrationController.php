@@ -39,47 +39,45 @@ class EmployeeRegistrationController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $isDraft = $request->input('status') === 'draft';
+
+        $rules = [
             'hr_interview_id' => 'required|exists:hr_competency_interviews,id',
             'technical_interview_id' => 'nullable|exists:technical_interviews,id',
-            'surname' => 'required|string|max:255',
-            'first_name' => 'required|string|max:255',
+            'surname' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'first_name' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
-            'birthplace' => 'required|string|max:255',
-            'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other',
-            'residence_area' => 'required|string|max:255',
-            'permanent_residence' => 'required|string|max:255',
+            'birthplace' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'date_of_birth' => $isDraft ? 'nullable|date|before:today' : 'required|date|before:today',
+            'gender' => $isDraft ? 'nullable|in:male,female,other' : 'required|in:male,female,other',
+            'residence_area' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'permanent_residence' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
             'postal_address' => 'nullable|string|max:255',
-            'email_address' => 'required|email|max:255|unique:employee_registrations',
-            'phone_number' => 'required|string|max:20|unique:employee_registrations',
-            'place_of_recruitment' => 'required|string|max:255',
-            'work_station' => 'required|string|max:255',
-            'type_of_contract' => 'required|string|max:255',
-            'job_descriptions' => 'required|string|max:5000',
-            'date_employed' => 'required|date|before_or_equal:today',
-            'terms_conditions' => 'required|string|max:5000',
-            'information_consent' => 'required|boolean',
+            'email_address' => $isDraft ? 'nullable|email|max:255|unique:employee_registrations' : 'required|email|max:255|unique:employee_registrations',
+            'phone_number' => $isDraft ? 'nullable|string|max:20|unique:employee_registrations' : 'required|string|max:20|unique:employee_registrations',
+            'place_of_recruitment' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'work_station' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'type_of_contract' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'job_descriptions' => $isDraft ? 'nullable|string|max:5000' : 'required|string|max:5000',
+            'date_employed' => $isDraft ? 'nullable|date|before_or_equal:today' : 'required|date|before_or_equal:today',
+            'terms_conditions' => $isDraft ? 'nullable|string|max:5000' : 'required|string|max:5000',
+            'information_consent' => $isDraft ? 'nullable|boolean' : 'required|boolean',
             'ranking_details' => 'nullable|string|max:2000',
             'employment_history' => 'nullable|string|max:3000',
-        ]);
+            'status' => 'nullable|in:draft,submitted',
+        ];
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $validated = $request->validate($rules);
 
         try {
+            $status = $request->input('status', 'draft');
             // Generate unique employee number
             $employeeNumber = $this->generateEmployeeNumber();
 
-            $employee = EmployeeRegistration::create(array_merge($request->all(), [
+            $employee = EmployeeRegistration::create(array_merge($validated, [
                 'employee_number' => $employeeNumber,
                 'created_by' => auth()->id(),
-                'status' => 'draft',
+                'status' => $status,
             ]));
 
             // Handle file upload for signed document
@@ -92,7 +90,9 @@ class EmployeeRegistrationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Employee registered successfully',
+                'message' => $status === 'submitted' 
+                    ? 'Employee registration submitted for approval' 
+                    : 'Employee registration saved as draft',
                 'employee' => $employee,
                 'employee_number' => $employeeNumber
             ]);

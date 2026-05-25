@@ -13,6 +13,7 @@
     <!-- Job Vacancy Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <form id="jobVacancyForm" class="p-6 space-y-8">
+            <input type="hidden" name="status" id="vacancyStatus" value="submitted">
             <!-- Basic Information Section -->
             <div class="border-b border-gray-200 pb-8">
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
@@ -365,24 +366,29 @@ class JobVacancyManager {
         }
     }
 
-    async submitForm() {
-        // Validate all required fields
+    async submitForm(isDraft = false) {
+        // Only validate required fields if not saving as draft
         const inputs = this.form.querySelectorAll('input[required], textarea[required], select[required]');
         let isValid = true;
         
-        inputs.forEach(input => {
-            if (!this.validateField(input)) {
-                isValid = false;
-            }
-        });
+        if (!isDraft) {
+            inputs.forEach(input => {
+                if (!this.validateField(input)) {
+                    isValid = false;
+                }
+            });
 
-        if (!isValid) {
-            this.showNotification('Please correct the errors in the form', 'error');
-            return;
+            if (!isValid) {
+                this.showNotification('Please correct the errors in the form', 'error');
+                return;
+            }
         }
 
+        // Set the status based on action
+        document.getElementById('vacancyStatus').value = isDraft ? 'draft' : 'submitted';
+
         // Show loading state
-        this.setLoadingState(true);
+        this.setLoadingState(true, isDraft);
 
         try {
             const formData = new FormData(this.form);
@@ -401,10 +407,10 @@ class JobVacancyManager {
             const result = await response.json();
 
             if (result.success) {
-                this.showNotification('Job vacancy successfully submitted!', 'success');
+                this.showNotification(result.message || 'Job vacancy successfully saved!', 'success');
                 setTimeout(() => {
                     window.location.href = '/job-vacancy';
-                }, 2000);
+                }, 500);
             } else {
                 if (result.errors) {
                     this.displayServerErrors(result.errors);
@@ -426,15 +432,17 @@ class JobVacancyManager {
         });
     }
 
-    setLoadingState(loading) {
+    setLoadingState(loading, isDraft = false) {
         if (loading) {
-            this.btnText.textContent = 'Submitting...';
+            this.btnText.textContent = isDraft ? 'Saving Draft...' : 'Submitting...';
             this.btnLoader.classList.remove('hidden');
             this.submitBtn.disabled = true;
+            document.querySelector('button[onclick="saveAsDraft()"]').disabled = true;
         } else {
             this.btnText.textContent = 'Submit for Approval';
             this.btnLoader.classList.add('hidden');
             this.submitBtn.disabled = false;
+            document.querySelector('button[onclick="saveAsDraft()"]').disabled = false;
         }
     }
 
@@ -457,14 +465,7 @@ class JobVacancyManager {
 
 // Save as draft function
 function saveAsDraft() {
-    const form = document.getElementById('jobVacancyForm');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Store draft in localStorage
-    localStorage.setItem('jobVacancyDraft', JSON.stringify(data));
-    
-    window.jobVacancyManager.showNotification('Draft saved successfully', 'success');
+    window.jobVacancyManager.submitForm(true);
 }
 
 // Initialize job vacancy manager

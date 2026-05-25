@@ -35,17 +35,19 @@ class JobVacancyController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'company_name' => 'required|string|max:255',
-            'job_title' => 'required|string|max:255',
-            'vacancy_type' => 'required|in:new_position,replacement',
-            'position_vacant_date' => 'required|date',
-            'application_date' => 'required|date',
-            'application_deadline' => 'required|date|after:application_date',
-            'department' => 'required|string|max:255',
-            'workstation' => 'required|string|max:255',
-            'replacement_reason' => 'required_if:vacancy_type,replacement|string|max:1000',
-            'job_description' => 'required|string|max:5000',
+        $isDraft = $request->input('status') === 'draft';
+
+        $rules = [
+            'company_name' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'job_title' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'vacancy_type' => $isDraft ? 'nullable|in:new_position,replacement' : 'required|in:new_position,replacement',
+            'position_vacant_date' => $isDraft ? 'nullable|date' : 'required|date',
+            'application_date' => $isDraft ? 'nullable|date' : 'required|date',
+            'application_deadline' => $isDraft ? 'nullable|date' : 'required|date|after:application_date',
+            'department' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'workstation' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'replacement_reason' => $isDraft ? 'nullable|string|max:1000' : 'required_if:vacancy_type,replacement|string|max:1000',
+            'job_description' => $isDraft ? 'nullable|string|max:5000' : 'required|string|max:5000',
             'min_age' => 'nullable|integer|min:18|max:65',
             'academic_qualifications' => 'nullable|string|max:2000',
             'professional_qualifications' => 'nullable|string|max:2000',
@@ -53,28 +55,30 @@ class JobVacancyController extends Controller
             'salary_range_min' => 'nullable|numeric|min:0',
             'salary_range_max' => 'nullable|numeric|min:0',
             'additional_comments' => 'nullable|string|max:2000',
-        ], [
+            'status' => 'nullable|in:draft,submitted',
+        ];
+
+        $messages = [
             'application_deadline.after' => 'Application deadline must be after application date',
             'salary_range_max.min' => 'Maximum salary must be greater than or equal to minimum salary',
-        ]);
+        ];
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $validated = $request->validate($rules, $messages);
 
         try {
-            $vacancy = JobVacancy::create(array_merge($request->all(), [
-                'status' => 'draft',
+            $status = $request->input('status', 'draft');
+            
+            $vacancy = JobVacancy::create(array_merge($validated, [
+                'status' => $status,
                 'initiated_by' => auth()->id(),
+                'application_date' => $status === 'submitted' ? now() : ($validated['application_date'] ?? now()),
             ]));
 
             return response()->json([
                 'success' => true,
-                'message' => 'Job vacancy successfully submitted',
+                'message' => $status === 'submitted' 
+                    ? 'Job vacancy successfully submitted for approval' 
+                    : 'Job vacancy saved as draft',
                 'vacancy' => $vacancy
             ]);
 

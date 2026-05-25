@@ -36,41 +36,42 @@ class TechnicalInterviewController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $isDraft = $request->input('status') === 'draft';
+
+        $rules = [
             'hr_interview_id' => 'required|exists:hr_competency_interviews,id',
-            'candidate_name' => 'required|string|max:255',
-            'job_title' => 'required|string|max:255',
-            'interview_date' => 'required|date',
-            'interviewer_name' => 'required|string|max:255',
-            'business_process_knowledge' => 'required|string|max:5000',
-            'technical_skills_assessment' => 'required|string|max:5000',
+            'candidate_name' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'job_title' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'interview_date' => $isDraft ? 'nullable|date' : 'required|date',
+            'interviewer_name' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'business_process_knowledge' => $isDraft ? 'nullable|string|max:5000' : 'required|string|max:5000',
+            'technical_skills_assessment' => $isDraft ? 'nullable|string|max:5000' : 'required|string|max:5000',
             'physical_capabilities' => 'nullable|string|max:5000',
             'practical_test_results' => 'nullable|string|max:5000',
             'other_technical_areas' => 'nullable|string|max:5000',
-            'technical_result' => 'required|in:pass,fail,na',
+            'technical_result' => $isDraft ? 'nullable|in:pass,fail,na' : 'required|in:pass,fail,na',
             'technical_comments' => 'nullable|string|max:2000',
-        ]);
+            'status' => 'nullable|in:draft,submitted',
+        ];
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $validated = $request->validate($rules);
 
         try {
+            $status = $request->input('status', 'draft');
             $interviewNumber = TechnicalInterview::generateInterviewNumber();
 
-            $interview = TechnicalInterview::create(array_merge($request->all(), [
+            $interview = TechnicalInterview::create(array_merge($validated, [
                 'interview_number' => $interviewNumber,
                 'interviewer_id' => auth()->id(),
-                'status' => 'draft',
+                'status' => $status,
+                'interviewer_completed_at' => $status === 'submitted' ? now() : null,
             ]));
 
             return response()->json([
                 'success' => true,
-                'message' => 'Technical interview assessed successfully',
+                'message' => $status === 'submitted' 
+                    ? 'Technical interview submitted for approval' 
+                    : 'Technical interview saved as draft',
                 'interview' => $interview,
                 'interview_number' => $interviewNumber
             ]);

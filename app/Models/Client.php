@@ -44,6 +44,14 @@ class Client extends Model
     }
 
     /**
+     * Get the employees associated with the client.
+     */
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    /**
      * Get the formatted status badge.
      */
     public function getStatusBadgeAttribute()

@@ -39,12 +39,6 @@
                 <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Organization</div>
                 <ul class="space-y-1 ml-4">
                     <li>
-                        <a href="{{ route('organization.setup') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('organization.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span class="text-sm">Company Setup</span>
-                        </a>
-                    </li>
-                    <li>
                         <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('clients.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                             <i data-feather="globe" class="w-4 h-4"></i>
                             <span class="text-sm">Clients</span>

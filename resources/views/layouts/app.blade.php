@@ -7,7 +7,7 @@
     <title>@yield('title', 'LegalHR - Tanzania HR Management System')</title>
     <meta name="client-title" content="@yield('title', 'LegalHR - Tanzania HR Management System')">
     <meta property="og:title" content="@yield('title', 'LegalHR - Tanzania HR Management System')">
-    <meta name="original-title" content="LegalHR - Tanzania HR Management System">
+    <meta name="original-title" content="@yield('title', 'LegalHR - Tanzania HR Management System')">
     
     <!-- Custom CSS for page transition animations -->
     <style>
@@ -436,11 +436,191 @@
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
-    
     <!-- Global Functions -->
     <script>
+        // Page transition system
+        class PageTransitions {
+            constructor() {
+                this.mainContent = document.getElementById('main-content');
+                this.pageLoader = null;
+                this.init();
+            }
+            
+            init() {
+                this.createPageLoader();
+                this.setupBrowserNavigationHandling();
+                this.setupNavigationListeners();
+                this.setupFormSubmissions();
+                this.addInitialAnimations();
+                this.hideLoader();
+            }
+            
+            createPageLoader() {
+                this.pageLoader = document.createElement('div');
+                this.pageLoader.className = 'page-loader';
+                this.pageLoader.innerHTML = `
+                    <div class="page-loader-content">
+                        <div class="page-loader-spinner"></div>
+                        <p class="text-gray-600">Loading...</p>
+                    </div>
+                `;
+                document.body.appendChild(this.pageLoader);
+            }
+            
+            showLoader() {
+                if (this.pageLoader) {
+                    this.pageLoader.classList.add('active');
+                }
+            }
+            
+            hideLoader() {
+                if (this.pageLoader) {
+                    this.pageLoader.classList.remove('active');
+                }
+            }
+
+            setupBrowserNavigationHandling() {
+                const cleanup = () => {
+                    this.hideLoader();
+                    if (this.mainContent) {
+                        this.mainContent.classList.remove('page-transition-exit-active');
+                    }
+                    document.body.classList.remove('client-switching');
+                    const clientSwitchLoader = document.getElementById('clientSwitchLoader');
+                    if (clientSwitchLoader) {
+                        clientSwitchLoader.remove();
+                    }
+                };
+
+                window.addEventListener('pageshow', cleanup);
+                window.addEventListener('popstate', cleanup);
+            }
+            
+            setupNavigationListeners() {
+                // Handle all navigation links
+                document.addEventListener('click', (e) => {
+                    const link = e.target.closest('a');
+                    if (link && link.href && !link.href.includes('#') && 
+                        !link.href.includes('javascript:') && 
+                        !link.href.includes('mailto:') && 
+                        !link.target && 
+                        !link.hasAttribute('data-no-transition')) {
+                        
+                        e.preventDefault();
+                        this.navigateToPage(link.href);
+                    }
+                });
+                
+                // Handle sidebar navigation
+                const sidebarLinks = document.querySelectorAll('.sidebar a');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        if (link.href && !link.href.includes('#')) {
+                            e.preventDefault();
+                            this.navigateToPage(link.href);
+                        }
+                    });
+                });
+            }
+            
+            setupFormSubmissions() {
+                // Handle form submissions with loading states
+                const forms = document.querySelectorAll('form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', (e) => {
+                        if (!form.hasAttribute('data-no-transition')) {
+                            this.showLoader();
+                        }
+                    });
+                });
+            }
+            
+            async navigateToPage(url) {
+                this.showLoader();
+                
+                // Add exit animation
+                if (this.mainContent) {
+                    this.mainContent.classList.add('page-transition-exit-active');
+                }
+                
+                // Navigate after animation
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 300);
+            }
+            
+            addInitialAnimations() {
+                // Add entrance animations to page elements, excluding sidebar
+                const animatedElements = document.querySelectorAll('.hover-card:not(#sidebar *), .btn-transition:not(#sidebar *), .nav-link:not(#sidebar *)');
+                animatedElements.forEach((element, index) => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        element.style.transition = 'all 0.5s ease';
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, 100 + (index * 50));
+                });
+                
+                // Add hover effects to cards, excluding sidebar
+                const cards = document.querySelectorAll('.bg-white.rounded-lg:not(#sidebar *), .bg-white.rounded-xl:not(#sidebar *)');
+                cards.forEach(card => {
+                    card.classList.add('hover-card');
+                });
+                
+                // Add button transitions, excluding sidebar
+                const buttons = document.querySelectorAll('button:not(#sidebar *), .btn:not(#sidebar *)');
+                buttons.forEach(button => {
+                    button.classList.add('btn-transition');
+                });
+                
+                // Add form input transitions
+                const inputs = document.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    input.classList.add('form-input-transition');
+                });
+                
+                // Add table row hover effects
+                const tableRows = document.querySelectorAll('tbody tr');
+                tableRows.forEach(row => {
+                    row.classList.add('table-row-hover');
+                });
+            }
+        }
+
+        // Notification system with animations
+        function showNotification(message, type = 'info', duration = 3000) {
+            // Remove any existing notifications to prevent stacking
+            const existingNotifications = document.querySelectorAll('.notification-slide');
+            existingNotifications.forEach(n => n.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `notification-slide fixed top-4 right-4 p-4 rounded-lg shadow-lg z-[100] ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200 font-bold">&times;</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.style.animation = 'notificationSlide 0.4s ease-out reverse';
+                    setTimeout(() => {
+                        if (notification.parentNode) notification.remove();
+                    }, 400);
+                }
+            }, duration);
+        }
+
         // Live client data from database
         @php
             $liveClientData = $currentClient ? [
@@ -520,13 +700,6 @@
 
         // Client switching function (available on all pages)
         function switchClient(clientId) {
-            if (typeof showNotification === 'undefined') {
-                // Define showNotification if not available
-                function showNotification(message, type = 'info') {
-                    console.log('Notification:', message);
-                }
-            }
-            
             // Prevent switching to the same client
             const currentClient = getCurrentClient();
             if (currentClient.id === clientId) {
@@ -552,10 +725,6 @@
             
             // Force page reload after client switch to ensure server-side updates
             setTimeout(() => {
-                // Clear any cached data and reload the page
-                if (typeof localStorage !== 'undefined') {
-                    localStorage.clear();
-                }
                 // Reload the page to ensure all server-side data is updated
                 window.location.href = window.location.href;
             }, 500);
@@ -621,14 +790,12 @@
         // Update UI elements when client changes
         function updateClientUI(clientId) {
             console.log('updateClientUI called with clientId:', clientId);
+            if (!clientId) return;
             
             // Update client selector
             const select = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (select) {
                 select.value = clientId;
-                console.log('Client selector updated to:', clientId);
-            } else {
-                console.warn('Client selector not found!');
             }
             
             // Update any client display elements
@@ -638,88 +805,46 @@
                 clientDisplays.forEach(element => {
                     element.textContent = clientName;
                 });
-                console.log('Updated', clientDisplays.length, 'client display elements to:', clientName);
-            } else {
-                console.warn('No client display elements found');
             }
             
-            // Update client title if applicable
-            const titleElement = document.querySelector('title');
-            const clientTitleMeta = document.querySelector('meta[name="client-title"]');
-            const ogTitleMeta = document.querySelector('meta[property="og:title"]');
-            const originalTitleMeta = document.querySelector('meta[name="original-title"]');
-            
-            if (titleElement && clientId) {
-                const originalTitle = originalTitleMeta ? originalTitleMeta.getAttribute('content') : 'LegalHR - Tanzania HR Management System';
-                const clientName = getClientNameById(clientId);
-                
-                const newTitle = `${clientName} - ${originalTitle}`;
-                
-                // Update all title-related elements immediately and forcefully
-                titleElement.textContent = newTitle;
-                if (clientTitleMeta) {
-                    clientTitleMeta.setAttribute('content', newTitle);
-                }
-                if (ogTitleMeta) {
-                    ogTitleMeta.setAttribute('content', newTitle);
-                }
-                
-                console.log('Title updated to:', newTitle);
-                
-                // Force title update in case of race conditions
-                setTimeout(() => {
-                    if (titleElement.textContent !== newTitle) {
-                        titleElement.textContent = newTitle;
-                        console.log('Forced title update to:', newTitle);
-                    }
-                }, 50);
-            }
+            // Update the page title
+            updateClientTitle(clientId);
         }
         
         // Update client title (standalone function)
         function updateClientTitle(clientId) {
-            const titleElement = document.querySelector('title');
-            const clientTitleMeta = document.querySelector('meta[name="client-title"]');
-            const ogTitleMeta = document.querySelector('meta[property="og:title"]');
+            if (!clientId) return;
             
-            if (titleElement) {
-                let clientName = '';
-                
-                // Try to get client from live data
-                if (clientId && window.liveClientData && window.liveClientData.id == clientId) {
-                    clientName = window.liveClientData.name;
-                } else {
-                    // Fallback to getCurrentClient
-                    const currentClient = getCurrentClient();
-                    clientName = currentClient.name;
-                }
-                
-                // Ensure we never show Unknown Client - use getClientNameById instead
-                if (clientId && (!clientName || clientName === 'Unknown Client')) {
-                    clientName = getClientNameById(clientId);
-                }
-                
-                // Final fallback to prevent Unknown Client
-                if (!clientName || clientName === 'Unknown Client' || clientName === 'No Client Selected') {
-                    clientName = 'LegalHR - Tanzania HR Management System';
-                }
-                
-                // Always update title with available client name
-                const newTitle = clientName && clientName !== 'LegalHR - Tanzania HR Management System' 
-                    ? `${clientName} - LegalHR Tanzania`
-                    : 'LegalHR - Tanzania HR Management System';
-                
-                titleElement.textContent = newTitle;
-                
-                if (clientTitleMeta) {
-                    clientTitleMeta.content = newTitle;
-                }
-                if (ogTitleMeta) {
-                    ogTitleMeta.content = newTitle;
-                }
-                
-                console.log('Title updated to:', newTitle);
+            const clientName = getClientNameById(clientId);
+            const originalTitleMeta = document.querySelector('meta[name="original-title"]');
+            const originalTitle = originalTitleMeta ? originalTitleMeta.getAttribute('content') : 'LegalHR - Tanzania HR Management System';
+            
+            // Construct the title: "Client Name - Page Title"
+            let pageTitle = originalTitle;
+            if (pageTitle.includes(' - ')) {
+                pageTitle = pageTitle.split(' - ')[1];
             }
+            
+            const newTitle = clientName && clientName !== 'LegalHR - Tanzania HR Management System' 
+                ? `${clientName} - ${pageTitle}`
+                : originalTitle;
+            
+            document.title = newTitle;
+            
+            // Update meta tags for SEO/social sharing
+            const metaTags = {
+                'meta[name="client-title"]': 'content',
+                'meta[property="og:title"]': 'content'
+            };
+            
+            Object.entries(metaTags).forEach(([selector, attribute]) => {
+                const meta = document.querySelector(selector);
+                if (meta) {
+                    meta.setAttribute(attribute, newTitle);
+                }
+            });
+            
+            console.log('Title updated to:', newTitle);
         }
         
         // Synchronize all client-related elements across the page
@@ -892,6 +1017,11 @@
 
         // Initialize page transitions and client selection on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+
             // Remove preload class to enable transitions
             setTimeout(() => {
                 document.body.classList.remove('preload');
@@ -924,46 +1054,32 @@
                 console.log('No client data available');
             }
             
-            // Only restore if we have a valid client ID
+            // Initial UI and title update
             if (savedClientId) {
-                // Restore saved client and update UI immediately
                 updateClientUI(savedClientId);
                 updateAllModuleData(savedClientId);
-                console.log('Restored client:', savedClientId);
+                
+                // One follow-up update to catch any late-loading elements
+                setTimeout(() => updateClientTitle(savedClientId), 500);
             }
+
             // Ensure client selector shows correct value
             const clientSelector = document.querySelector('select[onchange="switchClient(this.value)"]');
             if (clientSelector && savedClientId) {
                 clientSelector.value = savedClientId;
-                console.log('Client selector set to:', savedClientId);
-            }
-            
-            // Update page title multiple times for persistence
-            if (savedClientId) {
-                updateClientTitle(savedClientId);
-            }
-            if (savedClientId) {
-                setTimeout(() => updateClientTitle(savedClientId), 100);
-                setTimeout(() => updateClientTitle(savedClientId), 500);
-                setTimeout(() => updateClientTitle(savedClientId), 1000);
             }
             
             // Listen for client change events
             document.addEventListener('clientChanged', function(event) {
                 console.log('Client changed to:', event.detail);
-                // Additional logic can be added here for specific pages
             });
             
             // Add page visibility change listener to maintain client state
             document.addEventListener('visibilitychange', function() {
                 if (!document.hidden) {
                     const currentClient = getCurrentClient();
-                    console.log('Page became visible - current client:', currentClient.id);
                     updateClientUI(currentClient.id);
-                    // Update title multiple times when page becomes visible
-                    updateClientTitle(currentClient.id);
                     setTimeout(() => updateClientTitle(currentClient.id), 100);
-                    setTimeout(() => updateClientTitle(currentClient.id), 500);
                 }
             });
             
@@ -1334,215 +1450,7 @@
             // This is a placeholder for client-specific data filtering
             return data;
         }
-    </script>
-</head>
-<body class="font-lato bg-gray-50 preload">
-    @if(isset($currentUser))
-        <!-- Main Application Layout -->
-        <div class="flex h-screen overflow-hidden">
-            <!-- Sidebar -->
-            @include('layouts.sidebar')
-            
-            <!-- Main Content Area -->
-            <div class="flex-1 flex flex-col overflow-hidden">
-                <!-- Header -->
-                @include('layouts.header')
-                
-                <!-- Main Content -->
-                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 main-content fade-in" id="main-content">
-                    <div class="page-transition-content">
-                        @yield('content')
-                    </div>
-                    
-                    <!-- Footer inside scrollable content -->
-                    @include('layouts.footer')
-                </main>
-            </div>
-        </div>
-    @else
-        <!-- Auth Layout -->
-        @yield('content')
-    @endif
-    
-    <script>
-        // Initialize Feather Icons
-        feather.replace();
-        
-        // Page transition system
-        class PageTransitions {
-            constructor() {
-                this.mainContent = document.getElementById('main-content');
-                this.pageLoader = null;
-                this.init();
-            }
-            
-            init() {
-                this.createPageLoader();
-                this.setupBrowserNavigationHandling();
-                this.setupNavigationListeners();
-                this.setupFormSubmissions();
-                this.addInitialAnimations();
-                this.hideLoader();
-            }
-            
-            createPageLoader() {
-                this.pageLoader = document.createElement('div');
-                this.pageLoader.className = 'page-loader';
-                this.pageLoader.innerHTML = `
-                    <div class="page-loader-content">
-                        <div class="page-loader-spinner"></div>
-                        <p class="text-gray-600">Loading...</p>
-                    </div>
-                `;
-                document.body.appendChild(this.pageLoader);
-            }
-            
-            showLoader() {
-                if (this.pageLoader) {
-                    this.pageLoader.classList.add('active');
-                }
-            }
-            
-            hideLoader() {
-                if (this.pageLoader) {
-                    this.pageLoader.classList.remove('active');
-                }
-            }
 
-            setupBrowserNavigationHandling() {
-                const cleanup = () => {
-                    this.hideLoader();
-                    if (this.mainContent) {
-                        this.mainContent.classList.remove('page-transition-exit-active');
-                    }
-                    document.body.classList.remove('client-switching');
-                    const clientSwitchLoader = document.getElementById('clientSwitchLoader');
-                    if (clientSwitchLoader) {
-                        clientSwitchLoader.remove();
-                    }
-                };
-
-                window.addEventListener('pageshow', cleanup);
-                window.addEventListener('popstate', cleanup);
-            }
-            
-            setupNavigationListeners() {
-                // Handle all navigation links
-                document.addEventListener('click', (e) => {
-                    const link = e.target.closest('a');
-                    if (link && link.href && !link.href.includes('#') && 
-                        !link.href.includes('javascript:') && 
-                        !link.href.includes('mailto:') && 
-                        !link.target && 
-                        !link.hasAttribute('data-no-transition')) {
-                        
-                        e.preventDefault();
-                        this.navigateToPage(link.href);
-                    }
-                });
-                
-                // Handle sidebar navigation
-                const sidebarLinks = document.querySelectorAll('.sidebar a');
-                sidebarLinks.forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        if (link.href && !link.href.includes('#')) {
-                            e.preventDefault();
-                            this.navigateToPage(link.href);
-                        }
-                    });
-                });
-            }
-            
-            setupFormSubmissions() {
-                // Handle form submissions with loading states
-                const forms = document.querySelectorAll('form');
-                forms.forEach(form => {
-                    form.addEventListener('submit', (e) => {
-                        if (!form.hasAttribute('data-no-transition')) {
-                            this.showLoader();
-                        }
-                    });
-                });
-            }
-            
-            async navigateToPage(url) {
-                this.showLoader();
-                
-                // Add exit animation
-                if (this.mainContent) {
-                    this.mainContent.classList.add('page-transition-exit-active');
-                }
-                
-                // Navigate after animation
-                setTimeout(() => {
-                    window.location.href = url;
-                }, 300);
-            }
-            
-            addInitialAnimations() {
-                // Add entrance animations to page elements, excluding sidebar
-                const animatedElements = document.querySelectorAll('.hover-card:not(#sidebar *), .btn-transition:not(#sidebar *), .nav-link:not(#sidebar *)');
-                animatedElements.forEach((element, index) => {
-                    element.style.opacity = '0';
-                    element.style.transform = 'translateY(20px)';
-                    
-                    setTimeout(() => {
-                        element.style.transition = 'all 0.5s ease';
-                        element.style.opacity = '1';
-                        element.style.transform = 'translateY(0)';
-                    }, 100 + (index * 50));
-                });
-                
-                // Add hover effects to cards, excluding sidebar
-                const cards = document.querySelectorAll('.bg-white.rounded-lg:not(#sidebar *), .bg-white.rounded-xl:not(#sidebar *)');
-                cards.forEach(card => {
-                    card.classList.add('hover-card');
-                });
-                
-                // Add button transitions, excluding sidebar
-                const buttons = document.querySelectorAll('button:not(#sidebar *), .btn:not(#sidebar *)');
-                buttons.forEach(button => {
-                    button.classList.add('btn-transition');
-                });
-                
-                // Add form input transitions
-                const inputs = document.querySelectorAll('input, textarea, select');
-                inputs.forEach(input => {
-                    input.classList.add('form-input-transition');
-                });
-                
-                // Add table row hover effects
-                const tableRows = document.querySelectorAll('tbody tr');
-                tableRows.forEach(row => {
-                    row.classList.add('table-row-hover');
-                });
-            }
-        }
-        
-        // Notification system with animations
-        function showNotification(message, type = 'info', duration = 3000) {
-            const notification = document.createElement('div');
-            notification.className = `notification-slide fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                type === 'warning' ? 'bg-yellow-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <span class="mr-2">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">&times;</button>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'notificationSlide 0.4s ease-out reverse';
-                setTimeout(() => notification.remove(), 400);
-            }, duration);
-        }
-        
         // Update client-specific data throughout the application
         function updateClientData(clientId) {
             const client = getClientById(clientId);
@@ -1591,22 +1499,6 @@
             }
         }
         
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
-                type === 'success' ? 'bg-green-600' : 
-                type === 'error' ? 'bg-red-600' : 
-                type === 'warning' ? 'bg-yellow-600' : 'bg-blue-600'
-            }`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-        
         // Toggle Sidebar
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1624,11 +1516,41 @@
             const dropdown = document.getElementById('userDropdown');
             const userButton = document.getElementById('userButton');
             
-            if (!userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
+            if (dropdown && userButton) {
+                if (!userButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.classList.add('hidden');
+                }
             }
         });
     </script>
+</head>
+<body class="font-lato bg-gray-50 preload">
+    @if(isset($currentUser))
+        <!-- Main Application Layout -->
+        <div class="flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            @include('layouts.sidebar')
+            
+            <!-- Main Content Area -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header -->
+                @include('layouts.header')
+                
+                <!-- Main Content -->
+                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 main-content fade-in" id="main-content">
+                    <div class="page-transition-content">
+                        @yield('content')
+                    </div>
+                    
+                    <!-- Footer inside scrollable content -->
+                    @include('layouts.footer')
+                </main>
+            </div>
+        </div>
+    @else
+        <!-- Auth Layout -->
+        @yield('content')
+    @endif
     
     @stack('scripts')
 </body>

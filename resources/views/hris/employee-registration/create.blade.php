@@ -13,6 +13,7 @@
     <!-- Employee Registration Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <form id="employeeRegistrationForm" class="p-6 space-y-8">
+            <input type="hidden" name="status" id="registrationStatus" value="submitted">
             <!-- Interview Information Section -->
             <div class="border-b border-gray-200 pb-8">
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">Interview Information</h2>
@@ -509,56 +510,56 @@ class EmployeeRegistrationManager {
         }
     }
 
-    async submitForm() {
-        // Validate all required fields
+    async submitForm(isDraft = false) {
+        // Only validate required fields if not saving as draft
         const inputs = this.form.querySelectorAll('input[required], select[required], textarea[required]');
         let isValid = true;
         
-        inputs.forEach(input => {
-            if (!this.validateField(input)) {
+        if (!isDraft) {
+            inputs.forEach(input => {
+                if (!this.validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            // Check consent checkbox
+            const consentCheckbox = document.getElementById('information_consent');
+            if (!consentCheckbox.checked) {
+                this.showFieldError('information_consent', 'You must consent to the information provision');
                 isValid = false;
             }
-        });
 
-        // Check consent checkbox
-        const consentCheckbox = document.getElementById('information_consent');
-        if (!consentCheckbox.checked) {
-            this.showFieldError('information_consent', 'You must consent to the information provision');
-            isValid = false;
+            if (!isValid) {
+                this.showNotification('Please correct the errors in the form', 'error');
+                return;
+            }
         }
 
-        if (!isValid) {
-            this.showNotification('Please correct the errors in the form', 'error');
-            return;
-        }
+        // Set the status based on action
+        document.getElementById('registrationStatus').value = isDraft ? 'draft' : 'submitted';
 
         // Show loading state
-        this.setLoadingState(true);
+        this.setLoadingState(true, isDraft);
 
         try {
             const formData = new FormData(this.form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Handle checkbox
-            data.information_consent = consentCheckbox.checked;
-
+            // Handle file upload and regular fields
             const response = await fetch('/employee-registration', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: formData
             });
 
             const result = await response.json();
 
             if (result.success) {
-                this.showNotification('Employee registered successfully!', 'success');
+                this.showNotification(result.message || 'Registration successfully saved!', 'success');
                 setTimeout(() => {
                     window.location.href = '/employee-registration';
-                }, 2000);
+                }, 500);
             } else {
                 if (result.errors) {
                     this.displayServerErrors(result.errors);
@@ -580,15 +581,19 @@ class EmployeeRegistrationManager {
         });
     }
 
-    setLoadingState(loading) {
+    setLoadingState(loading, isDraft = false) {
         if (loading) {
-            this.btnText.textContent = 'Registering...';
+            this.btnText.textContent = isDraft ? 'Saving Draft...' : 'Registering...';
             this.btnLoader.classList.remove('hidden');
             this.submitBtn.disabled = true;
+            const draftBtn = document.querySelector('button[onclick="saveAsDraft()"]');
+            if (draftBtn) draftBtn.disabled = true;
         } else {
             this.btnText.textContent = 'Register Employee';
             this.btnLoader.classList.add('hidden');
             this.submitBtn.disabled = false;
+            const draftBtn = document.querySelector('button[onclick="saveAsDraft()"]');
+            if (draftBtn) draftBtn.disabled = false;
         }
     }
 
@@ -611,14 +616,7 @@ class EmployeeRegistrationManager {
 
 // Save as draft function
 function saveAsDraft() {
-    const form = document.getElementById('employeeRegistrationForm');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Store draft in localStorage
-    localStorage.setItem('employeeRegistrationDraft', JSON.stringify(data));
-    
-    window.employeeRegistrationManager.showNotification('Draft saved successfully', 'success');
+    window.employeeRegistrationManager.submitForm(true);
 }
 
 // Generate and download PDF function

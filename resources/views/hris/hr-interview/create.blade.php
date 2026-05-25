@@ -13,6 +13,7 @@
     <!-- Interview Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <form id="hrInterviewForm" class="p-6 space-y-8">
+            <input type="hidden" name="status" id="interviewStatus" value="submitted">
             <!-- Basic Information Section -->
             <div class="border-b border-gray-200 pb-8">
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
@@ -662,56 +663,59 @@ class HrInterviewManager {
         }
     }
 
-    async submitForm() {
-        // Validate all required fields
+    async submitForm(isDraft = false) {
+        // Only validate required fields if not saving as draft
         const inputs = this.form.querySelectorAll('input[required], select[required]');
         let isValid = true;
         
-        inputs.forEach(input => {
-            if (!this.validateField(input)) {
-                isValid = false;
-            }
-        });
+        if (!isDraft) {
+            inputs.forEach(input => {
+                if (!this.validateField(input)) {
+                    isValid = false;
+                }
+            });
 
-        if (!isValid) {
-            this.showNotification('Please correct the errors in the form', 'error');
-            return;
+            if (!isValid) {
+                this.showNotification('Please correct the errors in the form', 'error');
+                return;
+            }
         }
 
+        // Set the status based on action
+        document.getElementById('interviewStatus').value = isDraft ? 'draft' : 'submitted';
+
         // Show loading state
-        this.setLoadingState(true);
+        this.setLoadingState(true, isDraft);
 
         try {
             const formData = new FormData(this.form);
-            const data = Object.fromEntries(formData.entries());
-
+            // Handle file upload
             const response = await fetch('/hr-interview', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: formData
             });
 
             const result = await response.json();
 
             if (result.success) {
-                this.showNotification('HR competency interview assessed successfully!', 'success');
+                this.showNotification(result.message || 'Interview successfully saved!', 'success');
                 setTimeout(() => {
                     window.location.href = '/hr-interview';
-                }, 2000);
+                }, 500);
             } else {
                 if (result.errors) {
                     this.displayServerErrors(result.errors);
                 } else {
-                    this.showNotification(result.message || 'Assessment failed', 'error');
+                    this.showNotification(result.message || 'Submission failed', 'error');
                 }
             }
         } catch (error) {
-            console.error('Assessment error:', error);
-            this.showNotification('An error occurred during assessment', 'error');
+            console.error('Submission error:', error);
+            this.showNotification('An error occurred during submission', 'error');
         } finally {
             this.setLoadingState(false);
         }
@@ -723,15 +727,17 @@ class HrInterviewManager {
         });
     }
 
-    setLoadingState(loading) {
+    setLoadingState(loading, isDraft = false) {
         if (loading) {
-            this.btnText.textContent = 'Assessing...';
+            this.btnText.textContent = isDraft ? 'Saving Draft...' : 'Submitting...';
             this.btnLoader.classList.remove('hidden');
             this.submitBtn.disabled = true;
+            document.querySelector('button[onclick="saveAsDraft()"]').disabled = true;
         } else {
             this.btnText.textContent = 'Submit Assessment';
             this.btnLoader.classList.add('hidden');
             this.submitBtn.disabled = false;
+            document.querySelector('button[onclick="saveAsDraft()"]').disabled = false;
         }
     }
 
@@ -754,14 +760,7 @@ class HrInterviewManager {
 
 // Save as draft function
 function saveAsDraft() {
-    const form = document.getElementById('hrInterviewForm');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Store draft in localStorage
-    localStorage.setItem('hrInterviewDraft', JSON.stringify(data));
-    
-    window.hrInterviewManager.showNotification('Draft saved successfully', 'success');
+    window.hrInterviewManager.submitForm(true);
 }
 
 // Initialize HR interview manager

@@ -47,33 +47,37 @@ class OnboardingController extends Controller
      */
     private function getOnboardingStats($clientId)
     {
-        $employees = Employee::where('client_id', $clientId);
-        
         // Active onboarding (employees in probation)
-        $activeOnboarding = $employees->where('status', 'probation')->count();
+        $activeOnboarding = Employee::where('client_id', $clientId)
+            ->where('status', 'probation')
+            ->count();
         
-        // Completed this month (employees who finished probation this month)
-        $completedThisMonth = $employees->where('status', 'active')
+        // Completed this month (employees who are active and were hired in current month/year)
+        $completedThisMonth = Employee::where('client_id', $clientId)
+            ->where('status', 'active')
             ->whereMonth('hire_date', now()->month)
             ->whereYear('hire_date', now()->year)
             ->count();
         
         // New hires this month
-        $newHiresThisMonth = $employees
+        $newHiresThisMonth = Employee::where('client_id', $clientId)
             ->whereMonth('hire_date', now()->month)
             ->whereYear('hire_date', now()->year)
             ->count();
         
         // Average onboarding completion rate
-        $totalEmployees = $employees->count();
-        $activeEmployees = $employees->where('status', 'active')->count();
+        $totalEmployees = Employee::where('client_id', $clientId)->count();
+        $activeEmployees = Employee::where('client_id', $clientId)
+            ->where('status', 'active')
+            ->count();
         $completionRate = $totalEmployees > 0 ? round(($activeEmployees / $totalEmployees) * 100, 1) : 0;
         
-        // Pending documentation
-        $pendingDocumentation = $employees->where('status', 'probation')
+        // Pending documentation (missing emergency contact or probation end date)
+        $pendingDocumentation = Employee::where('client_id', $clientId)
+            ->where('status', 'probation')
             ->where(function($query) {
-                $query->whereNull('contract_end_date')
-                      ->orWhereNull('emergency_contact');
+                $query->whereNull('probation_end_date')
+                      ->orWhereNull('emergency_contact_name');
             })
             ->count();
 

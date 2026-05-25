@@ -35,62 +35,60 @@ class HrCompetencyInterviewController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'job_title' => 'required|string|max:255',
-            'interview_date' => 'required|date',
-            'candidate_name' => 'required|string|max:255',
-            'interviewer_name' => 'required|string|max:255',
-            'military_service_status' => 'required|in:completed,didnt_attend,na',
-            'place_of_recruitment' => 'required|string|max:255',
-            'total_years_experience' => 'required|integer|min:0|max:50',
-            'education_job_knowledge' => 'required|integer|min:0|max:5',
-            'relevant_job_experience' => 'required|integer|min:0|max:5',
-            'major_previous_achievement' => 'required|integer|min:0|max:5',
-            'language_fluency' => 'required|integer|min:0|max:5',
-            'interactive_communication' => 'required|integer|min:0|max:5',
-            'accountability' => 'required|integer|min:0|max:5',
-            'work_excellence' => 'required|integer|min:0|max:5',
-            'functional_competencies' => 'required|integer|min:0|max:5',
-            'planning_organizing' => 'required|integer|min:0|max:5',
-            'problem_solving' => 'required|integer|min:0|max:5',
-            'attention_to_details' => 'required|integer|min:0|max:5',
-            'multitasking' => 'required|integer|min:0|max:5',
-            'continuous_improvement' => 'required|integer|min:0|max:5',
-            'compliance' => 'required|integer|min:0|max:5',
-            'creative_innovation' => 'required|integer|min:0|max:5',
-            'negotiation' => 'required|integer|min:0|max:5',
-            'teamwork' => 'required|integer|min:0|max:5',
-            'adaptability_flexibility' => 'required|integer|min:0|max:5',
-            'leadership' => 'required|integer|min:0|max:5',
-            'managing_developing_people' => 'required|integer|min:0|max:5',
-            'managing_change' => 'required|integer|min:0|max:5',
-            'making_decisions' => 'required|integer|min:0|max:5',
-            'overall_rating' => 'required|integer|min:0|max:5',
-            'relative_inside_client' => 'required|in:yes,no',
-            'birthplace' => 'required|string|max:255',
-            'residence' => 'required|string|max:255',
-            'employed_before' => 'required|in:yes,no',
-            'reference_checking' => 'required|in:yes,no',
-            'current_employer_entity' => 'required|in:government,private',
-            'recruiter_recommendation' => 'required|in:accepted,not_accepted,waiting_list',
-            'recommended_job_title' => 'nullable|string|max:255',
-        ]);
+        $isDraft = $request->input('status') === 'draft';
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $rules = [
+            'job_title' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'interview_date' => $isDraft ? 'nullable|date' : 'required|date',
+            'candidate_name' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'interviewer_name' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'military_service_status' => $isDraft ? 'nullable|in:completed,didnt_attend,na' : 'required|in:completed,didnt_attend,na',
+            'place_of_recruitment' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'total_years_experience' => $isDraft ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
+            'education_job_knowledge' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'relevant_job_experience' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'major_previous_achievement' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'language_fluency' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'interactive_communication' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'accountability' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'work_excellence' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'functional_competencies' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'planning_organizing' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'problem_solving' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'attention_to_details' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'multitasking' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'continuous_improvement' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'compliance' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'creative_innovation' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'negotiation' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'teamwork' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'adaptability_flexibility' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'leadership' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'managing_developing_people' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'managing_change' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'making_decisions' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'overall_rating' => $isDraft ? 'nullable|integer|min:0|max:5' : 'required|integer|min:0|max:5',
+            'relative_inside_client' => $isDraft ? 'nullable|in:yes,no' : 'required|in:yes,no',
+            'birthplace' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'residence' => $isDraft ? 'nullable|string|max:255' : 'required|string|max:255',
+            'employed_before' => $isDraft ? 'nullable|in:yes,no' : 'required|in:yes,no',
+            'reference_checking' => $isDraft ? 'nullable|in:yes,no' : 'required|in:yes,no',
+            'current_employer_entity' => $isDraft ? 'nullable|in:government,private' : 'required|in:government,private',
+            'recruiter_recommendation' => $isDraft ? 'nullable|in:accepted,not_accepted,waiting_list' : 'required|in:accepted,not_accepted,waiting_list',
+            'recommended_job_title' => 'nullable|string|max:255',
+            'status' => 'nullable|in:draft,submitted',
+        ];
+
+        $validated = $request->validate($rules);
 
         try {
+            $status = $request->input('status', 'draft');
             $interviewNumber = HrCompetencyInterview::generateInterviewNumber();
 
-            $interview = HrCompetencyInterview::create(array_merge($request->all(), [
+            $interview = HrCompetencyInterview::create(array_merge($validated, [
                 'interview_number' => $interviewNumber,
                 'interviewer_id' => auth()->id(),
-                'status' => 'draft',
+                'status' => $status,
             ]));
 
             // Handle file upload for military certificate
@@ -103,7 +101,9 @@ class HrCompetencyInterviewController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'HR competency interview assessed successfully',
+                'message' => $status === 'submitted' 
+                    ? 'HR competency interview submitted for approval' 
+                    : 'HR competency interview saved as draft',
                 'interview' => $interview,
                 'interview_number' => $interviewNumber
             ]);

@@ -63,6 +63,14 @@ return new class extends Migration
                 if (!Schema::hasColumn('employees', 'salary')) {
                     $table->decimal('salary', 10, 2)->nullable()->after('status');
                 }
+
+                if (!Schema::hasColumn('employees', 'probation_end_date')) {
+                    $table->date('probation_end_date')->nullable()->after('hire_date');
+                }
+
+                if (!Schema::hasColumn('employees', 'emergency_contact_name')) {
+                    $table->string('emergency_contact_name')->nullable()->after('salary');
+                }
             });
         }
     }

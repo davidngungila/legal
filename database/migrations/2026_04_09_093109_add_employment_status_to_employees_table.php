@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            //
+            if (!Schema::hasColumn('employees', 'probation_end_date')) {
+                $table->date('probation_end_date')->nullable()->after('hire_date');
+            }
         });
     }
 
