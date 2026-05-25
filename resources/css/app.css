@@ -98,6 +98,76 @@
     @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-300;
 }
 
+/* Auth Pages Styling */
+.login-container {
+    @apply flex min-h-screen relative overflow-hidden bg-slate-50 opacity-0 animate-[fadeIn_0.6s_ease-out_forwards];
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-out {
+    animation: fadeOut 0.4s ease-in forwards !important;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.login-left {
+    @apply hidden lg:flex flex-1 flex-col justify-center items-center text-white p-12 relative overflow-hidden bg-[#040344];
+}
+
+.login-left::before {
+    content: '';
+    @apply absolute inset-0 opacity-10;
+    background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0);
+    background-size: 24px 24px;
+}
+
+.login-right {
+    @apply flex-1 flex justify-center items-center p-6 md:p-12;
+}
+
+.login-form-card {
+    @apply w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 md:p-10 transition-all duration-500;
+}
+
+.auth-input-group {
+    @apply space-y-2 mb-6;
+}
+
+.auth-label {
+    @apply block text-sm font-semibold text-slate-700;
+}
+
+.auth-input-wrapper {
+    @apply relative flex items-center;
+}
+
+.auth-input-icon {
+    @apply absolute left-4 text-slate-400 w-5 h-5;
+}
+
+.auth-input {
+    @apply w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm transition-all duration-200 focus:bg-white focus:border-[#040344] focus:ring-4 focus:ring-[#040344]/10 outline-none;
+}
+
+.auth-btn-primary {
+    @apply w-full py-3.5 bg-[#040344] hover:bg-[#060563] text-white rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-[#040344]/20 transition-all duration-300 active:scale-[0.98];
+}
+
+.auth-btn-outline {
+    @apply w-full py-3.5 bg-white border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-3;
+}
+
+.floating-shape {
+    @apply absolute rounded-full opacity-20 blur-3xl animate-pulse;
+}
+
 .btn-success {
     @apply bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-green-700 hover:shadow-lg;
 }
