@@ -3,6 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmployeeRegistration;
+use App\Models\JobVacancy;
+use App\Models\HrCompetencyInterview;
+use App\Models\TechnicalInterview;
+use App\Models\EmployeeDocument;
+use App\Models\Contract;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -14,8 +20,6 @@ class WorkflowController extends Controller
      */
     public function index()
     {
-        // In a real implementation, this would fetch workflow items from database
-        // For now, we'll show the dashboard with placeholder data
         return view('hris.workflow.index');
     }
 
@@ -25,33 +29,27 @@ class WorkflowController extends Controller
     public function statistics()
     {
         try {
-            // In a real implementation, this would query the workflow tables
+            $clientId = session('current_client_id');
+            
             $stats = [
-                'pending_approvals' => 15, // Placeholder
-                'approved_today' => 8, // Placeholder
-                'rejected_today' => 2, // Placeholder
-                'overdue_approvals' => 3, // Placeholder
-                'total_workflows' => 127, // Placeholder
+                'pending_approvals' => EmployeeRegistration::where('status', 'submitted')->count() + 
+                                      JobVacancy::where('status', 'submitted')->count() +
+                                      HrCompetencyInterview::where('status', 'submitted')->count(),
+                'approved_today' => EmployeeRegistration::where('status', 'approved')->whereDate('approved_at', now())->count(),
+                'rejected_today' => EmployeeRegistration::where('status', 'rejected')->whereDate('updated_at', now())->count(),
+                'overdue_approvals' => EmployeeRegistration::where('status', 'submitted')->where('created_at', '<', now()->subDays(3))->count(),
+                'total_workflows' => EmployeeRegistration::count() + JobVacancy::count() + HrCompetencyInterview::count(),
                 'by_type' => [
-                    'user_registration' => 12,
-                    'client_registration' => 8,
-                    'job_vacancy' => 15,
-                    'hr_interview' => 10,
-                    'technical_interview' => 7,
-                    'employee_registration' => 25,
-                    'employee_documents' => 18,
-                    'social_records' => 14,
-                    'induction_training' => 9,
-                    'personnel_id' => 11,
-                    'contract_management' => 16,
-                    'employment_contracts' => 12
+                    'job_vacancy' => JobVacancy::count(),
+                    'hr_interview' => HrCompetencyInterview::count(),
+                    'technical_interview' => TechnicalInterview::count(),
+                    'employee_registration' => EmployeeRegistration::count(),
+                    'employee_documents' => EmployeeDocument::count(),
                 ],
                 'by_status' => [
-                    'pending' => 15,
-                    'in_review' => 8,
-                    'approved' => 85,
-                    'rejected' => 12,
-                    'cancelled' => 7
+                    'pending' => EmployeeRegistration::where('status', 'submitted')->count(),
+                    'approved' => EmployeeRegistration::where('status', 'approved')->count(),
+                    'rejected' => EmployeeRegistration::where('status', 'rejected')->count(),
                 ],
                 'avg_approval_time_hours' => 24.5, // Placeholder
                 'approval_rate' => 87.3, // Placeholder
@@ -77,48 +75,62 @@ class WorkflowController extends Controller
     public function pendingApprovals()
     {
         try {
-            // In a real implementation, this would fetch pending approvals for the current user
-            $approvals = [
-                [
-                    'id' => 1,
-                    'type' => 'user_registration',
-                    'title' => 'User Registration - John Doe',
-                    'description' => 'New user registration requiring approval',
-                    'submitted_by' => 'System',
-                    'submitted_at' => '2024-01-15 10:30:00',
-                    'priority' => 'medium',
-                    'current_approver' => auth()->user()->name,
-                    'workflow_step' => 'Manager Approval',
-                    'total_steps' => 3,
-                    'current_step' => 2
-                ],
-                [
-                    'id' => 2,
-                    'type' => 'job_vacancy',
-                    'title' => 'Job Vacancy - Senior Developer',
-                    'description' => 'New job vacancy requiring HR approval',
-                    'submitted_by' => 'Jane Smith',
-                    'submitted_at' => '2024-01-15 09:15:00',
+            $clientId = session('current_client_id');
+            $approvals = [];
+
+            // 1. Employee Registrations
+            $registrations = EmployeeRegistration::where('status', 'submitted')->get();
+            foreach ($registrations as $reg) {
+                $approvals[] = [
+                    'id' => $reg->id,
+                    'type' => 'employee_registration',
+                    'title' => 'Employee Registration - ' . $reg->first_name . ' ' . $reg->surname,
+                    'description' => 'New employee registration requiring approval',
+                    'submitted_by' => $reg->creator->first_name ?? 'System',
+                    'submitted_at' => $reg->created_at->format('Y-m-d H:i:s'),
                     'priority' => 'high',
-                    'current_approver' => auth()->user()->name,
+                    'current_approver' => auth()->user()->first_name,
+                    'workflow_step' => 'Final Approval',
+                    'total_steps' => 3,
+                    'current_step' => 3
+                ];
+            }
+
+            // 2. Job Vacancies
+            $vacancies = JobVacancy::where('status', 'submitted')->get();
+            foreach ($vacancies as $vacancy) {
+                $approvals[] = [
+                    'id' => $vacancy->id,
+                    'type' => 'job_vacancy',
+                    'title' => 'Job Vacancy - ' . $vacancy->job_title,
+                    'description' => 'New job vacancy requiring HR approval',
+                    'submitted_by' => $vacancy->initiator->first_name ?? 'Manager',
+                    'submitted_at' => $vacancy->created_at->format('Y-m-d H:i:s'),
+                    'priority' => 'medium',
+                    'current_approver' => auth()->user()->first_name,
                     'workflow_step' => 'HR Approval',
                     'total_steps' => 4,
                     'current_step' => 2
-                ],
-                [
-                    'id' => 3,
-                    'type' => 'employee_registration',
-                    'title' => 'Employee Registration - Bob Johnson',
-                    'description' => 'Employee registration requiring final approval',
-                    'submitted_by' => 'Mike Wilson',
-                    'submitted_at' => '2024-01-14 16:45:00',
-                    'priority' => 'high',
-                    'current_approver' => auth()->user()->name,
-                    'workflow_step' => 'Director Approval',
-                    'total_steps' => 3,
-                    'current_step' => 3
-                ]
-            ];
+                ];
+            }
+
+            // 3. HR Interviews
+            $hrInterviews = HrCompetencyInterview::where('status', 'submitted')->get();
+            foreach ($hrInterviews as $interview) {
+                $approvals[] = [
+                    'id' => $interview->id,
+                    'type' => 'hr_interview',
+                    'title' => 'HR Interview - ' . $interview->candidate_name,
+                    'description' => 'HR interview results requiring review',
+                    'submitted_by' => $interview->interviewer->first_name ?? 'HR',
+                    'submitted_at' => $interview->created_at->format('Y-m-d H:i:s'),
+                    'priority' => 'medium',
+                    'current_approver' => auth()->user()->first_name,
+                    'workflow_step' => 'Manager Review',
+                    'total_steps' => 2,
+                    'current_step' => 1
+                ];
+            }
 
             return response()->json([
                 'success' => true,
@@ -140,36 +152,43 @@ class WorkflowController extends Controller
     public function history()
     {
         try {
-            // In a real implementation, this would fetch workflow history
-            $history = [
-                [
-                    'id' => 1,
-                    'type' => 'user_registration',
-                    'title' => 'User Registration - Alice Brown',
-                    'action' => 'approved',
-                    'performed_by' => auth()->user()->name,
-                    'performed_at' => '2024-01-15 11:30:00',
-                    'comments' => 'All documents verified and approved'
-                ],
-                [
-                    'id' => 2,
+            $clientId = session('current_client_id');
+            $history = [];
+
+            // Fetch recent actions from various models
+            $registrations = EmployeeRegistration::whereIn('status', ['approved', 'rejected'])
+                ->orderBy('updated_at', 'desc')
+                ->limit(5)
+                ->get();
+            
+            foreach ($registrations as $reg) {
+                $history[] = [
+                    'id' => $reg->id,
+                    'type' => 'employee_registration',
+                    'title' => 'Registration - ' . $reg->first_name . ' ' . $reg->surname,
+                    'action' => $reg->status,
+                    'performed_by' => $reg->approver->first_name ?? 'System',
+                    'performed_at' => $reg->updated_at->format('Y-m-d H:i:s'),
+                    'comments' => 'Processed via standard workflow'
+                ];
+            }
+
+            $vacancies = JobVacancy::whereIn('status', ['hr_approved', 'rejected'])
+                ->orderBy('updated_at', 'desc')
+                ->limit(5)
+                ->get();
+
+            foreach ($vacancies as $vacancy) {
+                $history[] = [
+                    'id' => $vacancy->id,
                     'type' => 'job_vacancy',
-                    'title' => 'Job Vacancy - Marketing Manager',
-                    'action' => 'rejected',
-                    'performed_by' => auth()->user()->name,
-                    'performed_at' => '2024-01-15 10:15:00',
-                    'comments' => 'Budget constraints - please resubmit next quarter'
-                ],
-                [
-                    'id' => 3,
-                    'type' => 'hr_interview',
-                    'title' => 'HR Interview - Carol Davis',
-                    'action' => 'approved',
-                    'performed_by' => 'Sarah Johnson',
-                    'performed_at' => '2024-01-15 09:45:00',
-                    'comments' => 'Excellent candidate - recommend proceeding to technical interview'
-                ]
-            ];
+                    'title' => 'Vacancy - ' . $vacancy->job_title,
+                    'action' => $vacancy->status == 'hr_approved' ? 'approved' : 'rejected',
+                    'performed_by' => auth()->user()->first_name, // Placeholder
+                    'performed_at' => $vacancy->updated_at->format('Y-m-d H:i:s'),
+                    'comments' => 'HR review completed'
+                ];
+            }
 
             return response()->json([
                 'success' => true,

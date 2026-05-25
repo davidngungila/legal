@@ -15,11 +15,36 @@ class EmployeeRegistrationController extends Controller
     /**
      * Display the employee registration list.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = EmployeeRegistration::with(['hrInterview', 'technicalInterview', 'creator', 'approver'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = EmployeeRegistration::with(['hrInterview', 'technicalInterview', 'creator', 'approver']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('surname', 'like', "%{$search}%")
+                  ->orWhere('email_address', 'like', "%{$search}%")
+                  ->orWhere('employee_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        if ($request->filled('work_station')) {
+            $query->where('work_station', $request->get('work_station'));
+        }
+
+        if ($request->filled('contract_type')) {
+            $query->where('type_of_contract', $request->get('contract_type'));
+        }
+
+        $employees = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
         
         return view('hris.employee-registration.index', compact('employees'));
     }
@@ -75,6 +100,7 @@ class EmployeeRegistrationController extends Controller
             $employeeNumber = $this->generateEmployeeNumber();
 
             $employee = EmployeeRegistration::create(array_merge($validated, [
+                'client_id' => session('current_client_id'),
                 'employee_number' => $employeeNumber,
                 'created_by' => auth()->id(),
                 'status' => $status,

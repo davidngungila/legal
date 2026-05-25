@@ -361,9 +361,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS Dashboard Route
-    Route::get('/hris', function () {
-        return view('hris.dashboard');
-    })->name('hris.dashboard');
+    Route::get('/hris', [DashboardController::class, 'hrisDashboard'])->name('hris.dashboard');
 
     // Training Routes
     Route::prefix('training')->group(function () {
@@ -465,6 +463,9 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             Route::get('/current', [ClientSwitchController::class, 'current']);
             Route::get('/available', [ClientSwitchController::class, 'available']);
         });
+
+        // HRIS Stats API
+        Route::get('/hris/stats', [DashboardController::class, 'getHrisStats']);
     });
 
     // Test route for authentication

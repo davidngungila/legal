@@ -213,6 +213,16 @@ class Employee extends Model
         return $this->hasMany(Contract::class);
     }
 
+    public function inductionTrainings(): HasMany
+    {
+        return $this->hasMany(InductionTraining::class);
+    }
+
+    public function personnelIdApplications(): HasMany
+    {
+        return $this->hasMany(PersonnelIdApplication::class);
+    }
+
     /**
      * Get the active contract for the employee.
      */

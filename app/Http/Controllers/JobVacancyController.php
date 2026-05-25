@@ -69,6 +69,7 @@ class JobVacancyController extends Controller
             $status = $request->input('status', 'draft');
             
             $vacancy = JobVacancy::create(array_merge($validated, [
+                'client_id' => session('current_client_id'),
                 'status' => $status,
                 'initiated_by' => auth()->id(),
                 'application_date' => $status === 'submitted' ? now() : ($validated['application_date'] ?? now()),

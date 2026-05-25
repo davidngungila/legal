@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\InductionTraining;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,8 @@ class InductionTrainingController extends Controller
      */
     public function index()
     {
-        $employees = Employee::where('status', 'approved')
+        $employees = Employee::where('status', 'active')
+            ->with('inductionTrainings')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
@@ -27,9 +29,10 @@ class InductionTrainingController extends Controller
      */
     public function employeeTraining(Employee $employee)
     {
-        // In a real implementation, this would fetch training records from database
-        // For now, we'll pass the employee and show a placeholder view
-        return view('hris.induction-training.employee-training', compact('employee'));
+        $trainings = InductionTraining::where('employee_id', $employee->id)
+            ->orderBy('training_date', 'desc')
+            ->get();
+        return view('hris.induction-training.employee-training', compact('employee', 'trainings'));
     }
 
     /**
@@ -38,15 +41,15 @@ class InductionTrainingController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'employee_registration_id' => 'required|exists:employee_registrations,id',
+            'employee_id' => 'required|exists:employees,id',
             'training_date' => 'required|date|before_or_equal:today',
             'training_type' => 'required|in:company_policies,safety_procedures,job_specific,compliance,other',
             'training_title' => 'required|string|max:255',
             'training_description' => 'required|string|max:2000',
             'trainer_name' => 'required|string|max:255',
             'training_duration_hours' => 'required|numeric|min:0.5|max:40',
-            'training_materials_path' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:10240',
-            'completion_certificate_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'training_materials' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:10240',
+            'completion_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'assessment_score' => 'nullable|numeric|min:0|max:100',
             'assessment_passed' => 'required|boolean',
             'feedback_comments' => 'nullable|string|max:1000',
@@ -64,35 +67,33 @@ class InductionTrainingController extends Controller
         }
 
         try {
-            // In a real implementation, this would save to an induction_training table
-            // For now, we'll simulate the process and return success
-            
             // Handle file uploads
             $uploadedFiles = [];
             $fileFields = [
-                'training_materials_path' => 'training_materials',
-                'completion_certificate_path' => 'completion_certificate'
+                'training_materials' => 'training_materials_path',
+                'completion_certificate' => 'completion_certificate_path'
             ];
 
-            foreach ($fileFields as $dbField => $fileField) {
-                if ($request->hasFile($fileField)) {
-                    $file = $request->file($fileField);
-                    $fileName = time() . '_' . $fileField . '_' . $request->employee_registration_id . '.' . $file->getClientOriginalExtension();
+            foreach ($fileFields as $fileInput => $dbField) {
+                if ($request->hasFile($fileInput)) {
+                    $file = $request->file($fileInput);
+                    $fileName = time() . '_' . $fileInput . '_' . $request->employee_id . '.' . $file->getClientOriginalExtension();
                     $filePath = $file->storeAs('induction-training', $fileName, 'public');
                     $uploadedFiles[$dbField] = $filePath;
                 }
             }
 
-            // Simulate creating induction training record
-            $trainingData = array_merge($request->all(), $uploadedFiles, [
+            // Create induction training record
+            $training = InductionTraining::create(array_merge($request->except(['training_materials', 'completion_certificate']), $uploadedFiles, [
+                'client_id' => session('current_client_id'),
                 'created_by' => auth()->id(),
-                'created_at' => now(),
-            ]);
+                'updated_by' => auth()->id(),
+            ]));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Induction training record created successfully',
-                'data' => $trainingData
+                'data' => $training
             ]);
 
         } catch (\Exception $e) {

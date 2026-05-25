@@ -10,10 +10,16 @@ use App\Models\SelfService;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\EmployeeRegistration;
+use App\Models\EmployeeDocument;
+use App\Models\JobVacancy;
+use App\Models\HrCompetencyInterview;
+use App\Models\TechnicalInterview;
+
 class DashboardController extends Controller
 {
     /**
-     * Display the dashboard.
+     * Display the main dashboard.
      */
     public function index()
     {
@@ -48,6 +54,58 @@ class DashboardController extends Controller
         $client = $currentClient;
 
         return view('dashboard', compact('stats', 'recentActivities', 'alerts', 'currentClient'));
+    }
+
+    /**
+     * Display the HRIS dashboard.
+     */
+    public function hrisDashboard()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('clients.index')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('hris.dashboard', compact('currentClient'));
+    }
+
+    /**
+     * Get statistics for the HRIS dashboard.
+     */
+    public function getHrisStats()
+    {
+        $clientId = session('current_client_id');
+        
+        if (!$clientId) {
+            return response()->json(['success' => false, 'message' => 'No client selected']);
+        }
+
+        // The models will automatically filter by client_id because of the BelongsToCurrentClient trait
+        // as long as the session('current_client_id') is set, which it is in the middleware.
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'totalEmployees' => Employee::count(),
+                'activeContracts' => Contract::where('status', 'active')->count(),
+                'pendingApprovals' => EmployeeRegistration::where('status', 'submitted')->count(),
+                'totalDocuments' => EmployeeDocument::count(),
+                'userRegCount' => User::count(), // Users are filtered by client in their model too
+                'clientRegCount' => ClientRegistration::count(),
+                'jobVacancyCount' => JobVacancy::where('status', 'hr_approved')->count(),
+                'hrInterviewCount' => HrCompetencyInterview::where('status', 'submitted')->count(),
+                'techInterviewCount' => TechnicalInterview::where('status', 'submitted')->count(),
+                'employeeRegCount' => EmployeeRegistration::count(),
+                'documentCount' => EmployeeDocument::count(),
+                'socialRecordsCount' => Employee::whereNotNull('nssf_number')->count(), // Simplified
+                'trainingCount' => Employee::count(), // Placeholder
+                'personnelIdCount' => Employee::count(), // Placeholder
+                'contractMgmtCount' => Contract::count(),
+                'employmentContractCount' => Contract::count(),
+                'workflowCount' => EmployeeRegistration::where('status', 'submitted')->count() // Simplified
+            ]
+        ]);
     }
 
     /**

@@ -147,38 +147,59 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-xs space-y-1">
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                                        <span>NSSF: Registered</span>
+                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->nssf_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>NSSF: {{ $employee->socialRecord && $employee->socialRecord->nssf_number ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                                        <span>NHIF: Registered</span>
+                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->nhif_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>NHIF: {{ $employee->socialRecord && $employee->socialRecord->nhif_number ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                                        <span>TIN: Registered</span>
+                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->tin_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>TIN: {{ $employee->socialRecord && $employee->socialRecord->tin_number ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                                        <span>WCF: Registered</span>
+                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->wcf_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>WCF: {{ $employee->socialRecord && $employee->socialRecord->wcf_number ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Bank: Available</div>
-                                <div class="text-sm text-gray-500">Account: Verified</div>
-                                <div class="text-xs text-green-600">Documents: Complete</div>
+                                <div class="text-sm {{ $employee->socialRecord && $employee->socialRecord->bank_account_number ? 'text-gray-900' : 'text-red-600 font-semibold' }}">
+                                    Bank: {{ $employee->socialRecord && $employee->socialRecord->bank_name ? $employee->socialRecord->bank_name : 'No Data' }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    Account: {{ $employee->socialRecord && $employee->socialRecord->bank_account_number ? 'Verified' : 'Missing' }}
+                                </div>
+                                @if($employee->socialRecord && $employee->socialRecord->bank_verification_path)
+                                    <div class="text-xs text-green-600">Documents: Complete</div>
+                                @else
+                                    <div class="text-xs text-red-500">Documents: Incomplete</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Emergency: On file</div>
-                                <div class="text-sm text-gray-500">Next of Kin: On file</div>
-                                <div class="text-xs text-blue-600">Complete</div>
+                                <div class="text-sm {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'text-gray-900' : 'text-red-600 font-semibold' }}">
+                                    Emergency: {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'On file' : 'Missing' }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    Next of Kin: {{ $employee->socialRecord && $employee->socialRecord->next_of_kin_name ? 'On file' : 'Missing' }}
+                                </div>
+                                <div class="text-xs {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'text-blue-600' : 'text-red-500' }}">
+                                    {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'Complete' : 'Action Required' }}
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Active
+                                @php
+                                    $isComplete = $employee->socialRecord && 
+                                                 $employee->socialRecord->nssf_number && 
+                                                 $employee->socialRecord->nhif_number && 
+                                                 $employee->socialRecord->tin_number && 
+                                                 $employee->socialRecord->bank_account_number;
+                                @endphp
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $isComplete ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $isComplete ? 'Complete' : 'Incomplete' }}
                                 </span>
-                                <div class="text-xs text-gray-500 mt-1">Records: Complete</div>
+                                <div class="text-xs text-gray-500 mt-1">Status: Active</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">

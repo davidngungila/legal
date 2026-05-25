@@ -159,25 +159,58 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">EMP20240001</div>
-                                <div class="text-sm text-gray-500">Employee Card</div>
-                                <div class="text-xs text-gray-400">Applied: 2024-01-15</div>
+                                @if($latestApplication = $employee->personnelIdApplications->sortByDesc('created_at')->first())
+                                    <div class="text-sm text-gray-900">{{ $latestApplication->id_number }}</div>
+                                    <div class="text-sm text-gray-500">{{ Str::headline($latestApplication->id_type) }}</div>
+                                    <div class="text-xs text-gray-400">Applied: {{ $latestApplication->created_at->format('Y-m-d') }}</div>
+                                @else
+                                    <div class="text-sm text-gray-400 italic">No application</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Valid: 2024-01-20 to 2025-01-20</div>
-                                <div class="text-sm text-gray-500">365 days</div>
-                                <div class="text-xs text-green-600">Active</div>
+                                @if($latestApplication)
+                                    <div class="text-sm text-gray-900">Valid: {{ $latestApplication->valid_from->format('Y-m-d') }} to {{ $latestApplication->valid_until->format('Y-m-d') }}</div>
+                                    <div class="text-sm text-gray-500">{{ $latestApplication->valid_from->diffInDays($latestApplication->valid_until) }} days</div>
+                                    @if($latestApplication->valid_until->isFuture())
+                                        <div class="text-xs text-green-600">Active</div>
+                                    @else
+                                        <div class="text-xs text-red-600">Expired</div>
+                                    @endif
+                                @else
+                                    <div class="text-sm text-gray-400">-</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Main Building</div>
-                                <div class="text-sm text-gray-500">Office Area</div>
-                                <div class="text-xs text-blue-600">Emergency: Yes</div>
+                                @if($latestApplication)
+                                    <div class="text-sm text-gray-900">{{ Str::limit($latestApplication->access_areas, 20) }}</div>
+                                    <div class="text-sm text-gray-500">Access: {{ $latestApplication->after_hours_access ? '24/7' : 'Standard' }}</div>
+                                    <div class="text-xs text-blue-600">Emergency: {{ $latestApplication->emergency_access ? 'Yes' : 'No' }}</div>
+                                @else
+                                    <div class="text-sm text-gray-400">-</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Issued
-                                </span>
-                                <div class="text-xs text-gray-500 mt-1">Issued: 2024-01-20</div>
+                                @if($latestApplication)
+                                    @php
+                                        $statusClasses = [
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'approved' => 'bg-blue-100 text-blue-800',
+                                            'issued' => 'bg-green-100 text-green-800',
+                                            'rejected' => 'bg-red-100 text-red-800',
+                                            'expired' => 'bg-gray-100 text-gray-800',
+                                            'lost' => 'bg-red-100 text-red-800',
+                                            'damaged' => 'bg-orange-100 text-orange-800',
+                                        ];
+                                    @endphp
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses[$latestApplication->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                        {{ ucfirst($latestApplication->status) }}
+                                    </span>
+                                    <div class="text-xs text-gray-500 mt-1">Updated: {{ $latestApplication->updated_at->format('Y-m-d') }}</div>
+                                @else
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        Not Applied
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmployeeRegistration;
+use App\Models\SocialRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,7 @@ class SocialRecordsController extends Controller
     public function index()
     {
         $employees = EmployeeRegistration::where('status', 'approved')
+            ->with('socialRecord')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
@@ -27,9 +29,8 @@ class SocialRecordsController extends Controller
      */
     public function employeeRecords(EmployeeRegistration $employee)
     {
-        // In a real implementation, this would fetch social records from database
-        // For now, we'll pass the employee and show a placeholder view
-        return view('hris.social-records.employee-records', compact('employee'));
+        $socialRecord = SocialRecord::where('employee_registration_id', $employee->id)->first();
+        return view('hris.social-records.employee-records', compact('employee', 'socialRecord'));
     }
 
     /**
@@ -40,19 +41,19 @@ class SocialRecordsController extends Controller
         $validator = Validator::make($request->all(), [
             'employee_registration_id' => 'required|exists:employee_registrations,id',
             'nssf_number' => 'required|string|max:50',
-            'nssf_card_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'nssf_card' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'nhif_number' => 'required|string|max:50',
-            'nhif_card_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'nhif_card' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'tin_number' => 'required|string|max:50',
-            'tin_certificate_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'tin_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'wcf_number' => 'required|string|max:50',
-            'wcf_certificate_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'wcf_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'osha_number' => 'nullable|string|max:50',
-            'osha_certificate_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'osha_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'bank_name' => 'required|string|max:255',
             'bank_account_number' => 'required|string|max:50',
             'bank_branch' => 'required|string|max:255',
-            'bank_verification_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'bank_verification' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'emergency_contact_name' => 'required|string|max:255',
             'emergency_contact_relationship' => 'required|string|max:100',
             'emergency_contact_phone' => 'required|string|max:20',
@@ -74,39 +75,40 @@ class SocialRecordsController extends Controller
         }
 
         try {
-            // In a real implementation, this would save to a social_records table
-            // For now, we'll simulate the process and return success
-            
             // Handle file uploads
             $uploadedFiles = [];
             $fileFields = [
-                'nssf_card_path' => 'nssf_card',
-                'nhif_card_path' => 'nhif_card',
-                'tin_certificate_path' => 'tin_certificate',
-                'wcf_certificate_path' => 'wcf_certificate',
-                'osha_certificate_path' => 'osha_certificate',
-                'bank_verification_path' => 'bank_verification'
+                'nssf_card' => 'nssf_card_path',
+                'nhif_card' => 'nhif_card_path',
+                'tin_certificate' => 'tin_certificate_path',
+                'wcf_certificate' => 'wcf_certificate_path',
+                'osha_certificate' => 'osha_certificate_path',
+                'bank_verification' => 'bank_verification_path'
             ];
 
-            foreach ($fileFields as $dbField => $fileField) {
-                if ($request->hasFile($fileField)) {
-                    $file = $request->file($fileField);
-                    $fileName = time() . '_' . $fileField . '_' . $request->employee_registration_id . '.' . $file->getClientOriginalExtension();
+            foreach ($fileFields as $fileInput => $dbField) {
+                if ($request->hasFile($fileInput)) {
+                    $file = $request->file($fileInput);
+                    $fileName = time() . '_' . $fileInput . '_' . $request->employee_registration_id . '.' . $file->getClientOriginalExtension();
                     $filePath = $file->storeAs('social-records', $fileName, 'public');
                     $uploadedFiles[$dbField] = $filePath;
                 }
             }
 
-            // Simulate creating social records
-            $socialRecordData = array_merge($request->all(), $uploadedFiles, [
-                'created_by' => auth()->id(),
-                'created_at' => now(),
-            ]);
+            // Create or update social record
+            $socialRecord = SocialRecord::updateOrCreate(
+                ['employee_registration_id' => $request->employee_registration_id],
+                array_merge($request->except(['nssf_card', 'nhif_card', 'tin_certificate', 'wcf_certificate', 'osha_certificate', 'bank_verification']), $uploadedFiles, [
+                    'client_id' => session('current_client_id'),
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
+                ])
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Social records registered successfully',
-                'data' => $socialRecordData
+                'data' => $socialRecord
             ]);
 
         } catch (\Exception $e) {

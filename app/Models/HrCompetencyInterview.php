@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Models\Traits\BelongsToCurrentClient;
+
 class HrCompetencyInterview extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $table = 'hr_competency_interviews';
 
     protected $fillable = [
+        'client_id',
         'interview_number',
         'job_title',
         'interview_date',
@@ -99,6 +102,14 @@ class HrCompetencyInterview extends Model
     public function hrManager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'hr_manager_id');
+    }
+
+    /**
+     * Filter by current client.
+     */
+    protected static function filterByClient(\Illuminate\Database\Eloquent\Builder $builder, $clientId)
+    {
+        $builder->where('hr_competency_interviews.client_id', $clientId);
     }
 
     public function scopeByStatus($query, $status)

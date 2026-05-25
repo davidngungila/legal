@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Models\Traits\BelongsToCurrentClient;
+
 class JobVacancy extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $table = 'job_vacancies';
 
     protected $fillable = [
+        'client_id',
         'company_name',
         'job_title',
         'vacancy_type',
@@ -72,6 +75,14 @@ class JobVacancy extends Model
     public function hrManager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'hr_manager_id');
+    }
+
+    /**
+     * Filter by current client.
+     */
+    protected static function filterByClient(\Illuminate\Database\Eloquent\Builder $builder, $clientId)
+    {
+        $builder->where('job_vacancies.client_id', $clientId);
     }
 
     public function scopeByStatus($query, $status)

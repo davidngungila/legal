@@ -61,6 +61,7 @@ class TechnicalInterviewController extends Controller
             $interviewNumber = TechnicalInterview::generateInterviewNumber();
 
             $interview = TechnicalInterview::create(array_merge($validated, [
+                'client_id' => session('current_client_id'),
                 'interview_number' => $interviewNumber,
                 'interviewer_id' => auth()->id(),
                 'status' => $status,

@@ -4,15 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Traits\BelongsToCurrentClient;
 
 class TechnicalInterview extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $table = 'technical_interviews';
 
     protected $fillable = [
+        'client_id',
         'interview_number',
         'hr_interview_id',
         'candidate_name',
@@ -44,19 +45,27 @@ class TechnicalInterview extends Model
         'status' => 'string',
     ];
 
-    public function hrInterview(): BelongsTo
+    public function hrInterview(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(HrCompetencyInterview::class, 'hr_interview_id');
     }
 
-    public function interviewer(): BelongsTo
+    public function interviewer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'interviewer_id');
     }
 
-    public function departmentManager(): BelongsTo
+    public function departmentManager(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'department_manager_id');
+    }
+
+    /**
+     * Filter by current client.
+     */
+    protected static function filterByClient(\Illuminate\Database\Eloquent\Builder $builder, $clientId)
+    {
+        $builder->where('technical_interviews.client_id', $clientId);
     }
 
     public function scopeByStatus($query, $status)

@@ -89,7 +89,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <div class="relative">
-                    <input type="text" id="employeeSearch" placeholder="Search employees..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="employeeSearch" value="{{ request('search') }}" placeholder="Search employees..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <i data-feather="search" class="w-5 h-5 text-gray-400 absolute left-3 top-2.5"></i>
                 </div>
             </div>
@@ -98,11 +98,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
                 <select id="departmentFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Departments</option>
-                    <option value="IT">IT</option>
-                    <option value="HR">HR</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Sales">Sales</option>
+                    <option value="IT" {{ request('department') == 'IT' ? 'selected' : '' }}>IT</option>
+                    <option value="HR" {{ request('department') == 'HR' ? 'selected' : '' }}>HR</option>
+                    <option value="Finance" {{ request('department') == 'Finance' ? 'selected' : '' }}>Finance</option>
+                    <option value="Operations" {{ request('department') == 'Operations' ? 'selected' : '' }}>Operations</option>
+                    <option value="Sales" {{ request('department') == 'Sales' ? 'selected' : '' }}>Sales</option>
                 </select>
             </div>
             
@@ -110,10 +110,10 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Employment Type</label>
                 <select id="employmentTypeFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Types</option>
-                    <option value="Permanent">Permanent</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Probation">Probation</option>
-                    <option value="Intern">Intern</option>
+                    <option value="Permanent" {{ request('employment_type') == 'Permanent' ? 'selected' : '' }}>Permanent</option>
+                    <option value="Contract" {{ request('employment_type') == 'Contract' ? 'selected' : '' }}>Contract</option>
+                    <option value="Probation" {{ request('employment_type') == 'Probation' ? 'selected' : '' }}>Probation</option>
+                    <option value="Intern" {{ request('employment_type') == 'Intern' ? 'selected' : '' }}>Intern</option>
                 </select>
             </div>
             
@@ -121,10 +121,10 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Status</option>
-                    <option value="Active">Active</option>
-                    <option value="On Leave">On Leave</option>
-                    <option value="Suspended">Suspended</option>
-                    <option value="Terminated">Terminated</option>
+                    <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Active</option>
+                    <option value="On Leave" {{ request('status') == 'On Leave' ? 'selected' : '' }}>On Leave</option>
+                    <option value="Suspended" {{ request('status') == 'Suspended' ? 'selected' : '' }}>Suspended</option>
+                    <option value="Terminated" {{ request('status') == 'Terminated' ? 'selected' : '' }}>Terminated</option>
                 </select>
             </div>
         </div>

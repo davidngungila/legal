@@ -359,34 +359,19 @@ class HrisDashboard {
 
     async loadSystemStats() {
         try {
-            // Simulate loading system statistics
-            const stats = {
-                totalEmployees: 127,
-                activeContracts: 89,
-                pendingApprovals: 15,
-                totalDocuments: 342,
-                userRegCount: 45,
-                clientRegCount: 23,
-                jobVacancyCount: 8,
-                hrInterviewCount: 12,
-                techInterviewCount: 7,
-                employeeRegCount: 89,
-                documentCount: 342,
-                socialRecordsCount: 76,
-                trainingCount: 95,
-                personnelIdCount: 89,
-                contractMgmtCount: 89,
-                employmentContractCount: 89,
-                workflowCount: 15
-            };
-
-            // Update dashboard counts
-            Object.keys(stats).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.textContent = stats[key];
-                }
-            });
+            const response = await fetch('/api/hris/stats');
+            const data = await response.json();
+            
+            if (data.success) {
+                const stats = data.stats;
+                // Update dashboard counts
+                Object.keys(stats).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.textContent = stats[key];
+                    }
+                });
+            }
 
         } catch (error) {
             console.error('Failed to load system stats:', error);

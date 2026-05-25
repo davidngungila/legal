@@ -21,37 +21,37 @@
 
     <!-- Search and Filters -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form action="{{ route('employee-registration.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <input type="text" id="searchInput" placeholder="Search employees..." 
+                <input type="text" name="search" id="searchInput" value="{{ request('search') }}" placeholder="Search employees..." 
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div>
-                <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <select name="status" id="statusFilter" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                    <option value="submitted" {{ request('status') == 'submitted' ? 'selected' : '' }}>Submitted</option>
+                    <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>
             </div>
             <div>
-                <select id="workStationFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <select name="work_station" id="workStationFilter" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Work Stations</option>
-                    @foreach($employees->pluck('work_station')->unique() as $workStation)
-                        <option value="{{ $workStation }}">{{ $workStation }}</option>
+                    @foreach(\App\Models\EmployeeRegistration::pluck('work_station')->unique() as $workStation)
+                        <option value="{{ $workStation }}" {{ request('work_station') == $workStation ? 'selected' : '' }}>{{ $workStation }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
-                <select id="contractTypeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <select name="contract_type" id="contractTypeFilter" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Contract Types</option>
-                    @foreach($employees->pluck('type_of_contract')->unique() as $contractType)
-                        <option value="{{ $contractType }}">{{ $contractType }}</option>
+                    @foreach(\App\Models\EmployeeRegistration::pluck('type_of_contract')->unique() as $contractType)
+                        <option value="{{ $contractType }}" {{ request('contract_type') == $contractType ? 'selected' : '' }}>{{ $contractType }}</option>
                     @endforeach
                 </select>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Employees Table -->
@@ -244,7 +244,6 @@ class EmployeeRegistrationManager {
     }
 
     init() {
-        this.setupEventListeners();
         this.initializeFeather();
     }
 
@@ -252,49 +251,6 @@ class EmployeeRegistrationManager {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
-    }
-
-    setupEventListeners() {
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', () => this.filterEmployees());
-
-        // Filter functionality
-        const statusFilter = document.getElementById('statusFilter');
-        statusFilter.addEventListener('change', () => this.filterEmployees());
-
-        const workStationFilter = document.getElementById('workStationFilter');
-        workStationFilter.addEventListener('change', () => this.filterEmployees());
-
-        const contractTypeFilter = document.getElementById('contractTypeFilter');
-        contractTypeFilter.addEventListener('change', () => this.filterEmployees());
-    }
-
-    filterEmployees() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value;
-        const workStationFilter = document.getElementById('workStationFilter').value;
-        const contractTypeFilter = document.getElementById('contractTypeFilter').value;
-        const employeeRows = document.querySelectorAll('.employee-row');
-
-        employeeRows.forEach(row => {
-            const name = row.dataset.name.toLowerCase();
-            const email = row.dataset.email.toLowerCase();
-            const workStation = row.dataset.workstation;
-            const contractType = row.dataset.contract;
-            const status = row.dataset.status;
-
-            const matchesSearch = !searchTerm || name.includes(searchTerm) || email.includes(searchTerm);
-            const matchesStatus = !statusFilter || status === statusFilter;
-            const matchesWorkStation = !workStationFilter || workStation === workStationFilter;
-            const matchesContractType = !contractTypeFilter || contractType === contractTypeFilter;
-
-            if (matchesSearch && matchesStatus && matchesWorkStation && matchesContractType) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
     }
 }
 

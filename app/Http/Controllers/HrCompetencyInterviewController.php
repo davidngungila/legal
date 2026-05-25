@@ -86,6 +86,7 @@ class HrCompetencyInterviewController extends Controller
             $interviewNumber = HrCompetencyInterview::generateInterviewNumber();
 
             $interview = HrCompetencyInterview::create(array_merge($validated, [
+                'client_id' => session('current_client_id'),
                 'interview_number' => $interviewNumber,
                 'interviewer_id' => auth()->id(),
                 'status' => $status,

@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Models\Traits\BelongsToCurrentClient;
+
 class LeaveRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $fillable = [
+        'client_id',
         'employee_id',
         'leave_type',
         'start_date',

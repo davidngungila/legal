@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Models\Traits\BelongsToCurrentClient;
+
 class EmployeeDocument extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $table = 'employee_documents';
 
     protected $fillable = [
+        'client_id',
         'employee_id',
         'document_type',
         'document_name',
@@ -64,6 +67,14 @@ class EmployeeDocument extends Model
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    /**
+     * Filter by current client.
+     */
+    protected static function filterByClient(\Illuminate\Database\Eloquent\Builder $builder, $clientId)
+    {
+        $builder->where('employee_documents.client_id', $clientId);
     }
 
     public function scopeByEmployee($query, $employeeId)

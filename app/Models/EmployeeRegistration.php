@@ -4,16 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\BelongsToCurrentClient;
 
 class EmployeeRegistration extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $table = 'employee_registrations';
 
     protected $fillable = [
+        'client_id',
         'employee_number',
         'hr_interview_id',
         'technical_interview_id',
@@ -63,7 +63,7 @@ class EmployeeRegistration extends Model
     /**
      * Get the HR interview associated with the registration.
      */
-    public function hrInterview(): BelongsTo
+    public function hrInterview(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(HrCompetencyInterview::class, 'hr_interview_id');
     }
@@ -71,7 +71,7 @@ class EmployeeRegistration extends Model
     /**
      * Get the technical interview associated with the registration.
      */
-    public function technicalInterview(): BelongsTo
+    public function technicalInterview(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(TechnicalInterview::class, 'technical_interview_id');
     }
@@ -79,7 +79,7 @@ class EmployeeRegistration extends Model
     /**
      * Get the user who created the registration.
      */
-    public function creator(): BelongsTo
+    public function creator(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -87,14 +87,37 @@ class EmployeeRegistration extends Model
     /**
      * Get the user who approved the registration.
      */
-    public function approver(): BelongsTo
+    public function approver(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    public function documents(): HasMany
+    public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(EmployeeDocument::class, 'employee_registration_id');
+    }
+
+    public function socialRecord(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(SocialRecord::class, 'employee_registration_id');
+    }
+
+    public function inductionTrainings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InductionTraining::class, 'employee_registration_id');
+    }
+
+    public function personnelIdApplications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PersonnelIdApplication::class, 'employee_registration_id');
+    }
+
+    /**
+     * Filter by current client.
+     */
+    protected static function filterByClient(\Illuminate\Database\Eloquent\Builder $builder, $clientId)
+    {
+        $builder->where('employee_registrations.client_id', $clientId);
     }
 
     /**

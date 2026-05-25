@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
+use App\Models\Traits\BelongsToCurrentClient;
+
 class Contract extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     /**
      * The attributes that are mass assignable.

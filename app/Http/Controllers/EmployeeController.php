@@ -10,25 +10,50 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Barryvdh\Swift\Flash;
 
 class EmployeeController extends Controller
 {
     /**
      * Display a listing of the employees.
      */
-    public function index()
+    public function index(Request $request)
     {
         $currentClient = session('current_client');
         $currentUser = Auth::user();
         
-        // Get employees for current client
-        $employees = Employee::forCurrentClient()
-            ->with(['client', 'contracts'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Start query with client filter
+        $query = Employee::forCurrentClient()
+            ->with(['client', 'contracts']);
 
-        // Get statistics
+        // Apply filters if provided
+        if ($request->filled('search')) {
+            $searchTerm = $request->get('search');
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('first_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('last_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('employee_id', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department', $request->get('department'));
+        }
+
+        if ($request->filled('employment_type')) {
+            $query->where('employment_type', $request->get('employment_type'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', strtolower($request->get('status')));
+        }
+
+        // Get employees with pagination
+        $employees = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        // Get statistics (always for the current client)
         $stats = Employee::getEmployeeStats();
 
         return view('employees.index', compact('employees', 'stats', 'currentClient', 'currentUser'));
@@ -52,15 +77,29 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
+        $clientId = session('current_client_id');
+        
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:employees,email,NULL,' . $request->client_id,
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('employees')->where(function ($query) use ($clientId) {
+                    return $query->where('client_id', $clientId);
+                })
+            ],
             'phone' => 'nullable|string|max:20',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other',
-            'national_id' => 'required|string|max:50|unique:employees,national_id,NULL,' . $request->client_id,
+            'national_id' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('employees')->where(function ($query) use ($clientId) {
+                    return $query->where('client_id', $clientId);
+                })
+            ],
             'passport_number' => 'nullable|string|max:50',
             'tin_number' => 'nullable|string|max:30',
             'nssf_number' => 'nullable|string|max:30',
@@ -93,13 +132,13 @@ class EmployeeController extends Controller
             'notes' => 'nullable|string|max:2000',
         ]);
 
+        // Force client_id from session
+        $validated['client_id'] = $clientId;
         // Add created by user
         $validated['created_by'] = Auth::id();
 
         $employee = Employee::create($validated);
 
-        Flash::success('Employee created successfully!');
-        
         return redirect()->route('employees.index')
                      ->with('success', 'Employee "' . $employee->full_name . '" has been added successfully.');
     }
@@ -194,8 +233,6 @@ class EmployeeController extends Controller
 
         $employee->update($validated);
 
-        Flash::success('Employee updated successfully!');
-        
         return redirect()->route('employees.index')
                      ->with('success', 'Employee "' . $employee->full_name . '" has been updated successfully.');
     }
@@ -213,8 +250,6 @@ class EmployeeController extends Controller
 
         $employee->delete();
 
-        Flash::success('Employee deleted successfully!');
-        
         return redirect()->route('employees.index')
                      ->with('success', 'Employee "' . $employee->full_name . '" has been deleted successfully.');
     }
@@ -234,8 +269,8 @@ class EmployeeController extends Controller
         $activeContract = $employee->activeContract()->first();
         
         if ($activeContract) {
-            Flash::warning('Employee already has an active contract!');
-            return redirect()->route('employees.show', $employee->id);
+            return redirect()->route('employees.show', $employee->id)
+                ->with('warning', 'Employee already has an active contract!');
         }
 
         // Create new contract
@@ -254,8 +289,6 @@ class EmployeeController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        Flash::success('Contract generated successfully!');
-        
         return redirect()->route('contracts.show', $contract->id)
                      ->with('success', 'Contract has been generated for "' . $employee->full_name . '" and is pending signature.');
     }
@@ -303,9 +336,12 @@ class EmployeeController extends Controller
             ];
         })->toArray();
 
-        $callback = function() use ($data) {
+        $callback = function() use ($data, $headers) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, $data);
+            fputcsv($file, $headers);
+            foreach ($data as $row) {
+                fputcsv($file, $row);
+            }
             fclose($file);
         };
 

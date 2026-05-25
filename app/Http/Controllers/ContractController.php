@@ -7,7 +7,6 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\Swift\Flash;
 
 class ContractController extends Controller
 {
@@ -79,8 +78,6 @@ class ContractController extends Controller
 
         $contract = Contract::create($validated);
 
-        Flash::success('Contract created successfully!');
-        
         return redirect()->route('contracts.index')
                      ->with('success', 'Contract "' . $contract->formatted_contract_number . '" has been created successfully.');
     }
@@ -157,8 +154,6 @@ class ContractController extends Controller
 
         $contract->update($validated);
 
-        Flash::success('Contract updated successfully!');
-        
         return redirect()->route('contracts.index')
                      ->with('success', 'Contract "' . $contract->formatted_contract_number . '" has been updated successfully.');
     }
@@ -176,8 +171,6 @@ class ContractController extends Controller
 
         $contract->delete();
 
-        Flash::success('Contract deleted successfully!');
-        
         return redirect()->route('contracts.index')
                      ->with('success', 'Contract "' . $contract->formatted_contract_number . '" has been deleted successfully.');
     }
@@ -204,8 +197,6 @@ class ContractController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
-        Flash::success('Contract signed successfully!');
-        
         return redirect()->route('contracts.show', $contract->id)
                      ->with('success', 'Contract has been signed successfully.');
     }
@@ -232,8 +223,6 @@ class ContractController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
-        Flash::success('Contract terminated successfully!');
-        
         return redirect()->route('contracts.show', $contract->id)
                      ->with('success', 'Contract has been terminated successfully.');
     }
@@ -261,8 +250,6 @@ class ContractController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
-        Flash::success('Contract renewed successfully!');
-        
         return redirect()->route('contracts.show', $contract->id)
                      ->with('success', 'Contract has been renewed successfully.');
     }

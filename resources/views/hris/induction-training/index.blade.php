@@ -173,27 +173,52 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                @php
+                                    $totalModules = 4; // Assuming 4 standard modules
+                                    $completedCount = $employee->inductionTrainings->where('status', 'completed')->count();
+                                    $percentage = $totalModules > 0 ? ($completedCount / $totalModules) * 100 : 0;
+                                @endphp
                                 <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ $percentage }}%"></div>
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">75% Complete</div>
-                                <div class="text-xs text-gray-400">3 of 4 modules</div>
+                                <div class="text-xs text-gray-500 mt-1">{{ number_format($percentage, 0) }}% Complete</div>
+                                <div class="text-xs text-gray-400">{{ $completedCount }} of {{ $totalModules }} modules</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Company Policies</div>
-                                <div class="text-sm text-gray-500">Completed: 2024-01-15</div>
-                                <div class="text-xs text-green-600">Score: 92%</div>
+                                @if($latestTraining = $employee->inductionTrainings->sortByDesc('training_date')->first())
+                                    <div class="text-sm text-gray-900">{{ Str::headline($latestTraining->training_type) }}</div>
+                                    <div class="text-sm text-gray-500">Date: {{ $latestTraining->training_date->format('Y-m-d') }}</div>
+                                    <div class="text-xs {{ $latestTraining->assessment_passed ? 'text-green-600' : 'text-red-600' }}">
+                                        {{ $latestTraining->assessment_passed ? 'Score: ' . $latestTraining->assessment_score . '%' : 'Failed' }}
+                                    </div>
+                                @else
+                                    <div class="text-sm text-gray-400 italic">No training recorded</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">24.5 hours</div>
+                                <div class="text-sm text-gray-900">{{ $employee->inductionTrainings->sum('training_duration_hours') }} hours</div>
                                 <div class="text-sm text-gray-500">Target: 32 hours</div>
-                                <div class="text-xs text-blue-600">76.6%</div>
+                                <div class="text-xs text-blue-600">{{ number_format(($employee->inductionTrainings->sum('training_duration_hours') / 32) * 100, 1) }}%</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    In Progress
-                                </span>
-                                <div class="text-xs text-gray-500 mt-1">Next: Safety Procedures</div>
+                                @if($percentage >= 100)
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Completed
+                                    </span>
+                                @elseif($completedCount > 0)
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        In Progress
+                                    </span>
+                                @else
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        Not Started
+                                    </span>
+                                @endif
+                                <div class="text-xs text-gray-500 mt-1">
+                                    @if($nextTraining = $employee->inductionTrainings->where('status', 'scheduled')->sortBy('training_date')->first())
+                                        Next: {{ Str::headline($nextTraining->training_type) }}
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">

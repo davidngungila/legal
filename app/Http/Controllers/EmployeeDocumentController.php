@@ -72,6 +72,7 @@ class EmployeeDocumentController extends Controller
                 $filePath = $file->storeAs('employee-documents', $fileName, 'public');
                 
                 $document = EmployeeDocument::create([
+                    'client_id' => session('current_client_id'),
                     'employee_registration_id' => $request->employee_registration_id,
                     'document_type' => $request->document_type,
                     'document_name' => $request->document_name,

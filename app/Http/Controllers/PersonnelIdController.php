@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\PersonnelIdApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,8 @@ class PersonnelIdController extends Controller
      */
     public function index()
     {
-        $employees = Employee::where('status', 'approved')
+        $employees = Employee::where('status', 'active')
+            ->with('personnelIdApplications')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
@@ -27,9 +29,10 @@ class PersonnelIdController extends Controller
      */
     public function employeeId(Employee $employee)
     {
-        // In a real implementation, this would fetch ID application from database
-        // For now, we'll pass the employee and show a placeholder view
-        return view('hris.personnel-id.employee-id', compact('employee'));
+        $applications = PersonnelIdApplication::where('employee_id', $employee->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('hris.personnel-id.employee-id', compact('employee', 'applications'));
     }
 
     /**
@@ -38,16 +41,16 @@ class PersonnelIdController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'employee_registration_id' => 'required|exists:employee_registrations,id',
+            'employee_id' => 'required|exists:employees,id',
             'id_type' => 'required|in:employee_card,access_card,visitor_card,contractor_card',
             'id_purpose' => 'required|string|max:255',
             'valid_from' => 'required|date',
             'valid_until' => 'required|date|after:valid_from',
             'access_areas' => 'nullable|string|max:1000',
             'special_permissions' => 'nullable|string|max:1000',
-            'photo_path' => 'required|file|mimes:jpg,jpeg,png|max:5120',
-            'signature_path' => 'required|file|mimes:jpg,jpeg,png|max:5120',
-            'fingerprint_path' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'photo' => 'required|file|mimes:jpg,jpeg,png|max:5120',
+            'signature' => 'required|file|mimes:jpg,jpeg,png|max:5120',
+            'fingerprint' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'emergency_access' => 'required|boolean',
             'after_hours_access' => 'required|boolean',
             'status' => 'required|in:pending,approved,rejected,issued,expired,lost,damaged',
@@ -63,21 +66,18 @@ class PersonnelIdController extends Controller
         }
 
         try {
-            // In a real implementation, this would save to a personnel_id_applications table
-            // For now, we'll simulate the process and return success
-            
             // Handle file uploads
             $uploadedFiles = [];
             $fileFields = [
-                'photo_path' => 'photo',
-                'signature_path' => 'signature',
-                'fingerprint_path' => 'fingerprint'
+                'photo' => 'photo_path',
+                'signature' => 'signature_path',
+                'fingerprint' => 'fingerprint_path'
             ];
 
-            foreach ($fileFields as $dbField => $fileField) {
-                if ($request->hasFile($fileField)) {
-                    $file = $request->file($fileField);
-                    $fileName = time() . '_' . $fileField . '_' . $request->employee_registration_id . '.' . $file->getClientOriginalExtension();
+            foreach ($fileFields as $fileInput => $dbField) {
+                if ($request->hasFile($fileInput)) {
+                    $file = $request->file($fileInput);
+                    $fileName = time() . '_' . $fileInput . '_' . $request->employee_id . '.' . $file->getClientOriginalExtension();
                     $filePath = $file->storeAs('personnel-id', $fileName, 'public');
                     $uploadedFiles[$dbField] = $filePath;
                 }
@@ -86,17 +86,18 @@ class PersonnelIdController extends Controller
             // Generate unique ID number
             $idNumber = $this->generateIdNumber($request->id_type);
 
-            // Simulate creating personnel ID application
-            $idData = array_merge($request->all(), $uploadedFiles, [
+            // Create personnel ID application
+            $application = PersonnelIdApplication::create(array_merge($request->except(['photo', 'signature', 'fingerprint']), $uploadedFiles, [
+                'client_id' => session('current_client_id'),
                 'id_number' => $idNumber,
                 'created_by' => auth()->id(),
-                'created_at' => now(),
-            ]);
+                'updated_by' => auth()->id(),
+            ]));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Personnel ID application submitted successfully',
-                'data' => $idData,
+                'data' => $application,
                 'id_number' => $idNumber
             ]);
 
