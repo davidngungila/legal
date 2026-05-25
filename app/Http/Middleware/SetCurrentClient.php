@@ -20,7 +20,15 @@ class SetCurrentClient
     {
         $clientId = Session::get('current_client_id');
         
-        // If no client is set in session, try to set a default
+        // If authenticated and session is empty, try to get from user record
+        if (!$clientId && auth()->check()) {
+            $clientId = auth()->user()->current_client_id;
+            if ($clientId) {
+                Session::put('current_client_id', $clientId);
+            }
+        }
+        
+        // If no client is set in session or user record, try to set a default
         if (!$clientId) {
             $this->setDefaultClient();
             $clientId = Session::get('current_client_id');
@@ -58,18 +66,27 @@ class SetCurrentClient
         // If user is authenticated, try to get their first assigned client
         if (auth()->check()) {
             $user = auth()->user();
-            $firstClient = $user->clients()->first();
+            
+            // Use same logic as ClientSwitchController for stability
+            if ($user->hasRole('admin')) {
+                $firstClient = Client::orderBy('name')->first();
+            } else {
+                $firstClient = $user->clients()->orderBy('name')->first();
+            }
             
             if ($firstClient) {
                 Session::put('current_client_id', $firstClient->id);
                 Session::put('current_client_name', $firstClient->name);
                 Session::put('current_client', $firstClient);
+                
+                // Persist to database as well
+                $user->update(['current_client_id' => $firstClient->id]);
                 return;
             }
         }
         
-        // Fallback to any available client
-        $firstClient = Client::orderBy('created_at', 'desc')->first();
+        // Fallback to any available client, sorted alphabetically for stability
+        $firstClient = Client::orderBy('name')->first();
         
         if ($firstClient) {
             Session::put('current_client_id', $firstClient->id);

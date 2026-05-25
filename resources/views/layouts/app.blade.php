@@ -699,11 +699,10 @@
         }
 
         // Client switching function (available on all pages)
-        function switchClient(clientId) {
+        async function switchClient(clientId) {
             // Prevent switching to the same client
             const currentClient = getCurrentClient();
-            if (currentClient.id === clientId) {
-                showNotification('Already viewing this client', 'info');
+            if (currentClient && currentClient.id == clientId) {
                 return;
             }
             
@@ -711,23 +710,41 @@
             showClientSwitchingLoader(true);
             showNotification('Switching client...', 'info');
             
-            // Add transition effects
-            document.body.classList.add('client-switching');
-            
-            // Store selected client in session storage
-            sessionStorage.setItem('selectedClientId', clientId);
-            
-            // Update UI elements
-            updateClientUI(clientId);
-            
-            // Update all module data for the new client
-            updateAllModuleData(clientId);
-            
-            // Force page reload after client switch to ensure server-side updates
-            setTimeout(() => {
-                // Reload the page to ensure all server-side data is updated
-                window.location.href = window.location.href;
-            }, 500);
+            try {
+                const response = await fetch('/api/client-switch/switch', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        client_id: clientId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update storage for fallback
+                    sessionStorage.setItem('selectedClientId', clientId);
+                    localStorage.setItem('selectedClientId', clientId);
+                    
+                    showNotification(data.message, 'success');
+                    
+                    // Force page reload after client switch to ensure server-side updates
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    showClientSwitchingLoader(false);
+                    showNotification('Failed to switch client', 'error');
+                }
+            } catch (error) {
+                console.error('Error switching client:', error);
+                showClientSwitchingLoader(false);
+                showNotification('Error switching client', 'error');
+            }
         }
         
         // Show/hide client switching loader
@@ -1111,7 +1128,12 @@
         
         // Get current selected client
         function getCurrentClient() {
-            // Enhanced fallback chain for client ID
+            // PRIORITY 1: Live data from the server (source of truth)
+            if (window.liveClientData && window.liveClientData.id) {
+                return window.liveClientData;
+            }
+
+            // Fallback chain for client ID
             let clientId = sessionStorage.getItem('selectedClientId') || 
                           localStorage.getItem('selectedClientId');
             
@@ -1120,22 +1142,12 @@
             const urlClientId = urlParams.get('client_id');
             if (urlClientId) {
                 clientId = urlClientId;
-                // Save to both storage methods
-                sessionStorage.setItem('selectedClientId', clientId);
-                localStorage.setItem('selectedClientId', clientId);
             }
             
-            // If still no client ID, use live data if available
-            if (!clientId && window.liveClientData) {
-                clientId = window.liveClientData.id;
-                // Save to both storage methods
-                sessionStorage.setItem('selectedClientId', clientId);
-                localStorage.setItem('selectedClientId', clientId);
-            }
-            
-            // Find client in live data
-            if (clientId && window.liveClientData && window.liveClientData.id == clientId) {
-                return window.liveClientData;
+            // Find client in allClients
+            if (clientId && window.allClients) {
+                const client = window.allClients.find(c => c.id == clientId);
+                if (client) return client;
             }
             
             // Return default client if no specific client found

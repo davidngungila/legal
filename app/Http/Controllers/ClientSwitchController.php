@@ -25,6 +25,12 @@ class ClientSwitchController extends Controller
         Session::put('current_client_name', $client->name);
         Session::put('current_client', $client);
         
+        // Persist to user record if authenticated
+        if (auth()->check()) {
+            $user = auth()->user();
+            $user->update(['current_client_id' => $clientId]);
+        }
+        
         // Also share with views immediately for this request
         view()->share('currentClient', $client);
 
@@ -42,6 +48,14 @@ class ClientSwitchController extends Controller
     {
         $clientId = Session::get('current_client_id');
         
+        // If not in session, try user record
+        if (!$clientId && auth()->check()) {
+            $clientId = auth()->user()->current_client_id;
+            if ($clientId) {
+                Session::put('current_client_id', $clientId);
+            }
+        }
+        
         if (!$clientId) {
             // Get first available client as default
             $firstClient = $this->getFirstAvailableClient();
@@ -49,6 +63,12 @@ class ClientSwitchController extends Controller
                 Session::put('current_client_id', $firstClient->id);
                 Session::put('current_client_name', $firstClient->name);
                 Session::put('current_client', $firstClient);
+                
+                // Persist to database if authenticated
+                if (auth()->check()) {
+                    auth()->user()->update(['current_client_id' => $firstClient->id]);
+                }
+                
                 $clientId = $firstClient->id;
             }
         }
@@ -88,15 +108,21 @@ class ClientSwitchController extends Controller
         // If user is authenticated, try to get their first assigned client
         if (auth()->check()) {
             $user = auth()->user();
-            $firstClient = $user->clients()->first();
+            
+            // If user is super admin (assuming role name 'admin'), they can see all clients
+            if ($user->hasRole('admin')) {
+                return Client::orderBy('name')->first();
+            }
+            
+            $firstClient = $user->clients()->orderBy('name')->first();
             
             if ($firstClient) {
                 return $firstClient;
             }
         }
         
-        // Fallback to any available client
-        return Client::orderBy('created_at', 'desc')->first();
+        // Fallback to any available client, sorted alphabetically for stability
+        return Client::orderBy('name')->first();
     }
 
     /**

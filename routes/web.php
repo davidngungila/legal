@@ -73,6 +73,13 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 
+    // Organization Routes
+    Route::prefix('organization')->group(function () {
+        Route::get('/setup', function () {
+            return view('organization.index');
+        })->name('organization.setup');
+    });
+
     // User Management Routes
     Route::prefix('users')->group(function () {
         Route::get('/', function () {

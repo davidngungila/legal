@@ -15,206 +15,248 @@
         
         <!-- Client Selector -->
         <div class="mt-4">
-            <label class="text-xs text-indigo-300 block mb-2">Current Client:</label>
-            <select id="clientSelector" class="w-full bg-indigo-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" onchange="switchClient(this.value)">
+            <label class="text-[10px] uppercase tracking-tighter text-indigo-300 block mb-1">Current Client:</label>
+            <select id="clientSelector" class="w-full bg-indigo-700/50 text-white border border-white/10 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-500" onchange="switchClient(this.value)">
                 <option value="">Select Client...</option>
             </select>
         </div>
     </div>
     
     <!-- Navigation Menu -->
-    <nav class="flex-1 p-4 overflow-y-auto">
-        <ul class="space-y-2">
+    <nav class="flex-1 p-3 overflow-y-auto">
+        <ul class="space-y-0.5">
             <!-- General -->
             <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">General</div>
-                <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('dashboard') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="home" class="w-5 h-5"></i>
-                    <span>Dashboard</span>
+                <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('dashboard') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                    <i data-feather="home" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Dashboard</span>
                 </a>
             </li>
 
             <!-- Organization -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Organization</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="globe" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Organization</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('clients.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="globe" class="w-4 h-4"></i>
-                            <span class="text-sm">Clients</span>
+                        <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('clients.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="users" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Clients</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
             <!-- Talent Acquisition -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Talent Acquisition</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="briefcase" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Talent Acquisition</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('job-vacancy.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('job-vacancy.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span class="text-sm">Recruitment</span>
+                        <a href="{{ route('job-vacancy.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('job-vacancy.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="search" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Recruitment</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('hr-interview.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('hr-interview.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="message-square" class="w-4 h-4"></i>
-                            <span class="text-sm">HR Interview</span>
+                        <a href="{{ route('hr-interview.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('hr-interview.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="message-square" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">HR Interview</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('technical-interview.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('technical-interview.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="cpu" class="w-4 h-4"></i>
-                            <span class="text-sm">Technical Interview</span>
+                        <a href="{{ route('technical-interview.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('technical-interview.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="cpu" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Technical Interview</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('onboarding.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('onboarding.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-check" class="w-4 h-4"></i>
-                            <span class="text-sm">Onboarding</span>
+                        <a href="{{ route('onboarding.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('onboarding.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="user-check" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Onboarding</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
             <!-- Human Resources -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Human Resources</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="users" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Human Resources</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('hris.dashboard') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('hris.dashboard') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="grid" class="w-4 h-4"></i>
-                            <span class="text-sm">HRIS Dashboard</span>
+                        <a href="{{ route('hris.dashboard') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('hris.dashboard') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="grid" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">HRIS Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('employees.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employees.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="users" class="w-4 h-4"></i>
-                            <span class="text-sm">Employee Master</span>
+                        <a href="{{ route('employees.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('employees.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="user" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Employee Master</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('employee-registration.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employee-registration.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-plus" class="w-4 h-4"></i>
-                            <span class="text-sm">Employee Registration</span>
+                        <a href="{{ route('employee-registration.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('employee-registration.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="user-plus" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Employee Registration</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('employee-document.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employee-document.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="file" class="w-4 h-4"></i>
-                            <span class="text-sm">Employee Documents</span>
+                        <a href="{{ route('employee-document.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('employee-document.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="file-text" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Employee Documents</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('social-records.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('social-records.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="book" class="w-4 h-4"></i>
-                            <span class="text-sm">Social Records</span>
+                        <a href="{{ route('social-records.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('social-records.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="book-open" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Social Records</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('induction-training.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('induction-training.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="clipboard" class="w-4 h-4"></i>
-                            <span class="text-sm">Induction Training</span>
+                        <a href="{{ route('induction-training.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('induction-training.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="clipboard" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Induction Training</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('personnel-id.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('personnel-id.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="credit-card" class="w-4 h-4"></i>
-                            <span class="text-sm">Personnel ID</span>
+                        <a href="{{ route('personnel-id.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('personnel-id.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="credit-card" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Personnel ID</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('workflow.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('workflow.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="repeat" class="w-4 h-4"></i>
-                            <span class="text-sm">Workflow</span>
+                        <a href="{{ route('workflow.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('workflow.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="activity" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Workflow</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
             <!-- Contracts -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Contracts</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="file-text" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Contracts</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('contract-management.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('contract-management.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="file-text" class="w-4 h-4"></i>
-                            <span class="text-sm">Contract Management</span>
+                        <a href="{{ route('contract-management.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('contract-management.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="layers" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Contract Management</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('employment-contracts.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('employment-contracts.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="briefcase" class="w-4 h-4"></i>
-                            <span class="text-sm">Employment Contracts</span>
+                        <a href="{{ route('employment-contracts.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('employment-contracts.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="file-text" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Employment Contracts</span>
                         </a>
                     </li>
                 </ul>
             </li>
+
             <!-- Time & Payroll -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Time & Payroll</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="clock" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Time & Payroll</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('attendance.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('attendance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="clock" class="w-4 h-4"></i>
-                            <span class="text-sm">Attendance & Timesheet</span>
+                        <a href="{{ route('attendance.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('attendance.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="check-square" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Attendance</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('payroll.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('payroll.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="credit-card" class="w-4 h-4"></i>
-                            <span class="text-sm">Payroll Management</span>
+                        <a href="{{ route('payroll.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('payroll.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="credit-card" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Payroll Management</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('compensation.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('compensation.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="dollar-sign" class="w-4 h-4"></i>
-                            <span class="text-sm">Compensation & Benefits</span>
+                        <a href="{{ route('compensation.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="dollar-sign" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Compensation</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
             <!-- Performance & Training -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Performance & Training</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="trending-up" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Performance & Training</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('performance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="trending-up" class="w-4 h-4"></i>
-                            <span class="text-sm">Performance Management</span>
+                        <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="bar-chart" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Performance</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('training.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('training.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="book-open" class="w-4 h-4"></i>
-                            <span class="text-sm">Training</span>
+                        <a href="{{ route('training.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('training.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="award" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Training</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
             <!-- Legal & Compliance -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Legal & Compliance</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="shield" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Legal & Compliance</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('compliance.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="shield" class="w-4 h-4"></i>
-                            <span class="text-sm">Compliance & Legal</span>
+                        <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="shield" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Compliance & Legal</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('casemanagement.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="folder" class="w-4 h-4"></i>
-                            <span class="text-sm">Case Management</span>
+                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('casemanagement.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="folder" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Case Management</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="alert-triangle" class="w-4 h-4"></i>
-                            <span class="text-sm">Employee Relations</span>
+                        <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="alert-circle" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Employee Relations</span>
                         </a>
                     </li>
                 </ul>
@@ -222,91 +264,101 @@
 
             <!-- Analytics -->
             <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Insights</div>
-                <a href="{{ route('analytics.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('analytics.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="bar-chart-2" class="w-5 h-5"></i>
-                    <span>Analytics</span>
+                <a href="{{ route('analytics.index') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('analytics.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                    <i data-feather="bar-chart-2" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Analytics</span>
                 </a>
             </li>
 
             <!-- Self Service -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Self Service</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="user" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Self Service</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('selfservice.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.index') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user" class="w-4 h-4"></i>
-                            <span class="text-sm">Overview</span>
+                        <a href="{{ route('selfservice.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="grid" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Overview</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('selfservice.leave') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.leave') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="calendar" class="w-4 h-4"></i>
-                            <span class="text-sm">Leave</span>
+                        <a href="{{ route('selfservice.leave') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.leave') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="calendar" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Leave</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.payslip') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="file" class="w-4 h-4"></i>
-                            <span class="text-sm">Payslip</span>
+                        <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.payslip') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="file" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Payslip</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('selfservice.contract') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.contract') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="file-text" class="w-4 h-4"></i>
-                            <span class="text-sm">Contract</span>
+                        <a href="{{ route('selfservice.contract') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.contract') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="file-text" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Contract</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('selfservice.complaint') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.complaint') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="message-circle" class="w-4 h-4"></i>
-                            <span class="text-sm">Complaint</span>
+                        <a href="{{ route('selfservice.complaint') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.complaint') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="alert-triangle" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Complaint</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('selfservice.profile') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('selfservice.profile') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="settings" class="w-4 h-4"></i>
-                            <span class="text-sm">Profile</span>
+                        <a href="{{ route('selfservice.profile') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.profile') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="settings" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Profile</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
-            <!-- Resources -->
+            <!-- Documents -->
             <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Resources</div>
-                <a href="{{ route('documents.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('documents.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="folder-open" class="w-5 h-5"></i>
-                    <span>Documents & Policies</span>
+                <a href="{{ route('documents.index') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('documents.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                    <i data-feather="book" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Documents & Policies</span>
                 </a>
             </li>
             
             <!-- Administration -->
-            <li>
-                <div class="px-4 py-2 text-xs text-[#a0a0c0] font-semibold uppercase tracking-wider">Administration</div>
-                <ul class="space-y-1 ml-4">
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="settings" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Administration</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                     <li>
-                        <a href="{{ route('users.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('users.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="users" class="w-4 h-4"></i>
-                            <span class="text-sm">Users</span>
+                        <a href="{{ route('users.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('users.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="users" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Users</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('user-registration.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('user-registration.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="user-plus" class="w-4 h-4"></i>
-                            <span class="text-sm">User Registration</span>
+                        <a href="{{ route('user-registration.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('user-registration.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="user-plus" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">User Registration</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('roles.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('roles.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="shield" class="w-4 h-4"></i>
-                            <span class="text-sm">Roles</span>
+                        <a href="{{ route('roles.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('roles.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="shield" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Roles</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('permissions.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('permissions.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                            <i data-feather="key" class="w-4 h-4"></i>
-                            <span class="text-sm">Permissions</span>
+                        <a href="{{ route('permissions.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('permissions.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="key" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Permissions</span>
                         </a>
                     </li>
                 </ul>
@@ -316,6 +368,58 @@
 </aside>
 
 <script>
+// Sidebar Dropdown Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdowns = document.querySelectorAll('.sidebar-dropdown');
+    
+    dropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('button');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        const arrow = dropdown.querySelector('.dropdown-arrow');
+        
+        // Check if any child link is active
+        const hasActiveChild = menu.querySelector('.text-white.font-medium') !== null;
+        
+        if (hasActiveChild) {
+            menu.style.maxHeight = menu.scrollHeight + 'px';
+            menu.style.opacity = '1';
+            arrow.style.transform = 'rotate(180deg)';
+            button.classList.add('bg-white/5');
+        }
+
+        button.addEventListener('click', () => {
+            const isOpen = menu.style.maxHeight !== '0px' && menu.style.maxHeight !== '';
+            
+            // Close other dropdowns (optional - comment out if you want multiple open)
+            /*
+            dropdowns.forEach(other => {
+                if (other !== dropdown) {
+                    const otherMenu = other.querySelector('.dropdown-menu');
+                    const otherArrow = other.querySelector('.dropdown-arrow');
+                    const otherButton = other.querySelector('button');
+                    otherMenu.style.maxHeight = '0px';
+                    otherMenu.style.opacity = '0';
+                    otherArrow.style.transform = 'rotate(0deg)';
+                    otherButton.classList.remove('bg-white/5');
+                }
+            });
+            */
+
+            if (isOpen) {
+                menu.style.maxHeight = '0px';
+                menu.style.opacity = '0';
+                arrow.style.transform = 'rotate(0deg)';
+                button.classList.remove('bg-white/5');
+            } else {
+                menu.style.maxHeight = menu.scrollHeight + 'px';
+                menu.style.opacity = '1';
+                arrow.style.transform = 'rotate(180deg)';
+                button.classList.add('bg-white/5');
+            }
+        });
+    });
+});
+
 // Immediate icon replacement for sidebar to prevent flicker
 if (typeof feather !== 'undefined') {
     feather.replace({ 'class': 'sidebar-icon' });
@@ -369,7 +473,6 @@ if (typeof feather !== 'undefined') {
 })();
 
 // Client switching functionality
-let currentClientId = null;
 let availableClients = [];
 
 // Load clients immediately from global data if available
@@ -377,16 +480,6 @@ let availableClients = [];
     function initClients() {
         if (window.allClients && window.allClients.length > 0) {
             availableClients = window.allClients;
-            
-            // Try to get current client from live data or storage
-            if (window.liveClientData) {
-                currentClientId = window.liveClientData.id;
-            } else {
-                currentClientId = sessionStorage.getItem('selectedClientId') || 
-                                localStorage.getItem('selectedClientId') || 
-                                (availableClients.length > 0 ? availableClients[0].id : null);
-            }
-            
             updateClientSelector();
         }
     }
@@ -397,61 +490,17 @@ let availableClients = [];
     // Also listen for DOMContentLoaded to ensure elements are ready
     document.addEventListener('DOMContentLoaded', function() {
         initClients();
-        
-        // Background refresh if needed, but don't block
-        loadAvailableClients();
-        loadCurrentClient();
     });
 })();
-
-// Load available clients (background refresh)
-async function loadAvailableClients() {
-    try {
-        const response = await fetch('/api/client-switch/available', {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            availableClients = data.clients;
-            updateClientSelector();
-        }
-    } catch (error) {
-        console.error('Error loading clients:', error);
-    }
-}
-
-// Load current client
-async function loadCurrentClient() {
-    try {
-        const response = await fetch('/api/client-switch/current', {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success && data.client) {
-            currentClientId = data.client.id;
-            updateClientSelector();
-        }
-    } catch (error) {
-        console.error('Error loading current client:', error);
-    }
-}
 
 // Update client selector dropdown
 function updateClientSelector() {
     const selector = document.getElementById('clientSelector');
     if (!selector) return;
+    
+    // Get current client from global state
+    const currentClient = typeof getCurrentClient === 'function' ? getCurrentClient() : null;
+    const currentId = currentClient ? currentClient.id : null;
     
     selector.innerHTML = '';
     
@@ -459,10 +508,10 @@ function updateClientSelector() {
         const option = document.createElement('option');
         option.value = client.id;
         option.textContent = client.name;
-        option.selected = client.id == currentClientId;
+        option.selected = client.id == currentId;
         
         // Add visual indicator for current client
-        if (client.id == currentClientId) {
+        if (client.id == currentId) {
             option.textContent += ' (Current)';
         }
         
@@ -474,50 +523,6 @@ function updateClientSelector() {
         
         selector.appendChild(option);
     });
-}
-
-// Switch client function
-async function switchClient(clientId) {
-    if (!clientId || clientId == currentClientId) {
-        return;
-    }
-    
-    // Show loading state
-    showNotification('Switching client...', 'info');
-    
-    try {
-        const response = await fetch('/api/client-switch/switch', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                client_id: clientId
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            currentClientId = clientId;
-            showNotification(data.message, 'success');
-            
-            // Clear any cached data and reload the page to refresh data for the new client
-            setTimeout(() => {
-                if (typeof localStorage !== 'undefined') {
-                    localStorage.clear();
-                }
-                window.location.href = window.location.href;
-            }, 1000);
-        } else {
-            showNotification('Failed to switch client', 'error');
-        }
-    } catch (error) {
-        console.error('Error switching client:', error);
-        showNotification('Error switching client', 'error');
-    }
 }
 
 // Notification helper function
