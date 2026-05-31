@@ -6,42 +6,35 @@
 <div class="login-container">
     <!-- Left Side - Branding -->
     <div class="login-left">
-        <div class="floating-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
-        </div>
-        
-        <div class="text-center z-10">
-            <!-- Logo Section -->
-            <div class="mb-6 md:mb-8">
-                <div class="w-28 h-28 md:w-36 md:h-36 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-2xl">
-                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-20 h-20 md:w-40 md:h-40 object-contain">
-                </div>
+        <div class="floating-shape w-64 h-64 bg-indigo-500 top-[-10%] left-[-10%]"></div>
+        <div class="floating-shape w-96 h-96 bg-blue-600 bottom-[-20%] right-[-10%]"></div>
+
+        <div class="relative z-10 text-center px-8">
+            <div class="inline-flex items-center justify-center w-32 h-32 bg-white rounded-3xl border border-white/20 mb-8 shadow-2xl overflow-hidden group hover:scale-105 transition-transform duration-500">
+                <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-24 h-24 object-contain group-hover:rotate-12 transition-transform duration-500">
             </div>
-            
-            <!-- System Info -->
-            <div class="mb-6 md:mb-8">
-                <h1 class="text-2xl md:text-4xl font-bold mb-2">Orvion</h1>
-                <p class="text-lg md:text-xl opacity-90">HR Management System</p>
-            </div>
-            
-            <div class="space-y-3 md:space-y-4 text-base md:text-lg">
-                <div class="flex items-center justify-center space-x-2 md:space-x-3">
-                    <i data-feather="check-circle" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    <span class="text-sm md:text-base">Complete HR Management</span>
+
+            <h1 class="text-5xl font-extrabold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Orvion</h1>
+            <p class="text-xl text-white/80 font-medium mb-12">Next Generation HR Management</p>
+
+            <div class="space-y-4 text-left max-w-xs mx-auto">
+                <div class="flex items-center gap-4 text-white/90">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                        <i data-feather="check-circle" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-sm font-semibold tracking-wide">Complete HR Management</span>
                 </div>
-                <div class="flex items-center justify-center space-x-2 md:space-x-3">
-                    <i data-feather="shield" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    <span class="text-sm md:text-base">Labor Compliant</span>
+                <div class="flex items-center gap-4 text-white/90">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                        <i data-feather="shield" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-sm font-semibold tracking-wide">Labor Compliant</span>
                 </div>
-                <div class="flex items-center justify-center space-x-2 md:space-x-3">
-                    <i data-feather="users" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    <span class="text-sm md:text-base">Employee Self Service</span>
-                </div>
-                <div class="flex items-center justify-center space-x-2 md:space-x-3">
-                    <i data-feather="bar-chart-2" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    <span class="text-sm md:text-base">Advanced Analytics</span>
+                <div class="flex items-center gap-4 text-white/90">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                        <i data-feather="users" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-sm font-semibold tracking-wide">Employee Self Service</span>
                 </div>
             </div>
         </div>
@@ -49,48 +42,50 @@
     
     <!-- Right Side - Registration Form -->
     <div class="login-right">
-        <div class="login-form">
-            <!-- Mobile Logo Section (shown only on small phones) -->
-            <div class="mobile-logo">
-                <div class="mobile-logo-container">
-                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo">
+        <div class="login-form-card">
+            <div class="lg:hidden text-center mb-10">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-[#040344]/5 rounded-2xl mb-4">
+                    <img src="{{ asset('Orvion.png') }}" alt="Orvion Logo" class="w-14 h-14 object-contain">
                 </div>
-                <h1>Orvion</h1>
+                <h1 class="text-3xl font-bold text-[#040344]">Orvion</h1>
             </div>
-            
-            <div class="text-center mb-6 md:mb-8">
-                <h2 class="text-xl md:text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
-                <p class="text-sm md:text-base text-gray-600">Fill in your information to get started</p>
+
+            <div class="mb-10 text-center lg:text-left">
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Create Account</h2>
+                <p class="text-slate-500 font-medium">Fill in your information to get started.</p>
             </div>
-            
+
             @if(session('error'))
-                <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {{ session('error') }}
+                <div class="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl flex items-center gap-3 animate-fadeIn">
+                    <i data-feather="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+                    <p class="text-sm font-medium">{{ session('error') }}</p>
                 </div>
             @endif
-            
+
             @if(session('success'))
-                <div class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                    {{ session('success') }}
+                <div class="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl flex items-center gap-3 animate-fadeIn">
+                    <i data-feather="check-circle" class="w-5 h-5 flex-shrink-0"></i>
+                    <p class="text-sm font-medium">{{ session('success') }}</p>
                 </div>
             @endif
-            
+
             @if($errors->any())
-                <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {{ $errors->first() }}
+                <div class="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl flex items-center gap-3 animate-fadeIn">
+                    <i data-feather="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+                    <p class="text-sm font-medium">{{ $errors->first() }}</p>
                 </div>
             @endif
-            
-            <form method="POST" action="{{ route('register') }}" class="space-y-6">
+
+            <form method="POST" action="{{ route('register.post') }}" class="space-y-6">
                 @csrf
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                        <div class="relative">
-                            <i data-feather="user" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                        <label for="first_name" class="auth-label">First Name</label>
+                        <div class="auth-input-wrapper">
+                            <i data-feather="user" class="auth-input-icon"></i>
                             <input type="text" id="first_name" name="first_name" required
-                                   class="form-input pl-10"
+                                   class="auth-input"
                                    placeholder="Enter your first name"
                                    value="{{ old('first_name') }}">
                         </div>
@@ -100,11 +95,11 @@
                     </div>
                     
                     <div>
-                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                        <div class="relative">
-                            <i data-feather="user" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                        <label for="last_name" class="auth-label">Last Name</label>
+                        <div class="auth-input-wrapper">
+                            <i data-feather="user" class="auth-input-icon"></i>
                             <input type="text" id="last_name" name="last_name" required
-                                   class="form-input pl-10"
+                                   class="auth-input"
                                    placeholder="Enter your last name"
                                    value="{{ old('last_name') }}">
                         </div>
@@ -115,12 +110,12 @@
                 </div>
                 
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                    <div class="relative">
-                        <i data-feather="mail" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                    <label for="email" class="auth-label">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <i data-feather="mail" class="auth-input-icon"></i>
                         <input type="email" id="email" name="email" required
-                               class="form-input pl-10"
-                               placeholder="Enter your email"
+                               class="auth-input"
+                               placeholder="name@company.com"
                                value="{{ old('email') }}">
                     </div>
                     @error('email')
@@ -129,12 +124,12 @@
                 </div>
                 
                 <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <div class="relative">
-                        <i data-feather="phone" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                    <label for="phone" class="auth-label">Phone Number</label>
+                    <div class="auth-input-wrapper">
+                        <i data-feather="phone" class="auth-input-icon"></i>
                         <input type="tel" id="phone" name="phone" required
-                               class="form-input pl-10"
-                               placeholder="Enter your phone number"
+                               class="auth-input"
+                               placeholder="+255 7xx xxx xxx"
                                value="{{ old('phone') }}">
                     </div>
                     @error('phone')
@@ -143,11 +138,11 @@
                 </div>
                 
                 <div>
-                    <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                    <div class="relative">
-                        <i data-feather="building" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                    <label for="company" class="auth-label">Company Name</label>
+                    <div class="auth-input-wrapper">
+                        <i data-feather="building" class="auth-input-icon"></i>
                         <input type="text" id="company" name="company" required
-                               class="form-input pl-10"
+                               class="auth-input"
                                placeholder="Enter your company name"
                                value="{{ old('company') }}">
                     </div>
@@ -157,11 +152,10 @@
                 </div>
                 
                 <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
-                    <div class="relative">
-                        <i data-feather="briefcase" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
-                        <select id="role" name="role" required
-                                class="form-input pl-10 appearance-none">
+                    <label for="role" class="auth-label">Account Type</label>
+                    <div class="auth-input-wrapper">
+                        <i data-feather="briefcase" class="auth-input-icon"></i>
+                        <select id="role" name="role" required class="auth-input">
                             <option value="">Select your role</option>
                             <option value="hr_admin" {{ old('role') == 'hr_admin' ? 'selected' : '' }}>HR Administrator</option>
                             <option value="hr_officer" {{ old('role') == 'hr_officer' ? 'selected' : '' }}>HR Officer</option>
@@ -176,12 +170,12 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <div class="relative">
-                            <i data-feather="lock" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                        <label for="password" class="auth-label">Password</label>
+                        <div class="auth-input-wrapper">
+                            <i data-feather="lock" class="auth-input-icon"></i>
                             <input type="password" id="password" name="password" required
-                                   class="form-input pl-10"
-                                   placeholder="Create a strong password">
+                                   class="auth-input"
+                                   placeholder="••••••••">
                         </div>
                         @error('password')
                             <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
@@ -189,38 +183,43 @@
                     </div>
                     
                     <div>
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                        <div class="relative">
-                            <i data-feather="lock" class="w-5 h-5 text-gray-400 absolute left-3 top-3"></i>
+                        <label for="password_confirmation" class="auth-label">Confirm Password</label>
+                        <div class="auth-input-wrapper">
+                            <i data-feather="lock" class="auth-input-icon"></i>
                             <input type="password" id="password_confirmation" name="password_confirmation" required
-                                   class="form-input pl-10"
-                                   placeholder="Confirm your password">
+                                   class="auth-input"
+                                   placeholder="••••••••">
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex items-center">
-                    <input type="checkbox" name="terms" id="terms" required
-                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="terms" class="ml-2 block text-sm text-gray-900">
+                    <input type="checkbox" name="terms" id="terms" required class="w-4 h-4 text-[#040344] border-slate-300 rounded focus:ring-[#040344]">
+                    <label for="terms" class="ml-2 text-sm font-medium text-slate-600">
                         I agree to Terms of Service and Privacy Policy, and confirm that I will comply with Tanzania Labour Laws and regulations.
                     </label>
                 </div>
                 
-                <button type="submit" class="btn-primary">
-                    <span class="flex items-center justify-center">
-                        <i data-feather="user-plus" class="w-5 h-5 mr-2"></i>
+                <button type="submit" class="auth-btn-primary group">
+                    <span class="flex items-center justify-center gap-2">
                         CREATE ACCOUNT
+                        <i data-feather="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                     </span>
                 </button>
             </form>
             
-            <div class="mt-6 text-center">
-                <div class="signup-link">
-                    <span class="text-gray-600 text-sm">Already have an account? </span>
-                    <a href="{{ route('login') }}" class="text-[#040344] hover:text-[#040344]/80 text-sm font-medium">Sign in</a>
-                    <span class="mx-2 text-gray-400">|</span>
-                    <a href="{{ route('splash') }}" class="text-[#040344] hover:text-[#040344]/80 text-sm font-medium">Go to Home</a>
+            <div class="mt-10 pt-8 border-t border-slate-50">
+                <div class="text-center space-y-4">
+                    <p class="text-sm text-slate-500 font-medium">
+                        Already have an account?
+                        <a href="{{ route('login') }}" class="text-[#040344] font-bold hover:underline">Sign in</a>
+                    </p>
+                    <div class="flex justify-center gap-4">
+                        <a href="{{ route('splash') }}" class="text-xs font-bold text-slate-400 hover:text-[#040344] transition-colors flex items-center gap-2">
+                            <i data-feather="home" class="w-3.5 h-3.5"></i>
+                            Back to Home
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -230,17 +229,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add entrance animations to form elements
-    const formElements = document.querySelectorAll('.login-form > *');
-    formElements.forEach((element, index) => {
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            element.style.transition = 'all 0.5s ease';
-            element.style.opacity = '1';
-            element.style.transform = 'translateY(0)';
-        }, 100 + (index * 100));
-    });
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
 });
 </script>

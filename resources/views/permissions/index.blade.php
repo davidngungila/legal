@@ -260,11 +260,27 @@ async function loadPermissions() {
         const response = await fetch(API_BASE, {
             method: 'GET',
             headers: {
+                'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             credentials: 'same-origin'
         });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            if (response.url && response.url.includes('/login')) {
+                window.location.href = response.url;
+                return;
+            }
+            throw new Error('Non-JSON response');
+        }
+
         const data = await response.json();
         
         if (data.success) {

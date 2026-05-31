@@ -405,4 +405,41 @@ class JobVacancyController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Remove the specified job vacancy.
+     */
+    public function destroy(JobVacancy $jobVacancy)
+    {
+        if (!in_array($jobVacancy->status, ['draft', 'rejected'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only draft or rejected vacancies can be deleted'
+            ], 403);
+        }
+
+        try {
+            $paths = array_values(array_filter([
+                $jobVacancy->shortlisted_file_path,
+                $jobVacancy->signed_file_path,
+            ]));
+
+            if (!empty($paths)) {
+                Storage::disk('public')->delete($paths);
+            }
+
+            $jobVacancy->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Job vacancy deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Job vacancy deletion failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -30,8 +30,8 @@ return new class extends Migration
             $table->json('responsibilities')->nullable();
             $table->json('terms_and_conditions')->nullable();
             $table->string('status', 50)->default('draft');
-            $table->foreignId('created_by')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('signed_at')->nullable();
             $table->timestamp('terminated_at')->nullable();
             $table->string('termination_reason', 255)->nullable();

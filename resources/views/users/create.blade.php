@@ -230,26 +230,7 @@
 @push('scripts')
 <script>
 // API endpoints
-const API_BASE = '/api/users';
-
-// Load managers for dropdown
-async function loadManagers() {
-    try {
-        const response = await fetch('/api/users/managers');
-        const data = await response.json();
-        
-        if (data.success) {
-            const select = document.querySelector('select[name="reports_to"]');
-            select.innerHTML = '<option value="">Select Manager</option>';
-            
-            data.managers.forEach(manager => {
-                select.innerHTML += `<option value="${manager.id}">${manager.first_name} ${manager.last_name} - ${manager.job_title}</option>`;
-            });
-        }
-    } catch (error) {
-        console.error('Error loading managers:', error);
-    }
-}
+const API_BASE = '/users/data';
 
 // Form submission
 document.getElementById('userForm').addEventListener('submit', async function(e) {
@@ -303,8 +284,6 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    loadManagers();
-    
     // Initialize feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();

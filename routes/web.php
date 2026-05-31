@@ -62,6 +62,7 @@ Route::middleware(['guest', 'web'])->group(function () {
     Route::get('/register', function () {
         return view('auth.register');
     })->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.post');
 });
@@ -89,6 +90,18 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/create', function () {
             return view('users.create');
         })->name('users.create');
+
+        Route::prefix('data')->group(function () {
+            Route::get('/', [UserController::class, 'index'])->name('users.data.index');
+            Route::post('/', [UserController::class, 'store'])->name('users.data.store');
+            Route::get('/roles-permissions', [UserController::class, 'getRolesAndPermissions'])->name('users.data.roles-permissions');
+            Route::post('/bulk', [UserController::class, 'bulkOperations'])->name('users.data.bulk');
+            Route::get('/{id}', [UserController::class, 'show'])->name('users.data.show');
+            Route::put('/{id}', [UserController::class, 'update'])->name('users.data.update');
+            Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.data.destroy');
+        });
+
+        Route::get('/export', [UserController::class, 'export'])->name('users.export');
     });
 
     // Role Management Routes
@@ -198,6 +211,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/{jobVacancy}', [JobVacancyController::class, 'show'])->name('show');
         Route::get('/{jobVacancy}/edit', [JobVacancyController::class, 'edit'])->name('edit');
         Route::put('/{jobVacancy}', [JobVacancyController::class, 'update'])->name('update');
+        Route::delete('/{jobVacancy}', [JobVacancyController::class, 'destroy'])->name('destroy');
         Route::post('/{jobVacancy}/submit', [JobVacancyController::class, 'submit'])->name('submit');
         Route::post('/{jobVacancy}/approve', [JobVacancyController::class, 'approve'])->name('approve');
         Route::post('/{jobVacancy}/reject', [JobVacancyController::class, 'reject'])->name('reject');

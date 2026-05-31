@@ -146,34 +146,43 @@
                                 @endswitch
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('hr-interview.show', $interview) }}" 
-                                       class="text-indigo-600 hover:text-indigo-900">
-                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ route('hr-interview.show', $interview) }}"
+                                       class="inline-flex items-center px-2 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium">
+                                        <i data-feather="eye" class="w-3 h-3 mr-1"></i>
+                                        View
                                     </a>
                                     @if($interview->canBeEdited())
-                                        <a href="{{ route('hr-interview.edit', $interview) }}" 
-                                           class="text-blue-600 hover:text-blue-900">
-                                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                                        <a href="{{ route('hr-interview.edit', $interview) }}"
+                                           class="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium">
+                                            <i data-feather="edit-2" class="w-3 h-3 mr-1"></i>
+                                            Edit
                                         </a>
                                     @endif
-                                    @if($interview->status === 'submitted')
-                                        <button onclick="approveInterview({{ $interview->id }})" 
-                                                class="text-green-600 hover:text-green-900"
-                                                title="Approve">
-                                            <i data-feather="check-circle" class="w-4 h-4"></i>
+                                    @if($interview->status === 'draft')
+                                        <button onclick="submitInterview({{ $interview->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100 text-xs font-medium">
+                                            <i data-feather="send" class="w-3 h-3 mr-1"></i>
+                                            Submit
                                         </button>
-                                        <button onclick="rejectInterview({{ $interview->id }})" 
-                                                class="text-red-600 hover:text-red-900"
-                                                title="Reject">
-                                            <i data-feather="x-circle" class="w-4 h-4"></i>
+                                    @endif
+                                    @if($interview->status === 'submitted')
+                                        <button onclick="approveInterview({{ $interview->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100 text-xs font-medium">
+                                            <i data-feather="check-circle" class="w-3 h-3 mr-1"></i>
+                                            Approve
+                                        </button>
+                                        <button onclick="rejectInterview({{ $interview->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium">
+                                            <i data-feather="x-circle" class="w-3 h-3 mr-1"></i>
+                                            Reject
                                         </button>
                                     @endif
                                     @if($interview->status === 'hr_approved')
-                                        <button onclick="generatePdf({{ $interview->id }})" 
-                                                class="text-purple-600 hover:text-purple-900"
-                                                title="Generate PDF">
-                                            <i data-feather="file-text" class="w-4 h-4"></i>
+                                        <button onclick="generatePdf({{ $interview->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-medium">
+                                            <i data-feather="file-text" class="w-3 h-3 mr-1"></i>
+                                            PDF
                                         </button>
                                     @endif
                                 </div>
@@ -282,6 +291,36 @@ class HrInterviewManager {
                 row.style.display = 'none';
             }
         });
+    }
+}
+
+async function submitInterview(interviewId) {
+    if (!confirm('Submit this interview for approval?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/hr-interview/${interviewId}/submit`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showNotification(result.message || 'Interview submitted for approval', 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            showNotification(result.message || 'Operation failed', 'error');
+        }
+    } catch (error) {
+        console.error('Interview submission error:', error);
+        showNotification('An error occurred during the operation', 'error');
     }
 }
 

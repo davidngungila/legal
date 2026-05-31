@@ -261,7 +261,28 @@ async function loadRoles() {
 // Load permissions from API
 async function loadPermissions() {
     try {
-        const response = await fetch(PERMISSIONS_API);
+        const response = await fetch(PERMISSIONS_API, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            if (response.url && response.url.includes('/login')) {
+                window.location.href = response.url;
+                return;
+            }
+            throw new Error('Non-JSON response');
+        }
+
         const data = await response.json();
         
         if (data.success) {

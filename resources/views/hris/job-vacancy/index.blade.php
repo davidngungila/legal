@@ -180,22 +180,41 @@
                                 @endswitch
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('job-vacancy.show', $vacancy) }}" 
-                                       class="text-indigo-600 hover:text-indigo-900">
-                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ route('job-vacancy.show', $vacancy) }}"
+                                       class="inline-flex items-center px-2 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium">
+                                        <i data-feather="eye" class="w-3 h-3 mr-1"></i>
+                                        View
                                     </a>
                                     @if($vacancy->status === 'draft')
-                                        <a href="{{ route('job-vacancy.edit', $vacancy) }}" 
-                                           class="text-blue-600 hover:text-blue-900">
-                                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                                        <a href="{{ route('job-vacancy.edit', $vacancy) }}"
+                                           class="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium">
+                                            <i data-feather="edit-2" class="w-3 h-3 mr-1"></i>
+                                            Edit
                                         </a>
+                                        <button onclick="submitVacancy({{ $vacancy->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100 text-xs font-medium">
+                                            <i data-feather="send" class="w-3 h-3 mr-1"></i>
+                                            Submit
+                                        </button>
+                                        <button onclick="deleteVacancy({{ $vacancy->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium">
+                                            <i data-feather="trash-2" class="w-3 h-3 mr-1"></i>
+                                            Delete
+                                        </button>
+                                    @endif
+                                    @if($vacancy->status === 'rejected')
+                                        <button onclick="deleteVacancy({{ $vacancy->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium">
+                                            <i data-feather="trash-2" class="w-3 h-3 mr-1"></i>
+                                            Delete
+                                        </button>
                                     @endif
                                     @if($vacancy->status === 'hr_approved' && !$vacancy->isExpired())
-                                        <button onclick="closeVacancy({{ $vacancy->id }})" 
-                                                class="text-yellow-600 hover:text-yellow-900"
-                                                title="Close Vacancy">
-                                            <i data-feather="x-circle" class="w-4 h-4"></i>
+                                        <button onclick="closeVacancy({{ $vacancy->id }})"
+                                                class="inline-flex items-center px-2 py-1 rounded bg-yellow-50 text-yellow-700 hover:bg-yellow-100 text-xs font-medium">
+                                            <i data-feather="x-circle" class="w-3 h-3 mr-1"></i>
+                                            Close
                                         </button>
                                     @endif
                                 </div>
@@ -334,6 +353,76 @@ async function closeVacancy(vacancyId) {
         }
     } catch (error) {
         console.error('Vacancy closure error:', error);
+        showNotification('An error occurred during the operation', 'error');
+    }
+}
+
+async function submitVacancy(vacancyId) {
+    if (!confirm('Submit this job vacancy for approval?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/job-vacancy/${vacancyId}/submit`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showNotification(result.message || 'Job vacancy submitted for approval', 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            showNotification(result.message || 'Operation failed', 'error');
+        }
+    } catch (error) {
+        console.error('Vacancy submission error:', error);
+        showNotification('An error occurred during the operation', 'error');
+    }
+}
+
+async function deleteVacancy(vacancyId) {
+    if (!confirm('Are you sure you want to delete this job vacancy?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/job-vacancy/${vacancyId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (response.status === 419) {
+            showNotification('Session expired. Please refresh the page and try again.', 'error');
+            return;
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            showNotification(result.message || 'Job vacancy deleted successfully', 'success');
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            showNotification(result.message || 'Operation failed', 'error');
+        }
+    } catch (error) {
+        console.error('Vacancy deletion error:', error);
         showNotification('An error occurred during the operation', 'error');
     }
 }
