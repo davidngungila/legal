@@ -108,14 +108,13 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Role Management Routes
-    Route::prefix('roles')->group(function () {
-        Route::get('/', function () {
-            return view('roles.index');
-        })->name('roles.index');
-        
-        Route::get('/create', function () {
-            return view('roles.create');
-        })->name('roles.create');
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [RoleController::class, 'show'])->name('show');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
+        Route::get('/permissions/list', [RoleController::class, 'getPermissions'])->name('permissions');
     });
 
     // Permission Management Routes
@@ -174,10 +173,10 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             });
 
     // Performance Routes
-    Route::prefix('performance')->group(function () {
-        Route::get('/', function () {
-            return view('performance.index');
-        })->name('performance.index');
+    Route::prefix('performance')->name('performance.')->group(function () {
+        Route::get('/', [PerformanceController::class, 'index'])->name('index');
+        Route::post('/', [PerformanceController::class, 'store'])->name('store');
+        Route::put('/{review}', [PerformanceController::class, 'updateStatus'])->name('update');
     });
 
     // Employee Relations & Discipline Routes
