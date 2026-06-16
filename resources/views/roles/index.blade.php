@@ -19,10 +19,10 @@
                 <i data-feather="key" class="w-4 h-4 inline mr-2"></i>
                 Manage Permissions
             </button>
-            <a href="{{ route('roles.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button onclick="showCreateRoleModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus-circle" class="w-4 h-4 inline mr-2"></i>
                 Create New Role
-            </a>
+            </button>
         </div>
     </div>
 
