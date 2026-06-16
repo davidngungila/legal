@@ -11,6 +11,8 @@ use Database\Seeders\DemoPayrollAttendanceCompensationSeeder;
 use Database\Seeders\CaseManagementDemoSeeder;
 use Database\Seeders\LeaveManagementDemoSeeder;
 use Database\Seeders\PerformanceManagementDemoSeeder;
+use Database\Seeders\DisciplinaryManagementDemoSeeder;
+use Database\Seeders\ExitManagementDemoSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -30,6 +32,8 @@ class DatabaseSeeder extends Seeder
             CaseManagementDemoSeeder::class,
             LeaveManagementDemoSeeder::class,
             PerformanceManagementDemoSeeder::class,
+            DisciplinaryManagementDemoSeeder::class,
+            ExitManagementDemoSeeder::class,
         ]);
     }
 }
