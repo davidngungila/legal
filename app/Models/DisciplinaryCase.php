@@ -40,31 +40,31 @@ class DisciplinaryCase extends Model
 
     public function warnings(): HasMany
     {
-        return $this->hasMany(DisciplinaryWarning::class);
+        return $this->hasMany(DisciplinaryWarning::class, 'case_id');
     }
 
     public function showCauseNotice(): HasOne
     {
-        return $this->hasOne(ShowCauseNotice::class);
+        return $this->hasOne(ShowCauseNotice::class, 'case_id');
     }
 
     public function hearing(): HasOne
     {
-        return $this->hasOne(DisciplinaryHearing::class);
+        return $this->hasOne(DisciplinaryHearing::class, 'case_id');
     }
 
     public function outcome(): HasOne
     {
-        return $this->hasOne(DisciplinaryOutcome::class);
+        return $this->hasOne(DisciplinaryOutcome::class, 'case_id');
     }
 
     public function appeal(): HasOne
     {
-        return $this->hasOne(DisciplinaryAppeal::class);
+        return $this->hasOne(DisciplinaryAppeal::class, 'case_id');
     }
 
     public function documents(): HasMany
     {
-        return $this->hasMany(DisciplinaryDocument::class);
+        return $this->hasMany(DisciplinaryDocument::class, 'case_id');
     }
 }
