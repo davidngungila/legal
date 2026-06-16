@@ -17,7 +17,7 @@
             @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button type="button" onclick="document.getElementById('newExitModal').classList.remove('hidden')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button type="button" onclick="openModal('newExitModal')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Initiate Exit
             </button>
@@ -125,16 +125,16 @@
     </div>
 
     <!-- New Exit Modal -->
-    <div id="newExitModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Initiate Exit Process</h3>
-                    <button type="button" onclick="document.getElementById('newExitModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
+<div id="newExitModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Initiate Exit Process</h3>
+                <button type="button" onclick="closeModal('newExitModal')" class="text-gray-400 hover:text-gray-600">
+                    <i data-feather="x" class="w-6 h-6"></i>
+                </button>
             </div>
+        </div>
             <form action="{{ route('exit.store') }}" method="POST" class="p-6">
                 @csrf
                 <div class="space-y-4">
@@ -175,6 +175,18 @@
     </div>
 
     <script>
-        feather.replace();
-    </script>
+    feather.replace();
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
 @endsection
