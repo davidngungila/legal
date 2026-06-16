@@ -89,7 +89,7 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                                    <span class="text-white text-xs font-medium">{{ substr($case->employee->first_name[0] ?? 'E') }}{{ substr($case->employee->last_name[0] ?? 'E') }}</span>
+                                    <span class="text-white text-xs font-medium">{{ substr($case->employee->first_name[0] ?? 'E', 0, 1) }}{{ substr($case->employee->last_name[0] ?? 'E', 0, 1) }}</span>
                                 </div>
                                 <div class="ml-3">
                                     <div class="text-sm font-medium text-gray-900">{{ $case->employee->first_name }} {{ $case->employee->last_name }}</div>
