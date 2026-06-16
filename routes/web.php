@@ -35,6 +35,10 @@ use App\Http\Controllers\ContractManagementController;
 use App\Http\Controllers\EmploymentContractsController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\CaseController;
+use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\DisciplinaryController;
+use App\Http\Controllers\ExitController;
+use App\Http\Controllers\PerformanceController;
 
 /*
 |--------------------------------------------------------------------------
