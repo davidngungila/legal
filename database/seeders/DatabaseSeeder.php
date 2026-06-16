@@ -9,6 +9,8 @@ use Database\Seeders\UserSeeder;
 use Database\Seeders\ClientSeeder;
 use Database\Seeders\DemoPayrollAttendanceCompensationSeeder;
 use Database\Seeders\CaseManagementDemoSeeder;
+use Database\Seeders\LeaveManagementDemoSeeder;
+use Database\Seeders\PerformanceManagementDemoSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,6 +28,8 @@ class DatabaseSeeder extends Seeder
             AssignUsersToClients::class,
             DemoPayrollAttendanceCompensationSeeder::class,
             CaseManagementDemoSeeder::class,
+            LeaveManagementDemoSeeder::class,
+            PerformanceManagementDemoSeeder::class,
         ]);
     }
 }
