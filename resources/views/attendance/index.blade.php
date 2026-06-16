@@ -21,7 +21,7 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Report
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button type="button" onclick="openTimesheetImport()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="upload" class="w-4 h-4 inline mr-2"></i>
                 Import Timesheet
             </button>
@@ -117,14 +117,24 @@
     <!-- Today's Attendance -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Today's Attendance</h3>
-            <div class="flex space-x-3">
-                <input type="date" class="form-input" value="2024-03-29">
-                <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
-                    <i data-feather="search" class="w-4 h-4 inline mr-2"></i>
-                    Search
-                </button>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Attendance</h3>
+                @if(isset($summary))
+                    <p class="text-sm text-gray-600 mt-1">
+                        Present: <span class="font-medium">{{ $summary['present'] ?? 0 }}</span>,
+                        Late: <span class="font-medium">{{ $summary['late'] ?? 0 }}</span>,
+                        Absent: <span class="font-medium">{{ $summary['absent'] ?? 0 }}</span>,
+                        On Leave: <span class="font-medium">{{ $summary['on_leave'] ?? 0 }}</span>
+                    </p>
+                @endif
             </div>
+            <form method="GET" action="{{ route('attendance.index') }}" class="flex space-x-3">
+                <input type="date" name="date" class="form-input" value="{{ $date ?? now()->format('Y-m-d') }}">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                    <i data-feather="search" class="w-4 h-4 inline mr-2"></i>
+                    Load
+                </button>
+            </form>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -140,44 +150,70 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach([
-                        ['name' => 'John Doe', 'dept' => 'IT', 'checkin' => '08:30', 'checkout' => '17:45', 'status' => 'Present', 'hours' => '9.25'],
-                        ['name' => 'Sarah Smith', 'dept' => 'HR', 'checkin' => '08:45', 'checkout' => '17:30', 'status' => 'Present', 'hours' => '8.75'],
-                        ['name' => 'Mike Johnson', 'dept' => 'Finance', 'checkin' => '09:15', 'checkout' => '-', 'status' => 'Late', 'hours' => '-'],
-                        ['name' => 'Emily Davis', 'dept' => 'Marketing', 'checkin' => '-', 'checkout' => '-', 'status' => 'Leave', 'hours' => '-'],
-                        ['name' => 'David Wilson', 'dept' => 'Operations', 'checkin' => '08:00', 'checkout' => '17:00', 'status' => 'Present', 'hours' => '9.00'],
-                        ['name' => 'Lisa Brown', 'dept' => 'Sales', 'checkin' => '-', 'checkout' => '-', 'status' => 'Absent', 'hours' => '-']
-                    ] as $attendance)
-                    <tr class="hover:bg-gray-50">
+                    @forelse(($rows ?? []) as $row)
+                    @php($employee = $row['employee'])
+                    @php($att = $row['attendance'])
+                    @php($status = $att?->status ?? 'absent')
+                    <tr class="hover:bg-gray-50" data-att-row="{{ $employee->id }}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                                    <span class="text-white text-xs font-medium">{{ substr($attendance['name'], 0, 1) }}</span>
+                                    <span class="text-white text-xs font-medium">{{ substr(trim($employee->first_name.' '.$employee->last_name), 0, 1) }}</span>
                                 </div>
                                 <div class="ml-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $attendance['name'] }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $employee->first_name }} {{ $employee->last_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ $employee->employee_id ?: ('#'.$employee->id) }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $attendance['dept'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $attendance['checkin'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $attendance['checkout'] }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->department ?: '-' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="clock-in-{{ $employee->id }}">{{ $att?->clock_in ?: '-' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="clock-out-{{ $employee->id }}">{{ $att?->clock_out ?: '-' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                @if($attendance['status'] === 'Present') bg-green-100 text-green-800
-                                @elseif($attendance['status'] === 'Late') bg-yellow-100 text-yellow-800
-                                @elseif($attendance['status'] === 'Leave') bg-blue-100 text-blue-800
-                                @else bg-red-100 text-red-800 @endif">
-                                {{ $attendance['status'] }}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                @if($status === 'present') bg-green-100 text-green-800
+                                @elseif($status === 'late' || $status === 'half_day') bg-yellow-100 text-yellow-800
+                                @elseif($status === 'on_leave' || $status === 'holiday') bg-blue-100 text-blue-800
+                                @else bg-red-100 text-red-800 @endif"
+                                id="status-{{ $employee->id }}">
+                                {{ strtoupper(str_replace('_', ' ', $status)) }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $attendance['hours'] }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="hours-{{ $employee->id }}">{{ $att?->total_hours ? number_format((float)$att->total_hours, 2) : '-' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                            <button class="text-red-600 hover:text-red-900">Remove</button>
+                            <div class="flex items-center space-x-2">
+                                <button type="button"
+                                        onclick="setAttendanceStatus({{ $employee->id }}, 'present')"
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-50 text-green-700 hover:bg-green-100"
+                                        title="Mark Present">
+                                    <i data-feather="check-circle" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button"
+                                        onclick="setAttendanceStatus({{ $employee->id }}, 'late')"
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100"
+                                        title="Mark Late">
+                                    <i data-feather="clock" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button"
+                                        onclick="setAttendanceStatus({{ $employee->id }}, 'absent')"
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 text-red-700 hover:bg-red-100"
+                                        title="Mark Absent">
+                                    <i data-feather="x-circle" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button"
+                                        onclick="setAttendanceStatus({{ $employee->id }}, 'on_leave')"
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                        title="Mark On Leave">
+                                    <i data-feather="calendar" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500">No employees found for this client.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -256,16 +292,20 @@
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900">Attendance Calendar</h3>
             <div class="flex space-x-3">
-                <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
+                <a id="attendanceCalendarPrev" data-date="{{ $calendar['prev'] ?? ($date ?? now()->toDateString()) }}"
+                   href="{{ route('attendance.index', ['date' => $calendar['prev'] ?? ($date ?? now()->toDateString())]) }}"
+                   class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors inline-flex items-center">
                     <i data-feather="chevron-left" class="w-4 h-4"></i>
-                </button>
-                <span class="px-4 py-1 bg-indigo-100 text-indigo-700 rounded font-medium">March 2024</span>
-                <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
+                </a>
+                <span id="attendanceCalendarLabel" class="px-4 py-1 bg-indigo-100 text-indigo-700 rounded font-medium">{{ $calendar['label'] ?? 'Calendar' }}</span>
+                <a id="attendanceCalendarNext" data-date="{{ $calendar['next'] ?? ($date ?? now()->toDateString()) }}"
+                   href="{{ route('attendance.index', ['date' => $calendar['next'] ?? ($date ?? now()->toDateString())]) }}"
+                   class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors inline-flex items-center">
                     <i data-feather="chevron-right" class="w-4 h-4"></i>
-                </button>
+                </a>
             </div>
         </div>
-        <div class="grid grid-cols-7 gap-2">
+        <div id="attendanceCalendarGrid" class="grid grid-cols-7 gap-2">
             <!-- Week days -->
             <div class="text-center text-xs font-medium text-gray-500 py-2">Sun</div>
             <div class="text-center text-xs font-medium text-gray-500 py-2">Mon</div>
@@ -275,32 +315,265 @@
             <div class="text-center text-xs font-medium text-gray-500 py-2">Fri</div>
             <div class="text-center text-xs font-medium text-gray-500 py-2">Sat</div>
             
-            <!-- Calendar days -->
-            @for($day = 1; $day <= 31; $day++)
-            <div class="aspect-square border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition-colors cursor-pointer">
-                <div class="text-sm font-medium text-gray-900">{{ $day }}</div>
-                <div class="mt-1">
-                    @if($day <= 28)
-                    <div class="w-full h-1 bg-green-500 rounded-full"></div>
-                    @endif
-                </div>
-            </div>
-            @endfor
+            @foreach(($calendar['days'] ?? []) as $day)
+                @php($counts = $day['counts'] ?? [])
+                @php($total = array_sum($counts))
+                <a href="{{ route('attendance.index', ['date' => $day['date']]) }}"
+                   class="aspect-square border border-gray-200 rounded-lg p-2 transition-colors cursor-pointer block
+                        {{ ($day['in_month'] ?? false) ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100' }}
+                        {{ ($day['is_weekend'] ?? false) ? 'ring-1 ring-yellow-100' : '' }}
+                        {{ ($day['is_selected'] ?? false) ? 'ring-2 ring-indigo-500 border-indigo-300' : '' }}">
+                    <div class="flex items-start justify-between">
+                        <div class="text-sm font-medium {{ ($day['in_month'] ?? false) ? 'text-gray-900' : 'text-gray-400' }}">{{ $day['day'] }}</div>
+                        @if(($day['is_weekend'] ?? false))
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700">W</span>
+                        @endif
+                    </div>
+                    <div class="mt-2 space-y-1">
+                        @if($total > 0)
+                            @php($p = (int) round((($counts['present'] ?? 0) / $total) * 100))
+                            @php($l = (int) round((($counts['late'] ?? 0) / $total) * 100))
+                            @php($lv = (int) round((($counts['on_leave'] ?? 0) / $total) * 100))
+                            @php($a = 100 - $p - $l - $lv)
+                            <div class="w-full bg-gray-200 rounded-full h-1 overflow-hidden flex">
+                                <div class="h-1 bg-green-500" style="width: {{ $p }}%"></div>
+                                <div class="h-1 bg-yellow-500" style="width: {{ $l }}%"></div>
+                                <div class="h-1 bg-blue-500" style="width: {{ $lv }}%"></div>
+                                <div class="h-1 bg-red-500" style="width: {{ max(0, $a) }}%"></div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-gray-500">
+                                <span>P {{ $counts['present'] ?? 0 }}</span>
+                                <span>L {{ $counts['late'] ?? 0 }}</span>
+                                <span>LV {{ $counts['on_leave'] ?? 0 }}</span>
+                                <span>A {{ ($counts['absent'] ?? 0) + ($counts['holiday'] ?? 0) }}</span>
+                            </div>
+                        @else
+                            <div class="w-full bg-gray-100 rounded-full h-1"></div>
+                            <div class="text-[10px] text-gray-400">No data</div>
+                        @endif
+                    </div>
+                </a>
+            @endforeach
         </div>
         <div class="mt-4 flex items-center justify-center space-x-6 text-sm">
             <div class="flex items-center">
                 <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                <span class="text-gray-600">Normal Day</span>
+                <span class="text-gray-600">Present</span>
             </div>
             <div class="flex items-center">
                 <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                <span class="text-gray-600">Weekend</span>
+                <span class="text-gray-600">Late</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                <span class="text-gray-600">On Leave</span>
             </div>
             <div class="flex items-center">
                 <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                <span class="text-gray-600">Holiday</span>
+                <span class="text-gray-600">Absent/Holiday</span>
             </div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+window.__attendanceSelectedDate = '{{ $date ?? now()->format('Y-m-d') }}';
+
+async function loadAttendanceCalendar(monthDate) {
+    const prev = document.getElementById('attendanceCalendarPrev');
+    const next = document.getElementById('attendanceCalendarNext');
+    const label = document.getElementById('attendanceCalendarLabel');
+    const grid = document.getElementById('attendanceCalendarGrid');
+
+    if (!prev || !next || !label || !grid) return;
+
+    prev.classList.add('opacity-50', 'pointer-events-none');
+    next.classList.add('opacity-50', 'pointer-events-none');
+
+    try {
+        const url = new URL('{{ route('attendance.calendar') }}', window.location.origin);
+        url.searchParams.set('date', monthDate);
+        url.searchParams.set('selected_date', window.__attendanceSelectedDate || '');
+
+        const response = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const result = await response.json();
+        if (!result?.success || !result?.calendar) return;
+
+        const cal = result.calendar;
+        label.textContent = cal.label || 'Calendar';
+
+        prev.dataset.date = cal.prev;
+        next.dataset.date = cal.next;
+        prev.href = `{{ route('attendance.index') }}?date=${encodeURIComponent(cal.prev)}`;
+        next.href = `{{ route('attendance.index') }}?date=${encodeURIComponent(cal.next)}`;
+
+        grid.innerHTML = renderCalendarGrid(cal);
+    } finally {
+        prev.classList.remove('opacity-50', 'pointer-events-none');
+        next.classList.remove('opacity-50', 'pointer-events-none');
+    }
+}
+
+function renderCalendarGrid(cal) {
+    const week = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        .map((d) => `<div class="text-center text-xs font-medium text-gray-500 py-2">${d}</div>`)
+        .join('');
+
+    const days = (cal.days || []).map((day) => {
+        const counts = day.counts || {};
+        const total = (counts.present || 0) + (counts.late || 0) + (counts.absent || 0) + (counts.on_leave || 0) + (counts.holiday || 0);
+
+        const inMonth = !!day.in_month;
+        const isWeekend = !!day.is_weekend;
+        const isSelected = !!day.is_selected;
+
+        const baseClass = [
+            'aspect-square border border-gray-200 rounded-lg p-2 transition-colors cursor-pointer block',
+            inMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100',
+            isWeekend ? 'ring-1 ring-yellow-100' : '',
+            isSelected ? 'ring-2 ring-indigo-500 border-indigo-300' : '',
+        ].filter(Boolean).join(' ');
+
+        const dayTextClass = inMonth ? 'text-gray-900' : 'text-gray-400';
+        const weekendBadge = isWeekend ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700">W</span>' : '';
+
+        let statsHtml = '';
+        if (total > 0) {
+            const p = Math.round(((counts.present || 0) / total) * 100);
+            const l = Math.round(((counts.late || 0) / total) * 100);
+            const lv = Math.round(((counts.on_leave || 0) / total) * 100);
+            const a = Math.max(0, 100 - p - l - lv);
+
+            const absentLabel = (counts.absent || 0) + (counts.holiday || 0);
+
+            statsHtml = `
+                <div class="w-full bg-gray-200 rounded-full h-1 overflow-hidden flex">
+                    <div class="h-1 bg-green-500" style="width:${p}%"></div>
+                    <div class="h-1 bg-yellow-500" style="width:${l}%"></div>
+                    <div class="h-1 bg-blue-500" style="width:${lv}%"></div>
+                    <div class="h-1 bg-red-500" style="width:${a}%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[10px] text-gray-500">
+                    <span>P ${counts.present || 0}</span>
+                    <span>L ${counts.late || 0}</span>
+                    <span>LV ${counts.on_leave || 0}</span>
+                    <span>A ${absentLabel}</span>
+                </div>
+            `;
+        } else {
+            statsHtml = `
+                <div class="w-full bg-gray-100 rounded-full h-1"></div>
+                <div class="text-[10px] text-gray-400">No data</div>
+            `;
+        }
+
+        return `
+            <a href="{{ route('attendance.index') }}?date=${encodeURIComponent(day.date)}" class="${baseClass}">
+                <div class="flex items-start justify-between">
+                    <div class="text-sm font-medium ${dayTextClass}">${day.day}</div>
+                    ${weekendBadge}
+                </div>
+                <div class="mt-2 space-y-1">
+                    ${statsHtml}
+                </div>
+            </a>
+        `;
+    }).join('');
+
+    return week + days;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const prev = document.getElementById('attendanceCalendarPrev');
+    const next = document.getElementById('attendanceCalendarNext');
+
+    if (prev) {
+        prev.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadAttendanceCalendar(prev.dataset.date);
+        });
+    }
+
+    if (next) {
+        next.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadAttendanceCalendar(next.dataset.date);
+        });
+    }
+});
+
+function openTimesheetImport() {
+    const input = document.getElementById('timesheetFile');
+    if (!input) return;
+    input.value = '';
+    input.click();
+}
+
+function submitTimesheetImport() {
+    const form = document.getElementById('timesheetImportForm');
+    if (!form) return;
+    form.submit();
+}
+
+async function setAttendanceStatus(employeeId, status) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const date = document.querySelector('input[name="date"]')?.value || '{{ $date ?? now()->format('Y-m-d') }}';
+
+    try {
+        const response = await fetch('{{ route('attendance.upsert') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+            body: JSON.stringify({
+                employee_id: employeeId,
+                attendance_date: date,
+                status: status,
+            }),
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : null;
+
+        if (!response.ok || !result?.success) {
+            return;
+        }
+
+        const badge = document.getElementById(`status-${employeeId}`);
+        if (badge) {
+            badge.textContent = String(status).toUpperCase().replaceAll('_', ' ');
+            badge.className = 'px-2 py-1 text-xs font-semibold rounded-full ' + (
+                status === 'present' ? 'bg-green-100 text-green-800' :
+                (status === 'late' || status === 'half_day') ? 'bg-yellow-100 text-yellow-800' :
+                (status === 'on_leave' || status === 'holiday') ? 'bg-blue-100 text-blue-800' :
+                'bg-red-100 text-red-800'
+            );
+        }
+
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    } catch (e) {
+    }
+}
+</script>
+
+<form id="timesheetImportForm" method="POST" action="{{ route('attendance.import') }}" enctype="multipart/form-data" class="hidden">
+    @csrf
+    <input id="timesheetFile" type="file" name="timesheet" accept=".csv,text/csv" onchange="submitTimesheetImport()">
+</form>
+@endpush

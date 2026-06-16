@@ -1537,7 +1537,9 @@
     </script>
 </head>
 <body class="font-lato bg-gray-50 preload">
-    @if(isset($currentUser))
+    @if(auth()->check())
+        @php($currentUser = $currentUser ?? auth()->user())
+        @php($currentClient = $currentClient ?? session('current_client'))
         <!-- Main Application Layout -->
         <div class="flex h-screen overflow-hidden">
             <!-- Sidebar -->

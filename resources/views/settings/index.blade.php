@@ -608,8 +608,6 @@ window.addEventListener('scroll', function() {
     });
 });
 </script>
-
-@push('scripts')
 <script>
 // Settings Management System
 class SettingsManager {

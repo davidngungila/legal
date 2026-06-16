@@ -253,13 +253,15 @@
                             <span class="text-xs">Case Management</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="alert-circle" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Employee Relations</span>
-                        </a>
-                    </li>
                 </ul>
+            </li>
+
+            <!-- Employee Relations -->
+            <li>
+                <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
+                    <i data-feather="alert-circle" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Employee Relations</span>
+                </a>
             </li>
 
             <!-- Analytics -->

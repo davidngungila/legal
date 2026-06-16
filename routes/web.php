@@ -19,6 +19,8 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\CompensationController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\UserRegistrationController;
 use App\Http\Controllers\ClientRegistrationController;
 use App\Http\Controllers\JobVacancyController;
@@ -134,14 +136,17 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
     // Time & Attendance Routes
     Route::prefix('attendance')->group(function () {
-        Route::get('/', function () {
-            return view('attendance.index');
-        })->name('attendance.index');
+        Route::get('/', [AttendanceController::class, 'index'])->name('attendance.index');
+        Route::post('/upsert', [AttendanceController::class, 'upsert'])->name('attendance.upsert');
+        Route::post('/import', [AttendanceController::class, 'importTimesheet'])->name('attendance.import');
+        Route::get('/calendar', [AttendanceController::class, 'calendar'])->name('attendance.calendar');
     });
 
     // Payroll Routes
     Route::prefix('payroll')->group(function () {
         Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('/data', [PayrollController::class, 'data'])->name('payroll.data');
+        Route::post('/generate-from-attendance', [PayrollController::class, 'generateFromAttendance'])->name('payroll.generate.from.attendance');
         Route::get('/upload', [PayrollController::class, 'showUploadForm'])->name('payroll.upload');
         Route::post('/upload', [PayrollController::class, 'uploadCsv'])->name('payroll.upload.csv');
         Route::get('/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
@@ -149,14 +154,16 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             return view('payroll.payslip');
         })->name('payroll.payslip');
         Route::get('/{id}', [PayrollController::class, 'show'])->name('payroll.show');
+        Route::put('/{payroll}', [PayrollController::class, 'update'])->name('payroll.update');
         Route::put('/{id}/status', [PayrollController::class, 'updateStatus'])->name('payroll.update.status');
         Route::delete('/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
     });
 
     Route::prefix('compensation')->group(function () {
-        Route::get('/', function () {
-            return view('compensation.index');
-        })->name('compensation.index');
+        Route::get('/', [CompensationController::class, 'index'])->name('compensation.index');
+        Route::get('/export', [CompensationController::class, 'export'])->name('compensation.export');
+        Route::get('/employees', [CompensationController::class, 'employees'])->name('compensation.employees');
+        Route::put('/employees/{employee}', [CompensationController::class, 'updateEmployee'])->name('compensation.employees.update');
     });
 
     // Performance Routes

@@ -15,7 +15,7 @@
 @section('content')
 <div class="p-6">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">Payroll Management</h1>
             <p class="text-gray-600 mt-2">Process payroll with full Tanzania statutory compliance</p>
@@ -26,20 +26,32 @@
             </div>
             @endif
         </div>
-        <div class="flex space-x-3 mt-4 md:mt-0">
-            <button onclick="showBulkActions()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+        <div class="flex flex-wrap gap-3 lg:justify-end">
+            <a href="{{ route('attendance.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center">
+                <i data-feather="clock" class="w-4 h-4 mr-2"></i>
+                Attendance
+            </a>
+            <a href="{{ route('compensation.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center">
+                <i data-feather="dollar-sign" class="w-4 h-4 mr-2"></i>
+                Compensation
+            </a>
+            <button onclick="generatePayrollFromAttendance()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center justify-center">
+                <i data-feather="refresh-cw" class="w-4 h-4 inline mr-2"></i>
+                Generate From Attendance
+            </button>
+            <button onclick="showBulkActions()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors inline-flex items-center justify-center">
                 <i data-feather="layers" class="w-4 h-4 inline mr-2"></i>
                 Bulk Actions
             </button>
-            <button onclick="generateAllPayslips()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onclick="generateAllPayslips()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center">
                 <i data-feather="file-text" class="w-4 h-4 inline mr-2"></i>
                 Generate All Payslips
             </button>
-            <button onclick="exportPayrollReport()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onclick="exportPayrollReport()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Report
             </button>
-            <a href="{{ route('payroll.upload') }}" class="btn-transition px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 inline-flex items-center">
+            <a href="{{ route('payroll.upload') }}" class="btn-transition px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 inline-flex items-center justify-center">
                 <i data-feather="upload" class="w-4 h-4 mr-2"></i>
                 Upload CSV
             </a>
@@ -47,32 +59,107 @@
     </div>
 
     <!-- Compliance Status -->
-    <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-6 text-white mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-xl font-semibold mb-2">Payroll Compliance Status - <span id="currentClientName">{{ $currentClient->name }}</span></h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    <div id="payeContainer">
-                        <p class="text-green-100 text-sm">PAYE Filing</p>
-                        <p class="font-bold" id="payeStatus">Up to Date</p>
+    <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 text-white mb-8 shadow-sm">
+        <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-green-100">Compliance Overview</p>
+                        <h3 class="text-2xl font-semibold mt-1">Payroll Compliance Status</h3>
+                        <p class="text-sm text-green-100 mt-1">
+                            Current client:
+                            <span id="currentClientName" class="font-semibold text-white">{{ $currentClient->name }}</span>
+                        </p>
                     </div>
-                    <div id="nssfContainer">
-                        <p class="text-green-100 text-sm">NSSF Contributions</p>
-                        <p class="font-bold" id="nssfStatus">Compliant</p>
+                    <div class="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-sm text-green-50 border border-white/10">
+                        <i data-feather="shield" class="w-4 h-4 mr-2"></i>
+                        Tanzania Statutory Summary
                     </div>
-                    <div id="wcfContainer">
-                        <p class="text-green-100 text-sm">WCF Payments</p>
-                        <p class="font-bold" id="wcfStatus">Current</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
+                    <div id="payeContainer" class="rounded-xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-green-100 text-sm">PAYE Filing</p>
+                                <p class="font-semibold text-white mt-1" id="payeStatus">Up to Date</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                                <i data-feather="file-text" class="w-5 h-5 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-white/15 rounded-full h-2 overflow-hidden">
+                                <div id="payeProgressBar" class="h-2 rounded-full bg-white" style="width: 100%"></div>
+                            </div>
+                            <p class="text-xs text-green-50 mt-2" id="payeProgressText">100% Complete</p>
+                        </div>
                     </div>
-                    <div id="heslbContainer">
-                        <p class="text-green-100 text-sm">HESLB Deductions</p>
-                        <p class="font-bold" id="heslbStatus">Active</p>
+
+                    <div id="nssfContainer" class="rounded-xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-green-100 text-sm">NSSF Contributions</p>
+                                <p class="font-semibold text-white mt-1" id="nssfStatus">Compliant</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                                <i data-feather="briefcase" class="w-5 h-5 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-white/15 rounded-full h-2 overflow-hidden">
+                                <div id="nssfProgressBar" class="h-2 rounded-full bg-white" style="width: 100%"></div>
+                            </div>
+                            <p class="text-xs text-green-50 mt-2" id="nssfProgressText">100% Complete</p>
+                        </div>
+                    </div>
+
+                    <div id="wcfContainer" class="rounded-xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-green-100 text-sm">WCF Payments</p>
+                                <p class="font-semibold text-white mt-1" id="wcfStatus">Current</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                                <i data-feather="activity" class="w-5 h-5 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-white/15 rounded-full h-2 overflow-hidden">
+                                <div id="wcfProgressBar" class="h-2 rounded-full bg-white" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs text-green-50 mt-2" id="wcfProgressText">0% Complete</p>
+                        </div>
+                    </div>
+
+                    <div id="heslbContainer" class="rounded-xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-green-100 text-sm">HESLB Deductions</p>
+                                <p class="font-semibold text-white mt-1" id="heslbStatus">Active</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                                <i data-feather="book-open" class="w-5 h-5 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-white/15 rounded-full h-2 overflow-hidden">
+                                <div id="heslbProgressBar" class="h-2 rounded-full bg-white" style="width: 100%"></div>
+                            </div>
+                            <p class="text-xs text-green-50 mt-2" id="heslbProgressText">100% Complete</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="text-right">
-                <div class="text-3xl font-bold" id="complianceScore">100%</div>
-                <p class="text-sm text-green-100">Compliance Score</p>
+
+            <div class="xl:w-60 rounded-2xl bg-white/10 border border-white/10 p-5 text-center backdrop-blur-sm">
+                <p class="text-sm font-medium text-green-100">Compliance Score</p>
+                <div class="text-4xl font-bold mt-3" id="complianceScore">100%</div>
+                <p class="text-sm text-green-50 mt-2" id="complianceSummaryText">All primary payroll obligations are currently calculated.</p>
+                <div class="mt-4 h-2 rounded-full bg-white/15 overflow-hidden">
+                    <div id="complianceScoreBar" class="h-2 rounded-full bg-white" style="width: 100%"></div>
+                </div>
+                <p class="text-xs text-green-50 mt-2" id="complianceScoreCaption">Healthy compliance posture</p>
             </div>
         </div>
     </div>
@@ -206,27 +293,88 @@
                     </select>
                 </div>
             </div>
+            <div class="mt-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Payroll Date From</label>
+                        <input type="date" id="payrollDateFrom" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Payroll Date To</label>
+                        <input type="date" id="payrollDateTo" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Month</label>
+                        <select id="payrollMonthFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">All Months</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Year</label>
+                        <select id="payrollYearFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button onclick="clearPayrollFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
         </div>
         
+        <div class="px-6 pt-3 text-xs text-gray-500 border-b border-gray-100">
+            Scroll horizontally to view all payroll columns shown in the import template.
+        </div>
         <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="min-w-[2600px] w-full">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joining Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month of Payment</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Basic Salary</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OT Hours</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OT Rate</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OT Pay</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holiday Pay</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowances</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bonuses</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Pay</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taxable Pay</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PAYE</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NSSF</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HESLB</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Other Deduction</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Deduction</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Pay</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employer NSSF</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SDL</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WCF</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="payrollTableBody" class="bg-white divide-y divide-gray-200">
                     <!-- Payroll data will be loaded here -->
                     <tr>
-                        <td colspan="9" class="text-center py-8 text-gray-500">
+                        <td colspan="26" class="text-center py-8 text-gray-500">
                             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <i data-feather="upload" class="w-8 h-8 text-gray-400"></i>
                             </div>
@@ -370,6 +518,14 @@
                         <input type="number" id="editHolidayPay" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="0">
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Allowances (TZS)</label>
+                        <input type="number" id="editAllowances" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bonuses (TZS)</label>
+                        <input type="number" id="editBonuses" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="0">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Gross Pay (TZS)</label>
                         <input type="number" id="editGrossPay" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" readonly>
                     </div>
@@ -445,9 +601,9 @@
                 <i data-feather="calculator" class="w-4 h-4 inline mr-2"></i>
                 Calculate
             </button>
-            <button onclick="saveEmployee()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <button id="saveEmployeeBtn" onclick="saveEmployee()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                 <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
-                Save Changes
+                Update Payroll
             </button>
         </div>
     </div>
@@ -503,62 +659,175 @@ let filteredPayrollData = [];
 document.addEventListener('DOMContentLoaded', function() {
     loadPayrollData();
     setupEventListeners();
-    
-    // Load saved client data
-    loadSavedClientData();
 });
 
 function setupEventListeners() {
     document.getElementById('employeeSearch').addEventListener('input', filterPayrollData);
     document.getElementById('departmentFilter').addEventListener('change', filterPayrollData);
+    document.getElementById('payrollDateFrom').addEventListener('change', filterPayrollData);
+    document.getElementById('payrollDateTo').addEventListener('change', filterPayrollData);
+    document.getElementById('payrollMonthFilter').addEventListener('change', filterPayrollData);
+    document.getElementById('payrollYearFilter').addEventListener('change', filterPayrollData);
+
+    [
+        'editBasicSalary',
+        'editOtHours',
+        'editOtRate',
+        'editHolidayPay',
+        'editAllowances',
+        'editBonuses',
+        'editHeslb',
+        'editOtherDed'
+    ].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) {
+            field.addEventListener('input', calculatePayroll);
+        }
+    });
 }
 
-function loadPayrollData() {
-    // Load from localStorage or API
-    const currentClient = localStorage.getItem('selectedClient') || '1';
-    const clientPayrollKey = `payrollData_client_${currentClient}`;
-    const savedData = localStorage.getItem(clientPayrollKey);
-    
-    if (savedData) {
-        payrollData = JSON.parse(savedData);
-        filteredPayrollData = [...payrollData];
-        renderPayrollTable();
-        updatePayrollStats();
-    } else {
-        // If no data for current client, try to load general data for demo
-        const generalData = localStorage.getItem('payrollData');
-        if (generalData) {
-            payrollData = JSON.parse(generalData);
+async function loadPayrollData() {
+    try {
+        const response = await fetch('{{ route('payroll.data') }}', {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : null;
+
+        if (result?.success && Array.isArray(result.data)) {
+            payrollData = result.data;
             filteredPayrollData = [...payrollData];
+            initializePayrollDateFilters();
             renderPayrollTable();
             updatePayrollStats();
+            updateComplianceStatus();
+            return;
+        }
+    } catch (e) {
+    }
+
+    payrollData = [];
+    filteredPayrollData = [];
+    initializePayrollDateFilters();
+    renderPayrollTable();
+    updatePayrollStats();
+    updateComplianceStatus();
+}
+
+function initializePayrollDateFilters() {
+    const yearSelect = document.getElementById('payrollYearFilter');
+    if (!yearSelect) return;
+
+    const years = new Set();
+    payrollData.forEach((row) => {
+        const parsed = parseMonthOfPayment(row.monthOfPayment);
+        if (parsed) years.add(parsed.getFullYear());
+    });
+
+    const sortedYears = Array.from(years).sort((a, b) => b - a);
+
+    yearSelect.innerHTML = '<option value="">All Years</option>';
+    sortedYears.forEach((y) => {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        yearSelect.appendChild(opt);
+    });
+}
+
+function clearPayrollFilters() {
+    document.getElementById('employeeSearch').value = '';
+    document.getElementById('departmentFilter').value = '';
+    document.getElementById('payrollDateFrom').value = '';
+    document.getElementById('payrollDateTo').value = '';
+    document.getElementById('payrollMonthFilter').value = '';
+    document.getElementById('payrollYearFilter').value = '';
+    filterPayrollData();
+}
+
+function parseMonthOfPayment(monthOfPayment) {
+    if (!monthOfPayment) return null;
+    const value = String(monthOfPayment).trim();
+
+    const monthFirstTry = new Date(`1 ${value}`);
+    if (!isNaN(monthFirstTry.getTime())) {
+        return monthFirstTry;
+    }
+
+    const match = value.match(/^(\d{4})[-\/](\d{1,2})/);
+    if (match) {
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        if (year && month >= 1 && month <= 12) {
+            return new Date(year, month - 1, 1);
         }
     }
+
+    return null;
 }
 
-function loadSavedClientData() {
-    const savedClient = localStorage.getItem('selectedClient');
-    if (savedClient) {
-        updateClientDisplay(savedClient);
-    }
+function getPayrollPeriodRange(row) {
+    const start = parseMonthOfPayment(row.monthOfPayment);
+    if (!start) return null;
+    const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    return { start, end };
 }
 
-function updateClientDisplay(clientId) {
-    const clientNames = {
-        '1': 'ABC Manufacturing Ltd',
-        '2': 'XYZ Construction Co',
-        '3': 'Tanzania Mining Corp',
-        '4': 'East Africa Logistics'
-    };
-    
-    const clientName = clientNames[clientId] || 'Unknown Client';
-    document.getElementById('currentClientName').textContent = clientName;
-    
-    // Update compliance status based on client
-    updateComplianceStatus(clientId);
+function parseDateInput(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
 }
 
-function updateComplianceStatus(clientId) {
+function filterPayrollData() {
+    const searchTerm = document.getElementById('employeeSearch').value.toLowerCase();
+    const departmentFilter = document.getElementById('departmentFilter').value;
+    const dateFrom = parseDateInput(document.getElementById('payrollDateFrom').value);
+    const dateTo = parseDateInput(document.getElementById('payrollDateTo').value);
+    const monthFilter = parseInt(document.getElementById('payrollMonthFilter').value, 10) || null;
+    const yearFilter = parseInt(document.getElementById('payrollYearFilter').value, 10) || null;
+
+    filteredPayrollData = payrollData.filter((row) => {
+        const name = (row.name || '').toString().toLowerCase();
+        const empId = (row.empId || '').toString().toLowerCase();
+        const department = (row.department || '').toString();
+
+        const matchesSearch = !searchTerm || name.includes(searchTerm) || empId.includes(searchTerm);
+        const matchesDepartment = !departmentFilter || department === departmentFilter;
+
+        const period = getPayrollPeriodRange(row);
+        const monthDate = period?.start ?? null;
+
+        const matchesMonth = !monthFilter || (monthDate && (monthDate.getMonth() + 1) === monthFilter);
+        const matchesYear = !yearFilter || (monthDate && monthDate.getFullYear() === yearFilter);
+
+        let matchesDateRange = true;
+        if (dateFrom || dateTo) {
+            if (!period) {
+                matchesDateRange = false;
+            } else {
+                const from = dateFrom ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate()) : null;
+                const to = dateTo ? new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59, 999) : null;
+
+                if (from && period.end < from) matchesDateRange = false;
+                if (to && period.start > to) matchesDateRange = false;
+            }
+        }
+
+        return matchesSearch && matchesDepartment && matchesMonth && matchesYear && matchesDateRange;
+    });
+
+    renderPayrollTable();
+    updatePayrollStats();
+}
+
+function updateComplianceStatus() {
     // Only show compliance status if there's actual payroll data
     if (payrollData.length === 0) {
         // Clear compliance status when no data
@@ -567,143 +836,122 @@ function updateComplianceStatus(clientId) {
         document.getElementById('nssfStatus').textContent = 'No Data';
         document.getElementById('wcfStatus').textContent = 'No Data';
         document.getElementById('heslbStatus').textContent = 'No Data';
-        
-        // Clear progress bars
-        ['paye', 'nssf', 'wcf', 'heslb'].forEach(itemId => {
-            const container = document.getElementById(itemId + 'Container');
-            if (container) {
-                const progressBar = container.querySelector('.compliance-progress');
-                if (progressBar) {
-                    progressBar.remove();
-                }
-            }
-        });
-        
-        // Update score color
+
+        updateComplianceItem('paye', 'No Data', 0);
+        updateComplianceItem('nssf', 'No Data', 0);
+        updateComplianceItem('wcf', 'No Data', 0);
+        updateComplianceItem('heslb', 'No Data', 0);
+
         const scoreElement = document.getElementById('complianceScore');
         scoreElement.className = 'text-3xl font-bold text-gray-400';
-        
+        document.getElementById('complianceSummaryText').textContent = 'Import or generate payroll data to evaluate statutory compliance.';
+        document.getElementById('complianceScoreCaption').textContent = 'Awaiting payroll data';
+        document.getElementById('complianceScoreBar').style.width = '0%';
+
         return;
     }
-    
-    const complianceData = {
-        '1': { 
-            score: 100, 
-            paye: 'Up to Date', 
-            nssf: 'Compliant', 
-            wcf: 'Current', 
-            heslb: 'Active',
-            payeProgress: 100,
-            nssfProgress: 100,
-            wcfProgress: 100,
-            heslbProgress: 100
-        },
-        '2': { 
-            score: 95, 
-            paye: 'Pending', 
-            nssf: 'Compliant', 
-            wcf: 'Current', 
-            heslb: 'Active',
-            payeProgress: 75,
-            nssfProgress: 100,
-            wcfProgress: 100,
-            heslbProgress: 100
-        },
-        '3': { 
-            score: 88, 
-            paye: 'Overdue', 
-            nssf: 'Partial', 
-            wcf: 'Pending', 
-            heslb: 'Active',
-            payeProgress: 50,
-            nssfProgress: 60,
-            wcfProgress: 40,
-            heslbProgress: 100
-        },
-        '4': { 
-            score: 92, 
-            paye: 'Up to Date', 
-            nssf: 'Compliant', 
-            wcf: 'Current', 
-            heslb: 'Partial',
-            payeProgress: 100,
-            nssfProgress: 100,
-            wcfProgress: 100,
-            heslbProgress: 75
-        }
-    };
-    
-    const data = complianceData[clientId] || complianceData['1'];
-    
-    // Update text values
-    document.getElementById('complianceScore').textContent = data.score + '%';
-    document.getElementById('payeStatus').textContent = data.paye;
-    document.getElementById('nssfStatus').textContent = data.nssf;
-    document.getElementById('wcfStatus').textContent = data.wcf;
-    document.getElementById('heslbStatus').textContent = data.heslb;
-    
-    // Update compliance score color
+
+    document.getElementById('complianceScore').textContent = '100%';
+    document.getElementById('payeStatus').textContent = 'Calculated';
+    document.getElementById('nssfStatus').textContent = 'Calculated';
+    document.getElementById('wcfStatus').textContent = 'N/A';
+    document.getElementById('heslbStatus').textContent = 'Calculated';
+
     const scoreElement = document.getElementById('complianceScore');
-    scoreElement.className = 'text-3xl font-bold';
-    if (data.score >= 95) {
-        scoreElement.classList.add('text-green-100');
-    } else if (data.score >= 85) {
-        scoreElement.classList.add('text-yellow-100');
-    } else {
-        scoreElement.classList.add('text-red-100');
+    scoreElement.className = 'text-4xl font-bold mt-3';
+    document.getElementById('complianceSummaryText').textContent = 'All primary payroll obligations are currently calculated.';
+    document.getElementById('complianceScoreCaption').textContent = 'Healthy compliance posture';
+    document.getElementById('complianceScoreBar').style.width = '100%';
+
+    updateComplianceItem('paye', 'Calculated', 100);
+    updateComplianceItem('nssf', 'Calculated', 100);
+    updateComplianceItem('wcf', 'N/A', 0);
+    updateComplianceItem('heslb', 'Calculated', 100);
+}
+
+async function generatePayrollFromAttendance() {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const now = new Date();
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    try {
+        const response = await fetch('{{ route('payroll.generate.from.attendance') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+            body: JSON.stringify({ payroll_period: period }),
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : null;
+
+        if (!response.ok || !result?.success) {
+            showNotification(result?.message || 'Failed to generate payroll', 'error');
+            return;
+        }
+
+        showNotification(`${result.message} (Created: ${result.created}, Updated: ${result.updated})`, 'success');
+        await loadPayrollData();
+    } catch (e) {
+        showNotification('Network error while generating payroll', 'error');
     }
-    
-    // Update individual compliance items with progress bars
-    updateComplianceItem('paye', data.paye, data.payeProgress);
-    updateComplianceItem('nssf', data.nssf, data.nssfProgress);
-    updateComplianceItem('wcf', data.wcf, data.wcfProgress);
-    updateComplianceItem('heslb', data.heslb, data.heslbProgress);
 }
 
 function updateComplianceItem(itemId, status, progress) {
     // Find the compliance item container
     const container = document.getElementById(itemId + 'Container');
     if (!container) return;
-    
+
     // Determine color based on status
-    let statusColor = 'text-green-100';
-    let progressColor = 'bg-green-500';
-    
+    let statusColor = 'text-white';
+    let progressColor = 'bg-white';
+    let progressText = `${progress}% Complete`;
+
+    if (status === 'No Data') {
+        statusColor = 'text-green-50';
+        progressColor = 'bg-white/50';
+        progressText = 'Waiting for payroll data';
+    }
+
     if (status === 'Overdue' || status === 'Pending' || status === 'Partial') {
         statusColor = 'text-yellow-100';
-        progressColor = 'bg-yellow-500';
+        progressColor = 'bg-yellow-300';
     }
-    
+
     if (status === 'Overdue') {
         statusColor = 'text-red-100';
-        progressColor = 'bg-red-500';
+        progressColor = 'bg-red-300';
     }
-    
+
+    if (status === 'N/A') {
+        statusColor = 'text-green-50';
+        progressColor = 'bg-white/50';
+        progressText = 'Not applicable';
+    }
+
     // Update status text color
-    const statusElement = container.querySelector('.font-bold');
+    const statusElement = document.getElementById(itemId + 'Status');
     if (statusElement) {
-        statusElement.className = `font-bold ${statusColor}`;
+        statusElement.className = `font-semibold mt-1 ${statusColor}`;
     }
-    
-    // Add or update progress bar
-    let progressBar = container.querySelector('.compliance-progress');
-    if (!progressBar) {
-        progressBar = document.createElement('div');
-        progressBar.className = 'compliance-progress mt-2';
-        progressBar.innerHTML = `
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="h-2 rounded-full transition-all duration-500 ${progressColor}" style="width: ${progress}%"></div>
-            </div>
-            <div class="text-xs text-gray-400 mt-1">${progress}% Complete</div>
-        `;
-        container.appendChild(progressBar);
-    } else {
-        // Update existing progress bar
-        const bar = progressBar.querySelector('div > div');
-        const text = progressBar.querySelector('.text-xs');
-        bar.style.width = progress + '%';
-        bar.className = `h-2 rounded-full transition-all duration-500 ${progressColor}`;
-        text.textContent = progress + '% Complete';
+
+    const progressBar = document.getElementById(itemId + 'ProgressBar');
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+        progressBar.className = `h-2 rounded-full ${progressColor}`;
+    }
+
+    const progressTextElement = document.getElementById(itemId + 'ProgressText');
+    if (progressTextElement) {
+        progressTextElement.textContent = progressText;
     }
 }
 
@@ -1162,13 +1410,18 @@ function previewImportData(data) {
         </div>
         
         <div class="overflow-x-auto">
-            <table class="w-full border border-gray-200">
+            <table class="min-w-[1200px] w-full border border-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Emp ID</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Name</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Department</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Title</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Month</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Basic Salary</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Gross Pay</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">PAYE</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">NSSF</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Net Pay</th>
                     </tr>
                 </thead>
@@ -1178,7 +1431,12 @@ function previewImportData(data) {
                             <td class="px-4 py-2 text-sm">${emp.empId}</td>
                             <td class="px-4 py-2 text-sm">${emp.name}</td>
                             <td class="px-4 py-2 text-sm">${emp.department}</td>
+                            <td class="px-4 py-2 text-sm">${emp.title || '-'}</td>
+                            <td class="px-4 py-2 text-sm">${emp.monthOfPayment || '-'}</td>
                             <td class="px-4 py-2 text-sm">TZS ${emp.basicSalary.toLocaleString()}</td>
+                            <td class="px-4 py-2 text-sm">TZS ${emp.grossPay.toLocaleString()}</td>
+                            <td class="px-4 py-2 text-sm">TZS ${emp.paye.toLocaleString()}</td>
+                            <td class="px-4 py-2 text-sm">TZS ${emp.nssf.toLocaleString()}</td>
                             <td class="px-4 py-2 text-sm">TZS ${emp.netPay.toLocaleString()}</td>
                         </tr>
                     `).join('')}
@@ -1199,28 +1457,148 @@ function previewImportData(data) {
     showImportModal();
 }
 
-function confirmImport() {
-    if (window.tempImportData) {
-        payrollData = window.tempImportData;
-        filteredPayrollData = [...payrollData];
-        
-        // Save to localStorage for current client
-        const currentClient = localStorage.getItem('selectedClient') || '1';
-        const clientPayrollKey = `payrollData_client_${currentClient}`;
-        localStorage.setItem(clientPayrollKey, JSON.stringify(payrollData));
-        
-        // Also save to general key for fallback
-        localStorage.setItem('payrollData', JSON.stringify(payrollData));
-        
-        renderPayrollTable();
-        updatePayrollStats();
-        closeImportModal();
-        
-        showNotification(`Successfully imported ${payrollData.length} payroll records`, 'success');
-        
-        // Clear file input
-        document.getElementById('payrollFile').value = '';
+async function confirmImport() {
+    if (!window.tempImportData || !Array.isArray(window.tempImportData) || window.tempImportData.length === 0) {
+        return;
     }
+
+    const importBtn = document.querySelector('#importModal button[onclick="confirmImport()"]');
+    if (importBtn) {
+        importBtn.disabled = true;
+        importBtn.classList.add('opacity-60', 'cursor-not-allowed');
+    }
+
+    try {
+        const rows = window.tempImportData;
+        const inferred = inferPayrollPeriodAndPayDate(rows);
+
+        const csv = buildPayrollCsv(rows);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const file = new File([blob], `payroll_import_${inferred.payroll_period}.csv`, { type: 'text/csv' });
+
+        const formData = new FormData();
+        formData.append('csv_file', file);
+        formData.append('payroll_period', inferred.payroll_period);
+        formData.append('pay_date', inferred.pay_date);
+
+        const response = await fetch('{{ route("payroll.upload.csv") }}', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const result = await response.json().catch(() => null);
+        if (!result?.success) {
+            showNotification(result?.message || 'Import failed', 'error');
+            return;
+        }
+
+        showNotification(result.message || 'Payroll imported successfully', 'success');
+        closeImportModal();
+        document.getElementById('payrollFile').value = '';
+        window.tempImportData = null;
+
+        await loadPayrollData();
+    } catch (e) {
+        showNotification('Import failed. Please try again.', 'error');
+    } finally {
+        if (importBtn) {
+            importBtn.disabled = false;
+            importBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+    }
+}
+
+function inferPayrollPeriodAndPayDate(rows) {
+    const direct = rows.find(r => typeof r.payrollPeriod === 'string' && /^\d{4}-\d{2}$/.test(r.payrollPeriod));
+    if (direct) {
+        const [y, m] = direct.payrollPeriod.split('-').map(v => parseInt(v, 10));
+        const end = new Date(y, m, 0);
+        return { payroll_period: direct.payrollPeriod, pay_date: end.toISOString().slice(0, 10) };
+    }
+
+    const fromMonth = rows.find(r => r.monthOfPayment);
+    if (fromMonth) {
+        const d = parseMonthOfPayment(fromMonth.monthOfPayment);
+        if (d) {
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+            const period = `${y}-${String(m).padStart(2, '0')}`;
+            const end = new Date(y, m, 0);
+            return { payroll_period: period, pay_date: end.toISOString().slice(0, 10) };
+        }
+    }
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const period = `${y}-${String(m).padStart(2, '0')}`;
+    const end = new Date(y, m, 0);
+    return { payroll_period: period, pay_date: end.toISOString().slice(0, 10) };
+}
+
+function buildPayrollCsv(rows) {
+    const header = [
+        'employee_id',
+        'email',
+        'first_name',
+        'last_name',
+        'basic_salary',
+        'overtime_hours',
+        'overtime_rate',
+        'overtime_pay',
+        'allowances',
+        'bonuses',
+        'tax_deductions',
+        'social_security',
+        'pension',
+        'other_deductions',
+        'notes'
+    ];
+
+    const escape = (v) => {
+        const s = (v === null || v === undefined) ? '' : String(v);
+        if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+            return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+    };
+
+    const lines = [header.join(',')];
+
+    rows.forEach((r) => {
+        const name = String(r.name || '').trim();
+        const parts = name ? name.split(/\s+/) : [];
+        const first = parts[0] || '';
+        const last = parts.slice(1).join(' ') || '';
+
+        const other = (Number(r.otherDed || 0) || 0) + (Number(r.heslb || 0) || 0);
+
+        lines.push([
+            escape(r.empId || ''),
+            escape(r.email || ''),
+            escape(first),
+            escape(last),
+            escape(Number(r.basicSalary || 0) || 0),
+            escape(Number(r.otHours || 0) || 0),
+            escape(Number(r.otRate || 0) || 0),
+            escape(Number(r.otPay || 0) || 0),
+            escape(Number(r.allowances || 0) || 0),
+            escape(Number(r.bonuses || 0) || 0),
+            escape(Number(r.paye || 0) || 0),
+            escape(Number(r.nssf || 0) || 0),
+            escape(Number(r.employerNSSF || r.pension || 0) || 0),
+            escape(other),
+            escape(r.notes || '')
+        ].join(','));
+    });
+
+    return lines.join('\n');
 }
 
 function renderPayrollTable() {
@@ -1229,7 +1607,7 @@ function renderPayrollTable() {
     if (filteredPayrollData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" class="text-center py-12 text-gray-500">
+                <td colspan="26" class="text-center py-12 text-gray-500">
                     <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i data-feather="inbox" class="w-10 h-10 text-gray-400"></i>
                     </div>
@@ -1250,10 +1628,15 @@ function renderPayrollTable() {
         `;
         return;
     }
+
+    const formatCurrency = (value) => `TZS ${Number(value || 0).toLocaleString()}`;
+    const formatNumber = (value) => Number(value || 0).toLocaleString();
+    const formatDate = (value) => value || '-';
+    const textValue = (value) => value || '-';
     
     tbody.innerHTML = filteredPayrollData.map(emp => `
         <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap align-top">
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
                         <span class="text-white text-xs font-medium">${emp.name.charAt(0)}</span>
@@ -1264,20 +1647,39 @@ function renderPayrollTable() {
                     </div>
                 </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${emp.department}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TZS ${emp.basicSalary.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TZS ${emp.grossPay.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TZS ${emp.paye.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TZS ${emp.nssf.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TZS ${emp.heslb.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">TZS ${emp.netPay.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div class="flex space-x-2">
-                    <button onclick="generatePayslip('${emp.empId}')" class="text-indigo-600 hover:text-indigo-900" title="Generate Payslip">
-                        <i data-feather="file-text" class="w-4 h-4"></i>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${textValue(emp.department)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${textValue(emp.title)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatDate(emp.joiningDate)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${textValue(emp.shift)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${textValue(emp.monthOfPayment)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.basicSalary)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatNumber(emp.otHours)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.otRate)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.otPay)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.holidayPay)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.allowances)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.bonuses)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-top">${formatCurrency(emp.grossPay)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.taxablePay)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.paye)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.nssf)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.heslb)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.otherDed)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.totalDeduction)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 align-top">${formatCurrency(emp.netPay)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.employerNSSF)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.sdl)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.wcf)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 align-top">${formatCurrency(emp.totalCost)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium align-top">
+                <div class="flex items-center gap-2">
+                    <button onclick="generatePayslip('${emp.empId}')" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100" title="Generate Payslip">
+                        <i data-feather="file-text" class="w-4 h-4 mr-1.5"></i>
+                        Payslip
                     </button>
-                    <button onclick="editEmployee('${emp.empId}')" class="text-blue-600 hover:text-blue-900" title="Edit">
-                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                    <button onclick="editEmployee('${emp.empId}')" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100" title="Update Payroll">
+                        <i data-feather="edit-2" class="w-4 h-4 mr-1.5"></i>
+                        Update
                     </button>
                 </div>
             </td>
@@ -1301,8 +1703,20 @@ function updatePayrollStats() {
         document.getElementById('payrollMonth').textContent = 'No Data';
         return;
     }
-    
-    const totals = payrollData.reduce((acc, emp) => {
+
+    const dataForStats = filteredPayrollData.length ? filteredPayrollData : payrollData;
+
+    if (dataForStats.length === 0) {
+        document.getElementById('totalPayroll').textContent = 'No Results';
+        document.getElementById('totalPAYE').textContent = 'No Results';
+        document.getElementById('totalNSSF').textContent = 'No Results';
+        document.getElementById('totalNet').textContent = 'No Results';
+        document.getElementById('payePercentage').textContent = 'No Results';
+        document.getElementById('payrollMonth').textContent = 'No Results';
+        return;
+    }
+
+    const totals = dataForStats.reduce((acc, emp) => {
         acc.totalPayroll += emp.grossPay;
         acc.totalPAYE += emp.paye;
         acc.totalNSSF += emp.nssf + emp.employerNSSF;
@@ -1320,31 +1734,18 @@ function updatePayrollStats() {
     document.getElementById('totalNSSF').textContent = `TZS ${totals.totalNSSF.toLocaleString()}`;
     document.getElementById('totalNet').textContent = `TZS ${totals.totalNet.toLocaleString()}`;
     
-    const payePercentage = ((totals.totalPAYE / totals.totalPayroll) * 100).toFixed(1);
+    const payePercentage = totals.totalPayroll > 0 ? ((totals.totalPAYE / totals.totalPayroll) * 100).toFixed(1) : '0.0';
     document.getElementById('payePercentage').textContent = `${payePercentage}% of payroll`;
     
     // Get month from first employee or use current month
-    if (payrollData.length > 0) {
-        const monthOfPayment = payrollData[0].monthOfPayment;
-        document.getElementById('payrollMonth').textContent = monthOfPayment;
+    const uniqueMonths = new Set(dataForStats.map(r => r.monthOfPayment).filter(Boolean));
+    if (uniqueMonths.size === 1) {
+        document.getElementById('payrollMonth').textContent = Array.from(uniqueMonths)[0];
+    } else if (uniqueMonths.size > 1) {
+        document.getElementById('payrollMonth').textContent = 'Multiple Periods';
+    } else {
+        document.getElementById('payrollMonth').textContent = 'Unknown Period';
     }
-}
-
-function filterPayrollData() {
-    const searchTerm = document.getElementById('employeeSearch').value.toLowerCase();
-    const departmentFilter = document.getElementById('departmentFilter').value;
-    
-    filteredPayrollData = payrollData.filter(emp => {
-        const matchesSearch = !searchTerm || 
-            emp.name.toLowerCase().includes(searchTerm) ||
-            emp.empId.toLowerCase().includes(searchTerm);
-        
-        const matchesDepartment = !departmentFilter || emp.department === departmentFilter;
-        
-        return matchesSearch && matchesDepartment;
-    });
-    
-    renderPayrollTable();
 }
 
 function generatePayslip(empId) {
@@ -1499,6 +1900,8 @@ function editEmployee(empId) {
     document.getElementById('editOtRate').value = employee.otRate;
     document.getElementById('editOtPay').value = employee.otPay;
     document.getElementById('editHolidayPay').value = employee.holidayPay;
+    document.getElementById('editAllowances').value = employee.allowances || 0;
+    document.getElementById('editBonuses').value = employee.bonuses || 0;
     document.getElementById('editGrossPay').value = employee.grossPay;
     document.getElementById('editNssf').value = employee.nssf;
     document.getElementById('editPaye').value = employee.paye;
@@ -1533,6 +1936,8 @@ function calculatePayroll() {
     const otHours = parseFloat(document.getElementById('editOtHours').value) || 0;
     const otRate = parseFloat(document.getElementById('editOtRate').value) || 0;
     const holidayPay = parseFloat(document.getElementById('editHolidayPay').value) || 0;
+    const allowances = parseFloat(document.getElementById('editAllowances').value) || 0;
+    const bonuses = parseFloat(document.getElementById('editBonuses').value) || 0;
     const heslb = parseFloat(document.getElementById('editHeslb').value) || 0;
     const otherDed = parseFloat(document.getElementById('editOtherDed').value) || 0;
     
@@ -1541,7 +1946,7 @@ function calculatePayroll() {
     document.getElementById('editOtPay').value = otPay;
     
     // Calculate Gross Pay
-    const grossPay = basicSalary + otPay + holidayPay;
+    const grossPay = basicSalary + otPay + holidayPay + allowances + bonuses;
     document.getElementById('editGrossPay').value = grossPay;
     
     // Calculate NSSF (10% of gross pay, capped at TZS 10,000)
@@ -1591,9 +1996,11 @@ function calculatePayroll() {
     showNotification('Payroll calculated successfully', 'success');
 }
 
-function saveEmployee() {
+async function saveEmployee() {
     if (!window.currentEditingEmployee) return;
-    
+
+    calculatePayroll();
+
     // Get form values
     const updatedEmployee = {
         ...window.currentEditingEmployee,
@@ -1607,6 +2014,8 @@ function saveEmployee() {
         otRate: parseFloat(document.getElementById('editOtRate').value),
         otPay: parseFloat(document.getElementById('editOtPay').value),
         holidayPay: parseFloat(document.getElementById('editHolidayPay').value),
+        allowances: parseFloat(document.getElementById('editAllowances').value),
+        bonuses: parseFloat(document.getElementById('editBonuses').value),
         grossPay: parseFloat(document.getElementById('editGrossPay').value),
         nssf: parseFloat(document.getElementById('editNssf').value),
         paye: parseFloat(document.getElementById('editPaye').value),
@@ -1620,25 +2029,80 @@ function saveEmployee() {
         totalCost: parseFloat(document.getElementById('editTotalCost').value),
         monthOfPayment: document.getElementById('editMonthOfPayment').value
     };
-    
-    // Update in payroll data array
-    const index = payrollData.findIndex(emp => emp.empId === updatedEmployee.empId);
-    if (index !== -1) {
-        payrollData[index] = updatedEmployee;
-        filteredPayrollData = [...payrollData];
-        
-        // Save to localStorage
-        const currentClient = localStorage.getItem('selectedClient') || '1';
-        savePayrollDataForClient(currentClient);
-        
-        // Re-render table
-        renderPayrollTable();
-        updatePayrollStats();
-        
-        // Close modal
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const payrollId = updatedEmployee.payrollId;
+    if (!payrollId) {
+        showNotification('Cannot save: payroll record id is missing.', 'error');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveEmployeeBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.classList.add('opacity-60', 'cursor-not-allowed');
+    }
+
+    try {
+        const response = await fetch(`/payroll/${payrollId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+            body: JSON.stringify({
+                basic_salary: updatedEmployee.basicSalary || 0,
+                overtime_hours: updatedEmployee.otHours || 0,
+                overtime_rate: updatedEmployee.otRate || 0,
+                overtime_pay: updatedEmployee.otPay || 0,
+                allowances: updatedEmployee.allowances || 0,
+                bonuses: updatedEmployee.bonuses || 0,
+                gross_pay: updatedEmployee.grossPay || 0,
+                tax_deductions: updatedEmployee.paye || 0,
+                social_security: updatedEmployee.nssf || 0,
+                pension: updatedEmployee.employerNSSF || 0,
+                other_deductions: (updatedEmployee.heslb || 0) + (updatedEmployee.otherDed || 0),
+                total_deductions: updatedEmployee.totalDeduction || 0,
+                net_pay: updatedEmployee.netPay || 0,
+                notes: JSON.stringify({
+                    payroll_meta: {
+                        holidayPay: updatedEmployee.holidayPay || 0,
+                        heslb: updatedEmployee.heslb || 0,
+                        otherDed: updatedEmployee.otherDed || 0,
+                        taxablePay: (updatedEmployee.grossPay || 0) - (updatedEmployee.nssf || 0),
+                        sdl: updatedEmployee.sdl || 0,
+                        wcf: updatedEmployee.wcf || 0,
+                        totalCost: updatedEmployee.totalCost || 0,
+                        monthOfPayment: updatedEmployee.monthOfPayment || ''
+                    }
+                }),
+            })
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : null;
+
+        if (!response.ok || !result?.success) {
+            showNotification(result?.message || 'Failed to update payroll.', 'error');
+            return;
+        }
+
+        showNotification(`Payroll for ${updatedEmployee.name} updated successfully`, 'success');
         closeEditModal();
-        
-        showNotification(`Employee ${updatedEmployee.name} updated successfully`, 'success');
+        await loadPayrollData();
+    } catch (e) {
+        showNotification('Network error while saving payroll changes.', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
     }
 }
 
@@ -1761,61 +2225,10 @@ function generateComprehensiveReport() {
 if (typeof switchClient !== 'undefined') {
     const originalSwitchClient = switchClient;
     switchClient = function(clientId) {
-        // Call original function for general client switching
         originalSwitchClient(clientId);
-        
-        // Update payroll data specifically
-        updateClientData(clientId);
+        loadPayrollData();
     };
 }
-function updateClientData(clientId) {
-    updateClientDisplay(clientId);
-    
-    // Reload payroll data for new client
-    const clientPayrollKey = `payrollData_client_${clientId}`;
-    const savedData = localStorage.getItem(clientPayrollKey);
-    
-    if (savedData) {
-        payrollData = JSON.parse(savedData);
-        filteredPayrollData = [...payrollData];
-        renderPayrollTable();
-        updatePayrollStats();
-    } else {
-        // Clear data if no data for this client
-        payrollData = [];
-        filteredPayrollData = [];
-        renderPayrollTable();
-        updatePayrollStats();
-    }
-}
-
-// Save payroll data per client
-function savePayrollDataForClient(clientId) {
-    const clientPayrollKey = `payrollData_client_${clientId}`;
-    localStorage.setItem(clientPayrollKey, JSON.stringify(payrollData));
-}
-
-// Override confirmImport to save per client
-const originalConfirmImport = confirmImport;
-confirmImport = function() {
-    if (window.tempImportData) {
-        payrollData = window.tempImportData;
-        filteredPayrollData = [...payrollData];
-        
-        // Save to localStorage for current client
-        const currentClient = localStorage.getItem('selectedClient') || '1';
-        savePayrollDataForClient(currentClient);
-        
-        renderPayrollTable();
-        updatePayrollStats();
-        closeImportModal();
-        
-        showNotification(`Successfully imported ${payrollData.length} payroll records`, 'success');
-        
-        // Clear file input
-        document.getElementById('payrollFile').value = '';
-    }
-};
 
 // Fallback functions
 if (typeof showNotification === 'undefined') {

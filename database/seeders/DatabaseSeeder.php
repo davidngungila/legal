@@ -7,6 +7,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Database\Seeders\ClientSeeder;
+use Database\Seeders\DemoPayrollAttendanceCompensationSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,6 +23,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CreateTestUsers::class,
             AssignUsersToClients::class,
+            DemoPayrollAttendanceCompensationSeeder::class,
         ]);
     }
 }

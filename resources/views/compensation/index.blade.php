@@ -3,36 +3,30 @@
 @section('title', 'Compensation & Benefits - LegalHR Tanzania')
 
 @section('content')
-<div class="p-6">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+<div class="p-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">Compensation & Benefits</h1>
-            <p class="text-gray-600 mt-2">Manage salary structures and employee benefits</p>
+            <p class="text-gray-600 mt-2">Manage employee salary and benefits</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
-                Export Report
-            </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
-                New Salary Structure
-            </button>
+            <a href="{{ route('compensation.export', request()->query()) }}"
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center">
+                <i data-feather="download" class="w-4 h-4 mr-2"></i>
+                Export CSV
+            </a>
         </div>
     </div>
 
-    <!-- Compensation Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="dollar-sign" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+8%</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">TZS 45.2M</h3>
-            <p class="text-gray-600 text-sm">Monthly Payroll</p>
+            <h3 class="text-2xl font-bold text-gray-900">TZS {{ number_format($stats['total_salary_tzs'] ?? 0, 0) }}</h3>
+            <p class="text-gray-600 text-sm">Total Salary (TZS)</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -40,10 +34,9 @@
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-feather="trending-up" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+5%</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">TZS 182K</h3>
-            <p class="text-gray-600 text-sm">Avg. Salary</p>
+            <h3 class="text-2xl font-bold text-gray-900">TZS {{ number_format($stats['avg_salary'] ?? 0, 0) }}</h3>
+            <p class="text-gray-600 text-sm">Average Salary</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -51,309 +44,427 @@
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <i data-feather="gift" class="w-6 h-6 text-purple-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+12%</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">TZS 8.7M</h3>
-            <p class="text-gray-600 text-sm">Benefits Cost</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ number_format($stats['employees_with_benefits'] ?? 0) }}</h3>
+            <p class="text-gray-600 text-sm">Employees With Benefits</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i data-feather="award" class="w-6 h-6 text-yellow-600"></i>
+                    <i data-feather="users" class="w-6 h-6 text-yellow-600"></i>
                 </div>
-                <span class="text-sm text-orange-600 font-medium">3</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">15</h3>
-            <p class="text-gray-600 text-sm">Bonus Plans</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ number_format($stats['total_employees'] ?? 0) }}</h3>
+            <p class="text-gray-600 text-sm">Total Employees</p>
         </div>
     </div>
 
-    <!-- Salary Structures -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Salary Structures</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Add Structure</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach([
-                ['name' => 'Executive Level', 'grade' => 'E1-E5', 'min' => 5000000, 'max' => 15000000, 'employees' => 8],
-                ['name' => 'Management Level', 'grade' => 'M1-M4', 'min' => 3000000, 'max' => 8000000, 'employees' => 24],
-                ['name' => 'Professional Level', 'grade' => 'P1-P5', 'min' => 1500000, 'max' => 4000000, 'employees' => 89],
-                ['name' => 'Technical Level', 'grade' => 'T1-T4', 'min' => 800000, 'max' => 2500000, 'employees' => 67],
-                ['name' => 'Support Level', 'grade' => 'S1-S3', 'min' => 400000, 'max' => 1200000, 'employees' => 45],
-                ['name' => 'Intern Level', 'grade' => 'I1-I2', 'min' => 200000, 'max' => 500000, 'employees' => 15]
-            ] as $structure)
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-full">{{ $structure['grade'] }}</span>
-                    <span class="text-xs text-gray-500">{{ $structure['employees'] }} employees</span>
-                </div>
-                <h4 class="font-semibold text-gray-900 mb-2">{{ $structure['name'] }}</h4>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Minimum:</span>
-                        <span class="font-medium">TZS {{ number_format($structure['min'], 0) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Maximum:</span>
-                        <span class="font-medium">TZS {{ number_format($structure['max'], 0) }}</span>
-                    </div>
-                </div>
-                <div class="mt-3 pt-3 border-t border-gray-200">
-                    <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Details →</button>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="GET" action="{{ route('compensation.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" value="{{ request('search') }}"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Name, ID, email, dept, position">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <select name="department" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All</option>
+                    @foreach($departments as $dept)
+                        <option value="{{ $dept }}" {{ request('department') === $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Salary Range</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" step="0.01" name="min_salary" value="{{ request('min_salary') }}"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Min">
+                    <input type="number" step="0.01" name="max_salary" value="{{ request('max_salary') }}"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Max">
                 </div>
             </div>
-            @endforeach
-        </div>
+
+            <div class="flex space-x-2">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors w-full">Filter</button>
+                <a href="{{ route('compensation.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Clear</a>
+            </div>
+        </form>
     </div>
 
-    <!-- Benefits Overview -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Benefits Programs</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Manage Benefits</button>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Employee Compensation</h2>
+            <div id="compAlert" class="hidden text-sm px-3 py-2 rounded-lg"></div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="shield" class="w-5 h-5 text-green-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">Health Insurance</h4>
-                                <p class="text-sm text-gray-500">Comprehensive medical coverage</p>
-                            </div>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <p>Covers: Medical, Dental, Vision</p>
-                        <p>Employer Contribution: 80%</p>
-                        <p>Monthly Cost: TZS 2.5M</p>
-                    </div>
-                </div>
 
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="home" class="w-5 h-5 text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">Retirement Plan</h4>
-                                <p class="text-sm text-gray-500">NSSF + Private pension</p>
-                            </div>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <p>NSSF: 10% (5% employee, 5% employer)</p>
-                        <p>Private Pension: Optional</p>
-                        <p>Monthly Cost: TZS 4.5M</p>
-                    </div>
-                </div>
-
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="calendar" class="w-5 h-5 text-purple-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">Leave Benefits</h4>
-                                <p class="text-sm text-gray-500">Paid time off</p>
-                            </div>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <p>Annual Leave: 28 days</p>
-                        <p>Sick Leave: 90 days</p>
-                        <p>Maternity Leave: 84 days</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="car" class="w-5 h-5 text-yellow-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">Transportation</h4>
-                                <p class="text-sm text-gray-500">Company vehicle allowance</p>
-                            </div>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <p>Vehicle Allowance: TZS 500K/month</p>
-                        <p>Fuel Card: TZS 300K/month</p>
-                        <p>Eligibility: Management level and above</p>
-                    </div>
-                </div>
-
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="book-open" class="w-5 h-5 text-orange-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">Training & Development</h4>
-                                <p class="text-sm text-gray-500">Professional development</p>
-                            </div>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <p>Training Budget: TZS 2M/year</p>
-                        <p>Certification Support: 100%</p>
-                        <p>Conference Allowance: TZS 500K/year</p>
-                    </div>
-                </div>
-
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="phone" class="w-5 h-5 text-red-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">Communication</h4>
-                                <p class="text-sm text-gray-500">Phone & internet</p>
-                            </div>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <p>Phone Allowance: TZS 150K/month</p>
-                        <p>Internet Allowance: TZS 100K/month</p>
-                        <p>Eligibility: All employees</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bonus & Incentive Plans -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Bonus & Incentive Plans</h3>
-            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Create Plan</button>
-        </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payroll</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Benefits</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach([
-                        ['name' => 'Performance Bonus', 'type' => 'Performance-based', 'eligibility' => 'All employees', 'frequency' => 'Quarterly', 'budget' => 'TZS 5M', 'status' => 'Active'],
-                        ['name' => 'Sales Commission', 'type' => 'Commission', 'eligibility' => 'Sales team', 'frequency' => 'Monthly', 'budget' => 'TZS 3M', 'status' => 'Active'],
-                        ['name' => 'Year-end Bonus', 'type' => 'Profit-sharing', 'eligibility' => 'Management level', 'frequency' => 'Annually', 'budget' => 'TZS 15M', 'status' => 'Active'],
-                        ['name' => 'Referral Bonus', 'type' => 'Referral', 'eligibility' => 'All employees', 'frequency' => 'Per referral', 'budget' => 'TZS 500K', 'status' => 'Active'],
-                        ['name' => 'Innovation Award', 'type' => 'Special recognition', 'eligibility' => 'All employees', 'frequency' => 'Bi-annually', 'budget' => 'TZS 2M', 'status' => 'Active']
-                    ] as $bonus)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $bonus['name'] }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $bonus['type'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $bonus['eligibility'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $bonus['frequency'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $bonus['budget'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">{{ $bonus['status'] }}</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                            <button class="text-red-600 hover:text-red-900">Delete</button>
-                        </td>
-                    </tr>
-                    @endforeach
+                    @forelse($employees as $employee)
+                        <tr class="hover:bg-gray-50" data-employee-row="{{ $employee->id }}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ $employee->first_name }} {{ $employee->last_name }}</div>
+                                <div class="text-xs text-gray-500">
+                                    <span>{{ $employee->employee_id ?: ('#'.$employee->id) }}</span>
+                                    @if($employee->email)
+                                        <span class="mx-1">•</span>
+                                        <span>{{ $employee->email }}</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->department ?: '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->position ?: '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="salary-cell-{{ $employee->id }}">
+                                <div class="font-medium">{{ $employee->currency ?: 'TZS' }} {{ number_format((float) ($employee->salary ?? 0), 0) }}</div>
+                                <div class="text-xs text-gray-500">{{ $employee->payment_frequency ?: 'monthly' }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                @php($lp = $lastPayrollByEmployeeId[$employee->id] ?? null)
+                                @if($lp)
+                                    <div class="font-medium">TZS {{ number_format((float) ($lp->net_pay ?? 0), 0) }}</div>
+                                    <div class="text-xs text-gray-500">{{ \Carbon\Carbon::createFromFormat('Y-m', $lp->payroll_period)->format('F Y') }}</div>
+                                @else
+                                    <div class="text-gray-500 text-sm">-</div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="benefits-cell-{{ $employee->id }}">
+                                @php($benefits = is_array($employee->benefits) ? $employee->benefits : [])
+                                @if(count($benefits))
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach(array_slice($benefits, 0, 3) as $b)
+                                            <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">{{ $b }}</span>
+                                        @endforeach
+                                        @if(count($benefits) > 3)
+                                            <span class="text-xs text-gray-500">+{{ count($benefits) - 3 }}</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-gray-500 text-sm">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button type="button"
+                                        class="text-indigo-600 hover:text-indigo-900"
+                                        onclick="openCompEdit({{ $employee->id }})">
+                                    Edit
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                                <div class="py-8">
+                                    <i data-feather="users" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
+                                    <p class="text-lg font-medium">No employees found</p>
+                                    <p class="text-sm">Add employees first, then manage their compensation here.</p>
+                                    <a href="{{ route('employees.create') }}"
+                                       class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                        <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                                        Add Employee
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Compensation Analytics -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Compensation Analytics</h3>
-            <select class="form-select">
-                <option>Last Quarter</option>
-                <option>Last 6 Months</option>
-                <option>Last Year</option>
-            </select>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="border border-gray-200 rounded-lg p-4">
-                <h4 class="font-semibold text-gray-900 mb-4">Salary Distribution by Department</h4>
-                <div class="space-y-3">
-                    @foreach([
-                        ['dept' => 'IT', 'avg' => 2500000, 'count' => 45],
-                        ['dept' => 'Finance', 'avg' => 2200000, 'count' => 28],
-                        ['dept' => 'Operations', 'avg' => 1800000, 'count' => 89],
-                        ['dept' => 'Sales', 'avg' => 2100000, 'count' => 56],
-                        ['dept' => 'Marketing', 'avg' => 1900000, 'count' => 18]
-                    ] as $dept)
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                                <i data-feather="briefcase" class="w-4 h-4 text-indigo-600"></i>
-                            </div>
-                            <div>
-                                <p class="font-medium text-gray-900">{{ $dept['dept'] }}</p>
-                                <p class="text-xs text-gray-500">{{ $dept['count'] }} employees</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium text-gray-900">TZS {{ number_format($dept['avg'], 0) }}</p>
-                            <p class="text-xs text-gray-500">average</p>
-                        </div>
+        @if($employees->hasPages())
+            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {{ $employees->links() }}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing <span class="font-medium">{{ $employees->firstItem() }}</span> to
+                            <span class="font-medium">{{ $employees->lastItem() }}</span> of
+                            <span class="font-medium">{{ $employees->total() }}</span> results
+                        </p>
                     </div>
-                    @endforeach
+                    <div>
+                        {{ $employees->links() }}
+                    </div>
                 </div>
             </div>
-
-            <div class="border border-gray-200 rounded-lg p-4">
-                <h4 class="font-semibold text-gray-900 mb-4">Benefits Utilization</h4>
-                <div class="space-y-3">
-                    @foreach([
-                        ['benefit' => 'Health Insurance', 'usage' => 92, 'cost' => 2500000],
-                        ['benefit' => 'Retirement Plan', 'usage' => 78, 'cost' => 4500000],
-                        ['benefit' => 'Training Budget', 'usage' => 65, 'cost' => 1300000],
-                        ['benefit' => 'Transport Allowance', 'usage' => 88, 'cost' => 1200000],
-                        ['benefit' => 'Phone Allowance', 'usage' => 95, 'cost' => 350000]
-                    ] as $benefit)
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-medium text-gray-900">{{ $benefit['benefit'] }}</p>
-                            <p class="text-xs text-gray-500">{{ $benefit['usage'] }}% utilization</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium text-gray-900">TZS {{ number_format($benefit['cost'], 0) }}</p>
-                            <p class="text-xs text-gray-500">monthly</p>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
+        @endif
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+window.__compEmployees = @json($pageEmployees);
+
+function getCompEmployee(employeeId) {
+    return (window.__compEmployees || []).find((e) => Number(e.id) === Number(employeeId)) || null;
+}
+
+function showCompAlert(message, type) {
+    const el = document.getElementById('compAlert');
+    if (!el) return;
+
+    el.classList.remove('hidden', 'bg-green-50', 'text-green-700', 'bg-red-50', 'text-red-700');
+    if (type === 'success') {
+        el.classList.add('bg-green-50', 'text-green-700');
+    } else {
+        el.classList.add('bg-red-50', 'text-red-700');
+    }
+    el.textContent = message;
+
+    window.clearTimeout(window.__compAlertTimeout);
+    window.__compAlertTimeout = window.setTimeout(() => {
+        el.classList.add('hidden');
+    }, 4000);
+}
+
+function openCompEdit(employeeId) {
+    const employee = getCompEmployee(employeeId);
+    if (!employee) {
+        showCompAlert('Employee data not available on this page. Please refresh and try again.', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('compEditModal');
+    if (!modal) return;
+
+    document.getElementById('compEditEmployeeId').value = employee.id;
+    document.getElementById('compEditTitle').textContent = `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || `Employee #${employee.id}`;
+
+    document.getElementById('compSalary').value = employee.salary ?? '';
+    document.getElementById('compCurrency').value = employee.currency || 'TZS';
+    document.getElementById('compFrequency').value = employee.payment_frequency || 'monthly';
+
+    const benefitValues = new Set(Array.isArray(employee.benefits) ? employee.benefits.map(String) : []);
+    document.querySelectorAll('input[name="compBenefits[]"]').forEach((cb) => {
+        cb.checked = benefitValues.has(String(cb.value));
+    });
+
+    modal.classList.remove('hidden');
+}
+
+function closeCompEdit() {
+    const modal = document.getElementById('compEditModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+}
+
+function formatNumber(value) {
+    const n = Number(value || 0);
+    return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0';
+}
+
+function renderBenefitsBadges(benefits) {
+    const list = Array.isArray(benefits) ? benefits.filter(Boolean).map(String) : [];
+    if (!list.length) return '<span class="text-gray-500 text-sm">-</span>';
+
+    const visible = list.slice(0, 3);
+    const extra = list.length - visible.length;
+    const badges = visible.map((b) => `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">${escapeHtml(b)}</span>`).join('');
+    const more = extra > 0 ? `<span class="text-xs text-gray-500">+${extra}</span>` : '';
+    return `<div class="flex flex-wrap gap-1">${badges}${more}</div>`;
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+async function saveCompEdit() {
+    const employeeId = document.getElementById('compEditEmployeeId').value;
+    if (!employeeId) return;
+
+    const salary = document.getElementById('compSalary').value;
+    const currency = document.getElementById('compCurrency').value;
+    const payment_frequency = document.getElementById('compFrequency').value;
+
+    const benefits = Array.from(document.querySelectorAll('input[name="compBenefits[]"]:checked')).map((cb) => cb.value);
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    const saveBtn = document.getElementById('compSaveBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+
+    try {
+        const response = await fetch(`{{ url('/compensation/employees') }}/${employeeId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+            body: JSON.stringify({
+                salary: salary === '' ? null : Number(salary),
+                currency,
+                payment_frequency,
+                benefits,
+            }),
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await response.json() : null;
+
+        if (!response.ok || !data?.success) {
+            const message = data?.message || (data?.error) || 'Failed to update compensation.';
+            showCompAlert(message, 'error');
+            return;
+        }
+
+        const updated = data.data || null;
+        const salaryCell = document.getElementById(`salary-cell-${employeeId}`);
+        const benefitsCell = document.getElementById(`benefits-cell-${employeeId}`);
+
+        if (updated && salaryCell) {
+            const cur = updated.currency || 'TZS';
+            const sal = updated.salary ?? 0;
+            const freq = updated.payment_frequency || 'monthly';
+            salaryCell.innerHTML = `<div class="font-medium">${escapeHtml(cur)} ${formatNumber(sal)}</div><div class="text-xs text-gray-500">${escapeHtml(freq)}</div>`;
+        }
+
+        if (updated && benefitsCell) {
+            benefitsCell.innerHTML = renderBenefitsBadges(updated.benefits || []);
+        }
+
+        const local = getCompEmployee(employeeId);
+        if (local && updated) {
+            local.salary = updated.salary;
+            local.currency = updated.currency;
+            local.payment_frequency = updated.payment_frequency;
+            local.benefits = updated.benefits || [];
+        }
+
+        showCompAlert(data.message || 'Compensation updated successfully.', 'success');
+        closeCompEdit();
+    } catch (e) {
+        showCompAlert('Network error while saving. Please try again.', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+
+    const overlay = document.getElementById('compEditModal');
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeCompEdit();
+        });
+    }
+});
+</script>
+
+<div id="compEditModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-xl">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Edit Compensation</h3>
+                <p class="text-sm text-gray-500" id="compEditTitle"></p>
+            </div>
+            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeCompEdit()">
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <input type="hidden" id="compEditEmployeeId">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                    <input id="compSalary" type="number" step="0.01"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                    <select id="compCurrency" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="TZS">TZS</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Frequency</label>
+                <select id="compFrequency" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="monthly">Monthly</option>
+                    <option value="bi-weekly">Bi-weekly</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Benefits</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="compBenefits[]" value="Health Insurance" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Health Insurance</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="compBenefits[]" value="Retirement / Pension" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Retirement / Pension</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="compBenefits[]" value="Transport Allowance" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Transport Allowance</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="compBenefits[]" value="Phone / Internet" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Phone / Internet</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="compBenefits[]" value="Training Support" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Training Support</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="compBenefits[]" value="Other Benefit" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Other Benefit</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-end space-x-2">
+            <button type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" onclick="closeCompEdit()">Cancel</button>
+            <button type="button" id="compSaveBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="saveCompEdit()">Save</button>
+        </div>
+    </div>
+</div>
+@endpush
