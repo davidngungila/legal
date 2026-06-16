@@ -19,7 +19,7 @@ class DisciplinaryController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        $cases = DisciplinaryCase::with(['employee', 'outcomes'])->where('client_id', $clientId)->latest()->paginate(20);
+        $cases = DisciplinaryCase::with(['employee', 'outcome'])->where('client_id', $clientId)->latest()->paginate(20);
         $employees = Employee::where('client_id', $clientId)->get();
         $warnings = DisciplinaryWarning::with(['employee'])->where('client_id', $clientId)->where('is_active', true)->latest()->get();
 
