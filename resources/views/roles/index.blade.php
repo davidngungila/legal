@@ -228,75 +228,19 @@
 <script>
 // API endpoints
 const API_BASE = '/api/roles';
-const PERMISSIONS_API = '/api/roles/permissions';
 
-let roles = [];
-let permissions = [];
+let roles = @json($roles);
+let permissions = @json($permissions);
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    loadRoles();
-    loadPermissions();
+    renderRoles();
+    renderPermissionCheckboxes();
+    renderEditPermissionCheckboxes();
+    updateStats();
 });
 
-// Load roles from API
-async function loadRoles() {
-    try {
-        const response = await fetch(API_BASE);
-        const data = await response.json();
-        
-        if (data.success) {
-            roles = data.roles;
-            renderRoles();
-            updateStats();
-        } else {
-            showNotification('Failed to load roles', 'error');
-        }
-    } catch (error) {
-        console.error('Error loading roles:', error);
-        showNotification('Error loading roles', 'error');
-    }
-}
 
-// Load permissions from API
-async function loadPermissions() {
-    try {
-        const response = await fetch(PERMISSIONS_API, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            },
-            credentials: 'same-origin'
-        });
-
-        if (response.status === 401) {
-            window.location.href = '/login';
-            return;
-        }
-
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            if (response.url && response.url.includes('/login')) {
-                window.location.href = response.url;
-                return;
-            }
-            throw new Error('Non-JSON response');
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            permissions = data.permissions;
-            renderPermissionCheckboxes();
-            renderEditPermissionCheckboxes();
-        } else {
-            showNotification('Failed to load permissions', 'error');
-        }
-    } catch (error) {
-        console.error('Error loading permissions:', error);
-        showNotification('Error loading permissions', 'error');
-    }
-}
 
 // Render roles table
 function renderRoles() {
