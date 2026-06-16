@@ -192,6 +192,12 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('leave.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="calendar" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Leave Management</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('payroll.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('payroll.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="credit-card" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Payroll Management</span>
@@ -257,11 +263,28 @@
             </li>
 
             <!-- Employee Relations -->
-            <li>
-                <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="alert-circle" class="w-4 h-4"></i>
-                    <span class="text-sm font-medium">Employee Relations</span>
-                </a>
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="alert-circle" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Employee Relations</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                    <li>
+                        <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="alert-triangle" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Disciplinary Management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('exit.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('exit.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="log-out" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Exit Management</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
             <!-- Analytics -->

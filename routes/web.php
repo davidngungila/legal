@@ -145,27 +145,33 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
     // Payroll Routes
     Route::prefix('payroll')->group(function () {
-        Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
-        Route::get('/data', [PayrollController::class, 'data'])->name('payroll.data');
-        Route::post('/generate-from-attendance', [PayrollController::class, 'generateFromAttendance'])->name('payroll.generate.from.attendance');
-        Route::get('/upload', [PayrollController::class, 'showUploadForm'])->name('payroll.upload');
-        Route::post('/upload', [PayrollController::class, 'uploadCsv'])->name('payroll.upload.csv');
-        Route::get('/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
-        Route::get('/payslip', function () {
-            return view('payroll.payslip');
-        })->name('payroll.payslip');
-        Route::get('/{id}', [PayrollController::class, 'show'])->name('payroll.show');
-        Route::put('/{payroll}', [PayrollController::class, 'update'])->name('payroll.update');
-        Route::put('/{id}/status', [PayrollController::class, 'updateStatus'])->name('payroll.update.status');
-        Route::delete('/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
-    });
+                Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
+                Route::get('/data', [PayrollController::class, 'data'])->name('payroll.data');
+                Route::post('/generate-from-attendance', [PayrollController::class, 'generateFromAttendance'])->name('payroll.generate.from.attendance');
+                Route::get('/upload', [PayrollController::class, 'showUploadForm'])->name('payroll.upload');
+                Route::post('/upload', [PayrollController::class, 'uploadCsv'])->name('payroll.upload.csv');
+                Route::get('/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
+                Route::get('/payslip', function () {
+                    return view('payroll.payslip');
+                })->name('payroll.payslip');
+                Route::get('/{id}', [PayrollController::class, 'show'])->name('payroll.show');
+                Route::put('/{payroll}', [PayrollController::class, 'update'])->name('payroll.update');
+                Route::put('/{id}/status', [PayrollController::class, 'updateStatus'])->name('payroll.update.status');
+                Route::delete('/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
+            });
 
-    Route::prefix('compensation')->group(function () {
-        Route::get('/', [CompensationController::class, 'index'])->name('compensation.index');
-        Route::get('/export', [CompensationController::class, 'export'])->name('compensation.export');
-        Route::get('/employees', [CompensationController::class, 'employees'])->name('compensation.employees');
-        Route::put('/employees/{employee}', [CompensationController::class, 'updateEmployee'])->name('compensation.employees.update');
-    });
+            Route::prefix('leave')->name('leave.')->group(function () {
+                Route::get('/', [App\Http\Controllers\LeaveController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\LeaveController::class, 'store'])->name('store');
+                Route::put('/{leaveRequest}', [App\Http\Controllers\LeaveController::class, 'updateStatus'])->name('updateStatus');
+            });
+
+            Route::prefix('compensation')->group(function () {
+                Route::get('/', [CompensationController::class, 'index'])->name('compensation.index');
+                Route::get('/export', [CompensationController::class, 'export'])->name('compensation.export');
+                Route::get('/employees', [CompensationController::class, 'employees'])->name('compensation.employees');
+                Route::put('/employees/{employee}', [CompensationController::class, 'updateEmployee'])->name('compensation.employees.update');
+            });
 
     // Performance Routes
     Route::prefix('performance')->group(function () {
@@ -175,10 +181,15 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Employee Relations & Discipline Routes
-    Route::prefix('discipline')->group(function () {
-        Route::get('/', function () {
-            return view('discipline.index');
-        })->name('discipline.index');
+    Route::prefix('discipline')->name('discipline.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DisciplinaryController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\DisciplinaryController::class, 'store'])->name('store');
+    });
+
+    // Exit Management Routes
+    Route::prefix('exit')->name('exit.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ExitController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\ExitController::class, 'store'])->name('store');
     });
 
     // Compliance Routes
