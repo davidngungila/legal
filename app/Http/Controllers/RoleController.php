@@ -14,12 +14,18 @@ class RoleController
      */
     public function index()
     {
-        $roles = Role::with('permissions')->get();
+        $roles = Role::with(['permissions', 'users'])->get();
         
-        return response()->json([
-            'success' => true,
-            'roles' => $roles
-        ]);
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'roles' => $roles
+            ]);
+        }
+        
+        $permissions = \App\Models\Permission::all();
+        
+        return view('roles.index', compact('roles', 'permissions'));
     }
     
     /**
