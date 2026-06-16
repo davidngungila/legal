@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\BelongsToCurrentClient;
 
 class Attendance extends Model
@@ -22,6 +23,20 @@ class Attendance extends Model
         'total_hours',
         'overtime_hours',
         'status',
+        'status_code',
+        'ordinary_hours',
+        'rest_day_hours',
+        'ph_hours',
+        'night_hours',
+        'source',
+        'manual_entry',
+        'workflow_status',
+        'approved_by',
+        'approved_at',
+        'late_minutes',
+        'early_departure_minutes',
+        'violation_flags',
+        'shift_pattern_id',
         'notes',
         'location',
         'ip_address',
@@ -35,6 +50,13 @@ class Attendance extends Model
         'break_end' => 'datetime:H:i',
         'total_hours' => 'decimal:2',
         'overtime_hours' => 'decimal:2',
+        'ordinary_hours' => 'decimal:2',
+        'rest_day_hours' => 'decimal:2',
+        'ph_hours' => 'decimal:2',
+        'night_hours' => 'decimal:2',
+        'manual_entry' => 'boolean',
+        'approved_at' => 'datetime',
+        'violation_flags' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -55,6 +77,21 @@ class Attendance extends Model
         return $this->belongsTo(Employee::class);
     }
 
+    public function shiftPattern(): BelongsTo
+    {
+        return $this->belongsTo(ShiftPattern::class);
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function violations(): HasMany
+    {
+        return $this->hasMany(AttendanceViolation::class);
+    }
+
     /**
      * Get the formatted status badge.
      */
@@ -70,6 +107,21 @@ class Attendance extends Model
         ];
 
         return $badges[$this->status] ?? $badges['present'];
+    }
+
+    public function getStatusCodeLabelAttribute(): string
+    {
+        return match ($this->status_code) {
+            'A' => 'Absent',
+            'AL' => 'Annual Leave',
+            'SLF' => 'Sick Leave Full Pay',
+            'SLH' => 'Sick Leave Half Pay',
+            'UL' => 'Unpaid Leave',
+            'M' => 'Official Mission',
+            '9' => 'Ordinary Hours',
+            '12' => '12-Hour Shift',
+            default => strtoupper((string) ($this->status_code ?? $this->status ?? '')),
+        };
     }
 
     /**

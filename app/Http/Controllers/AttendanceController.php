@@ -3,9 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\AttendanceMonthlySummary;
+use App\Models\AttendanceViolation;
+use App\Models\Client;
 use App\Models\Employee;
+use App\Models\EmployeeShift;
+use App\Models\PublicHoliday;
+use App\Models\ShiftPattern;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,53 +29,107 @@ class AttendanceController extends Controller
         $date = $request->filled('date')
             ? Carbon::parse($request->get('date'))->startOfDay()
             : now()->startOfDay();
+        $monthStart = $date->copy()->startOfMonth();
+        $monthEnd = $date->copy()->endOfMonth();
+
+        $currentClient = Client::find($clientId);
+        if (!$currentClient) {
+            return redirect()->route('dashboard')->with('error', 'Selected client not found.');
+        }
+
+        $this->ensureReferenceData($clientId, $date->year);
 
         $employees = Employee::where('client_id', $clientId)
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
 
-        $attendanceByEmployeeId = Attendance::where('client_id', $clientId)
+        $this->ensureEmployeeShiftAssignments($clientId, $employees);
+
+        $shiftAssignments = $this->getShiftAssignmentsForDate($clientId, $date);
+
+        $attendanceByEmployeeId = Attendance::with(['shiftPattern', 'violations'])
+            ->where('client_id', $clientId)
             ->whereDate('attendance_date', $date->toDateString())
             ->get()
             ->keyBy('employee_id');
 
-        $rows = $employees->map(function ($employee) use ($attendanceByEmployeeId) {
+        $rows = $employees->values()->map(function ($employee, $index) use ($attendanceByEmployeeId, $shiftAssignments) {
             $record = $attendanceByEmployeeId->get($employee->id);
+            $shift = $shiftAssignments->get($employee->id);
+            $violationFlags = collect($record?->violation_flags ?? []);
 
             return [
+                'serial' => $index + 1,
                 'employee' => $employee,
                 'attendance' => $record,
+                'shift' => $shift,
+                'employee_info' => [
+                    'employee_id' => $employee->employee_id ?: ('#' . $employee->id),
+                    'employee_name' => trim($employee->first_name . ' ' . $employee->last_name),
+                    'job_title' => $employee->position ?: '-',
+                    'department' => $employee->department ?: '-',
+                    'joining_date' => $employee->hire_date?->format('Y-m-d') ?: '-',
+                    'place_of_work' => $employee->city ?: ($employee->region ?: 'Main Office'),
+                ],
+                'violation_flags' => $violationFlags->all(),
             ];
         });
 
-        $stats = Attendance::where('client_id', $clientId)
-            ->whereDate('attendance_date', $date->toDateString())
-            ->select('status', DB::raw('count(*) as c'))
-            ->groupBy('status')
-            ->pluck('c', 'status')
-            ->all();
-
-        $present = (int) ($stats['present'] ?? 0);
-        $late = (int) ($stats['late'] ?? 0);
-        $absent = (int) ($stats['absent'] ?? 0);
-        $onLeave = (int) ($stats['on_leave'] ?? 0);
-
-        $summary = [
-            'present' => $present,
-            'late' => $late,
-            'absent' => $absent,
-            'on_leave' => $onLeave,
-            'total' => $employees->count(),
-        ];
-
+        $summary = $this->buildDailySummary($attendanceByEmployeeId, $employees->count());
+        $monthlySummaries = $this->refreshMonthlySummaries(
+            $clientId,
+            $monthStart,
+            $monthEnd,
+            $employees->pluck('id')->all()
+        );
         $calendar = $this->buildCalendar($clientId, $date, $date);
+        $violations = AttendanceViolation::with('employee')
+            ->where('client_id', $clientId)
+            ->whereBetween('violation_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->latest('violation_date')
+            ->limit(12)
+            ->get();
+        $approvalQueue = Attendance::with(['employee', 'shiftPattern'])
+            ->where('client_id', $clientId)
+            ->where('workflow_status', 'pending_approval')
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->orderByDesc('attendance_date')
+            ->limit(10)
+            ->get();
+        $shiftPatterns = ShiftPattern::where('client_id', $clientId)
+            ->where('is_active', true)
+            ->orderBy('start_time')
+            ->get()
+            ->map(function (ShiftPattern $pattern) use ($shiftAssignments) {
+                return [
+                    'pattern' => $pattern,
+                    'assigned_count' => $shiftAssignments->filter(fn ($assignment) => (int) $assignment->shift_pattern_id === (int) $pattern->id)->count(),
+                ];
+            });
+        $payrollMetrics = $this->buildPayrollFeedMetrics($clientId, $monthStart, $monthEnd);
+        $statusReference = $this->attendanceStatusReference();
+        $publicHolidays = PublicHoliday::where(function ($query) use ($clientId) {
+                $query->where('client_id', $clientId)->orWhereNull('client_id');
+            })
+            ->whereBetween('holiday_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->orderBy('holiday_date')
+            ->get();
 
         return view('attendance.index', [
+            'currentClient' => $currentClient,
             'rows' => $rows,
             'date' => $date->toDateString(),
             'summary' => $summary,
             'calendar' => $calendar,
+            'monthlySummaries' => $monthlySummaries,
+            'violations' => $violations,
+            'approvalQueue' => $approvalQueue,
+            'shiftPatterns' => $shiftPatterns,
+            'payrollMetrics' => $payrollMetrics,
+            'statusReference' => $statusReference,
+            'publicHolidays' => $publicHolidays,
+            'payrollPeriod' => $date->format('Y-m'),
         ]);
     }
 
@@ -81,11 +143,14 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'employee_id' => 'required|integer|exists:employees,id',
             'attendance_date' => 'required|date',
-            'status' => 'required|string|in:present,absent,late,half_day,on_leave,holiday',
+            'status' => 'nullable|string',
+            'status_code' => 'nullable|string',
             'clock_in' => 'nullable|date_format:H:i',
             'clock_out' => 'nullable|date_format:H:i',
             'total_hours' => 'nullable|numeric|min:0|max:24',
-            'overtime_hours' => 'nullable|numeric|min:0|max:24',
+            'source' => 'nullable|string|max:30',
+            'workflow_status' => 'nullable|string|max:30',
+            'manual_entry' => 'nullable|boolean',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -94,32 +159,22 @@ class AttendanceController extends Controller
             return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
         }
 
-        $totalHours = $validated['total_hours'] ?? null;
-        if ($totalHours === null && ($validated['clock_in'] ?? null) && ($validated['clock_out'] ?? null)) {
-            $in = Carbon::createFromFormat('H:i', $validated['clock_in']);
-            $out = Carbon::createFromFormat('H:i', $validated['clock_out']);
-            if ($out->lessThan($in)) {
-                $out->addDay();
-            }
-            $minutes = $in->diffInMinutes($out);
-            $totalHours = round($minutes / 60, 2);
+        $workDate = Carbon::parse($validated['attendance_date'])->startOfDay();
+        $this->ensureReferenceData($clientId, $workDate->year);
+
+        $statusCode = $this->resolveStatusCode($validated['status_code'] ?? $validated['status'] ?? null);
+        if (!$statusCode) {
+            return response()->json(['success' => false, 'message' => 'Invalid attendance status code.'], 422);
         }
 
-        $attendance = Attendance::updateOrCreate(
-            [
-                'client_id' => $clientId,
-                'employee_id' => $employee->id,
-                'attendance_date' => Carbon::parse($validated['attendance_date'])->toDateString(),
-            ],
-            [
-                'status' => $validated['status'],
-                'clock_in' => $validated['clock_in'] ?? null,
-                'clock_out' => $validated['clock_out'] ?? null,
-                'total_hours' => $totalHours ?? 0,
-                'overtime_hours' => $validated['overtime_hours'] ?? 0,
-                'notes' => $validated['notes'] ?? null,
-            ]
-        );
+        $attendance = DB::transaction(function () use ($clientId, $employee, $workDate, $validated, $statusCode) {
+            $attendance = $this->persistAttendance($clientId, $employee, $workDate, array_merge($validated, [
+                'status_code' => $statusCode,
+            ]));
+            $this->refreshMonthlySummaryForEmployee($clientId, $employee, $workDate->copy()->startOfMonth(), $workDate->copy()->endOfMonth());
+
+            return $attendance->fresh(['shiftPattern', 'violations']);
+        });
 
         return response()->json([
             'success' => true,
@@ -129,10 +184,20 @@ class AttendanceController extends Controller
                 'employee_id' => $attendance->employee_id,
                 'attendance_date' => $attendance->attendance_date?->format('Y-m-d'),
                 'status' => $attendance->status,
-                'clock_in' => $attendance->clock_in,
-                'clock_out' => $attendance->clock_out,
+                'status_code' => $attendance->status_code,
+                'status_label' => $attendance->status_code_label,
+                'clock_in' => $attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('H:i') : null,
+                'clock_out' => $attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('H:i') : null,
                 'total_hours' => (float) $attendance->total_hours,
                 'overtime_hours' => (float) $attendance->overtime_hours,
+                'ordinary_hours' => (float) $attendance->ordinary_hours,
+                'rest_day_hours' => (float) $attendance->rest_day_hours,
+                'ph_hours' => (float) $attendance->ph_hours,
+                'night_hours' => (float) $attendance->night_hours,
+                'workflow_status' => $attendance->workflow_status,
+                'late_minutes' => (int) $attendance->late_minutes,
+                'early_departure_minutes' => (int) $attendance->early_departure_minutes,
+                'violation_flags' => $attendance->violation_flags ?? [],
             ],
         ]);
     }
@@ -151,6 +216,8 @@ class AttendanceController extends Controller
         $selectedDate = $request->filled('selected_date')
             ? Carbon::parse($request->get('selected_date'))->startOfDay()
             : $monthDate->copy();
+
+        $this->ensureReferenceData($clientId, $monthDate->year);
 
         $calendar = $this->buildCalendar($clientId, $monthDate, $selectedDate);
 
@@ -193,15 +260,23 @@ class AttendanceController extends Controller
             return $h;
         }, $header);
 
-        $required = ['employee_id', 'date', 'status'];
+        $required = ['employee_id', 'date'];
         foreach ($required as $req) {
             if (!in_array($req, $columns, true)) {
                 fclose($handle);
                 Storage::delete($path);
-                return redirect()->route('attendance.index')->with('error', "Missing required column: {$req}. Expected: employee_id, date, status.");
+                return redirect()->route('attendance.index')->with('error', "Missing required column: {$req}. Expected: employee_id, date, and status or status_code.");
             }
         }
 
+        $statusColumn = in_array('status_code', $columns, true) ? 'status_code' : (in_array('status', $columns, true) ? 'status' : null);
+        if (!$statusColumn) {
+            fclose($handle);
+            Storage::delete($path);
+            return redirect()->route('attendance.index')->with('error', 'Missing required status column. Include either status or status_code.');
+        }
+
+        $touchedPeriods = [];
         $imported = 0;
         $updated = 0;
         $skipped = 0;
@@ -233,54 +308,69 @@ class AttendanceController extends Controller
                 continue;
             }
 
-            $status = $this->normalizeStatus($assoc['status'] ?? null);
-            if (!$status) {
+            $workDate = $this->parseDate($assoc['date'] ?? null);
+            if (!$workDate) {
                 $skipped++;
-                $errors[] = 'Invalid status for employee_id=' . ($assoc['employee_id'] ?? '') . ' (status=' . ($assoc['status'] ?? '') . ')';
+                $errors[] = 'Invalid date for employee_id=' . ($assoc['employee_id'] ?? '') . ' (date=' . ($assoc['date'] ?? '') . ')';
+                if (count($errors) > 10) break;
+                continue;
+            }
+
+            $statusCode = $this->resolveStatusCode($assoc[$statusColumn] ?? null);
+            if (!$statusCode) {
+                $skipped++;
+                $errors[] = 'Invalid status for employee_id=' . ($assoc['employee_id'] ?? '') . ' (' . $statusColumn . '=' . ($assoc[$statusColumn] ?? '') . ')';
                 if (count($errors) > 10) break;
                 continue;
             }
 
             $clockIn = $this->normalizeTime($assoc['clock_in'] ?? ($assoc['check_in'] ?? null));
             $clockOut = $this->normalizeTime($assoc['clock_out'] ?? ($assoc['check_out'] ?? null));
-            $overtimeHours = is_numeric($assoc['overtime_hours'] ?? null) ? (float) $assoc['overtime_hours'] : 0;
             $notes = $assoc['notes'] ?? null;
-
-            $totalHours = null;
-            if (isset($assoc['total_hours']) && is_numeric($assoc['total_hours'])) {
-                $totalHours = (float) $assoc['total_hours'];
-            }
+            $source = $assoc['source'] ?? 'manual';
+            $manualEntry = filter_var($assoc['manual_entry'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
             $existing = Attendance::where('client_id', $clientId)
                 ->where('employee_id', $employee->id)
-                ->whereDate('attendance_date', $date)
+                ->whereDate('attendance_date', $workDate)
                 ->first();
 
-            $attendance = Attendance::updateOrCreate(
-                [
-                    'client_id' => $clientId,
-                    'employee_id' => $employee->id,
-                    'attendance_date' => $date,
-                ],
-                [
-                    'status' => $status,
-                    'clock_in' => $clockIn,
-                    'clock_out' => $clockOut,
-                    'total_hours' => $totalHours ?? 0,
-                    'overtime_hours' => $overtimeHours,
-                    'notes' => $notes,
-                ]
-            );
+            $attendance = $this->persistAttendance($clientId, $employee, Carbon::parse($workDate), [
+                'status_code' => $statusCode,
+                'clock_in' => $clockIn,
+                'clock_out' => $clockOut,
+                'total_hours' => $assoc['total_hours'] ?? null,
+                'notes' => $notes,
+                'source' => $source,
+                'manual_entry' => $manualEntry,
+                'workflow_status' => $assoc['workflow_status'] ?? null,
+            ], $existing);
 
             if ($existing) {
                 $updated++;
             } else {
                 $imported++;
             }
+
+            $periodKey = $employee->id . '-' . Carbon::parse($workDate)->format('Y-m');
+            $touchedPeriods[$periodKey] = [
+                'employee' => $employee,
+                'month_start' => Carbon::parse($workDate)->startOfMonth(),
+                'month_end' => Carbon::parse($workDate)->endOfMonth(),
+            ];
         }
 
         fclose($handle);
         Storage::delete($path);
+
+        foreach ($touchedPeriods as $period) {
+            $this->refreshMonthlySummaryForEmployee(
+                $clientId,
+                $period['employee'],
+                $period['month_start'],
+                $period['month_end']
+            );
+        }
 
         $message = "Timesheet import completed. New: {$imported}, Updated: {$updated}, Skipped: {$skipped}.";
         if (!empty($errors)) {
@@ -342,22 +432,44 @@ class AttendanceController extends Controller
         }
     }
 
-    private function normalizeStatus(?string $value): ?string
+    private function resolveStatusCode(?string $value): ?string
     {
-        $value = strtolower(trim((string) $value));
-        if ($value === '') return null;
-
-        $value = str_replace([' ', '-'], '_', $value);
+        $value = strtoupper(trim((string) $value));
+        if ($value === '') {
+            return null;
+        }
 
         $map = [
-            'present' => 'present',
-            'late' => 'late',
-            'absent' => 'absent',
-            'half_day' => 'half_day',
-            'halfday' => 'half_day',
-            'on_leave' => 'on_leave',
-            'leave' => 'on_leave',
-            'holiday' => 'holiday',
+            'A' => 'A',
+            'ABSENT' => 'A',
+            'AL' => 'AL',
+            'ANNUAL_LEAVE' => 'AL',
+            'ANNUAL LEAVE' => 'AL',
+            'SLF' => 'SLF',
+            'SICK_LEAVE_FULL_PAY' => 'SLF',
+            'SICK LEAVE FULL PAY' => 'SLF',
+            'SLH' => 'SLH',
+            'SICK_LEAVE_HALF_PAY' => 'SLH',
+            'SICK LEAVE HALF PAY' => 'SLH',
+            'UL' => 'UL',
+            'UNPAID_LEAVE' => 'UL',
+            'UNPAID LEAVE' => 'UL',
+            'M' => 'M',
+            'MISSION' => 'M',
+            'OFFICIAL_MISSION' => 'M',
+            'OFFICIAL MISSION' => 'M',
+            '9' => '9',
+            'PRESENT' => '9',
+            'ORDINARY' => '9',
+            'ORDINARY_HOURS' => '9',
+            'ORDINARY HOURS' => '9',
+            'LATE' => '9',
+            '12' => '12',
+            'OVERTIME' => '12',
+            'HALF_DAY' => '9',
+            'ON_LEAVE' => 'AL',
+            'LEAVE' => 'AL',
+            'HOLIDAY' => '9',
         ];
 
         return $map[$value] ?? null;
@@ -370,9 +482,21 @@ class AttendanceController extends Controller
 
         $monthStatsRows = Attendance::where('client_id', $clientId)
             ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-            ->select('attendance_date', 'status', DB::raw('count(*) as c'))
-            ->groupBy('attendance_date', 'status')
+            ->select('attendance_date', 'status_code', DB::raw('count(*) as c'))
+            ->groupBy('attendance_date', 'status_code')
             ->get();
+        $violationRows = AttendanceViolation::where('client_id', $clientId)
+            ->whereBetween('violation_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->select('violation_date', DB::raw('count(*) as c'))
+            ->groupBy('violation_date')
+            ->get()
+            ->pluck('c', 'violation_date');
+        $holidayRows = PublicHoliday::where(function ($query) use ($clientId) {
+                $query->where('client_id', $clientId)->orWhereNull('client_id');
+            })
+            ->whereBetween('holiday_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->get()
+            ->keyBy(fn (PublicHoliday $holiday) => $holiday->holiday_date->toDateString());
 
         $monthStats = [];
         foreach ($monthStatsRows as $row) {
@@ -380,7 +504,7 @@ class AttendanceController extends Controller
             if (!isset($monthStats[$dayKey])) {
                 $monthStats[$dayKey] = [];
             }
-            $monthStats[$dayKey][$row->status] = (int) $row->c;
+            $monthStats[$dayKey][$row->status_code] = (int) $row->c;
         }
 
         $gridStart = $monthStart->copy()->startOfWeek(Carbon::SUNDAY);
@@ -394,6 +518,11 @@ class AttendanceController extends Controller
             $isWeekend = $cursor->isWeekend();
             $counts = $monthStats[$dayKey] ?? [];
             $isSelected = $dayKey === $selectedDate->toDateString();
+            $holiday = $holidayRows->get($dayKey);
+
+            $worked = (int) (($counts['9'] ?? 0) + ($counts['12'] ?? 0) + ($counts['M'] ?? 0));
+            $leave = (int) (($counts['AL'] ?? 0) + ($counts['SLF'] ?? 0) + ($counts['SLH'] ?? 0) + ($counts['UL'] ?? 0));
+            $absent = (int) ($counts['A'] ?? 0);
 
             $calendarDays[] = [
                 'date' => $dayKey,
@@ -401,12 +530,15 @@ class AttendanceController extends Controller
                 'in_month' => $inMonth,
                 'is_weekend' => $isWeekend,
                 'is_selected' => $isSelected,
+                'holiday_name' => $holiday?->holiday_name,
+                'is_public_holiday' => (bool) $holiday,
+                'violations' => (int) ($violationRows[$dayKey] ?? 0),
                 'counts' => [
-                    'present' => (int) ($counts['present'] ?? 0),
-                    'late' => (int) ($counts['late'] ?? 0),
-                    'absent' => (int) ($counts['absent'] ?? 0),
-                    'on_leave' => (int) ($counts['on_leave'] ?? 0),
-                    'holiday' => (int) ($counts['holiday'] ?? 0),
+                    'worked' => $worked,
+                    'leave' => $leave,
+                    'absent' => $absent,
+                    'mission' => (int) ($counts['M'] ?? 0),
+                    'overtime_shift' => (int) ($counts['12'] ?? 0),
                 ],
             ];
 
@@ -419,5 +551,568 @@ class AttendanceController extends Controller
             'next' => $monthStart->copy()->addMonth()->startOfMonth()->toDateString(),
             'days' => $calendarDays,
         ];
+    }
+
+    private function persistAttendance(int $clientId, Employee $employee, Carbon $workDate, array $input, ?Attendance $existing = null): Attendance
+    {
+        $statusCode = $this->resolveStatusCode($input['status_code'] ?? $input['status'] ?? null) ?? '9';
+        $shift = $this->resolveShiftForEmployee($clientId, $employee, $workDate);
+        $holiday = $this->getHolidayForDate($clientId, $workDate);
+        $source = $this->normalizeSource($input['source'] ?? null);
+        $manualEntry = filter_var($input['manual_entry'] ?? ($source === 'manual'), FILTER_VALIDATE_BOOLEAN);
+        $timeMetrics = $this->calculateTimeMetrics(
+            $workDate,
+            $statusCode,
+            $input['clock_in'] ?? null,
+            $input['clock_out'] ?? null,
+            $shift,
+            $holiday !== null,
+            isset($input['total_hours']) && is_numeric($input['total_hours']) ? (float) $input['total_hours'] : null
+        );
+
+        $workflowStatus = trim((string) ($input['workflow_status'] ?? ''));
+        if ($workflowStatus === '') {
+            $workflowStatus = $manualEntry ? 'pending_approval' : 'approved';
+        }
+
+        $attendance = Attendance::updateOrCreate(
+            [
+                'client_id' => $clientId,
+                'employee_id' => $employee->id,
+                'attendance_date' => $workDate->toDateString(),
+            ],
+            [
+                'status' => $this->mapStatusCodeToLegacyStatus($statusCode, $timeMetrics['late_minutes'], $holiday !== null, $timeMetrics['productive_hours']),
+                'status_code' => $statusCode,
+                'clock_in' => $input['clock_in'] ?? null,
+                'clock_out' => $input['clock_out'] ?? null,
+                'total_hours' => $timeMetrics['total_hours'],
+                'ordinary_hours' => $timeMetrics['ordinary_hours'],
+                'overtime_hours' => $timeMetrics['overtime_hours'],
+                'rest_day_hours' => $timeMetrics['rest_day_hours'],
+                'ph_hours' => $timeMetrics['ph_hours'],
+                'night_hours' => $timeMetrics['night_hours'],
+                'source' => $source,
+                'manual_entry' => $manualEntry,
+                'workflow_status' => $workflowStatus,
+                'approved_by' => $workflowStatus === 'approved' ? (Auth::id() ?: ($existing?->approved_by)) : null,
+                'approved_at' => $workflowStatus === 'approved' ? now() : null,
+                'late_minutes' => $timeMetrics['late_minutes'],
+                'early_departure_minutes' => $timeMetrics['early_departure_minutes'],
+                'violation_flags' => [],
+                'shift_pattern_id' => $shift?->id,
+                'notes' => $input['notes'] ?? null,
+                'location' => $holiday?->holiday_name ?: ($existing?->location),
+            ]
+        );
+
+        $flags = $this->syncViolations($attendance, $employee, $workDate);
+        if (($attendance->violation_flags ?? []) !== $flags) {
+            $attendance->forceFill(['violation_flags' => $flags])->save();
+        }
+
+        return $attendance;
+    }
+
+    private function calculateTimeMetrics(
+        Carbon $workDate,
+        string $statusCode,
+        ?string $clockIn,
+        ?string $clockOut,
+        ?ShiftPattern $shift,
+        bool $isPublicHoliday,
+        ?float $providedTotalHours = null
+    ): array {
+        $breakHours = round(((float) ($shift?->break_duration ?? 60)) / 60, 2);
+        $totalHours = 0.0;
+        $productiveHours = 0.0;
+
+        if ($clockIn && $clockOut) {
+            $start = Carbon::parse($workDate->toDateString() . ' ' . $clockIn);
+            $end = Carbon::parse($workDate->toDateString() . ' ' . $clockOut);
+            if ($end->lessThanOrEqualTo($start)) {
+                $end->addDay();
+            }
+
+            $totalHours = round($start->diffInMinutes($end) / 60, 2);
+            $productiveHours = round(max(0, $totalHours - $breakHours), 2);
+        } elseif ($providedTotalHours !== null) {
+            $totalHours = round($providedTotalHours, 2);
+            $productiveHours = round(max(0, $totalHours - min($breakHours, $totalHours)), 2);
+        } elseif (in_array($statusCode, ['9', 'M'], true)) {
+            $totalHours = 9.0;
+            $productiveHours = 8.0;
+        } elseif ($statusCode === '12') {
+            $totalHours = 12.0;
+            $productiveHours = 11.0;
+        }
+
+        $ordinaryHours = 0.0;
+        $overtimeHours = 0.0;
+        $restDayHours = 0.0;
+        $publicHolidayHours = 0.0;
+
+        if (in_array($statusCode, ['9', '12', 'M'], true)) {
+            if ($isPublicHoliday) {
+                $publicHolidayHours = $productiveHours;
+            } elseif ($workDate->isWeekend()) {
+                $restDayHours = $productiveHours;
+            } else {
+                $ordinaryHours = min(8.0, $productiveHours);
+                $overtimeHours = max(0, $productiveHours - 8.0);
+            }
+        }
+
+        if ($statusCode === '12' && !$clockIn && !$clockOut && !$workDate->isWeekend() && !$isPublicHoliday) {
+            $ordinaryHours = 8.0;
+            $overtimeHours = 3.0;
+        }
+
+        $lateMinutes = 0;
+        $earlyDepartureMinutes = 0;
+        if ($clockIn && $shift) {
+            $scheduledStart = Carbon::parse($workDate->toDateString() . ' ' . $shift->start_time);
+            $actualStart = Carbon::parse($workDate->toDateString() . ' ' . $clockIn);
+            if ($actualStart->greaterThan($scheduledStart)) {
+                $lateMinutes = $scheduledStart->diffInMinutes($actualStart);
+            }
+        }
+        if ($clockOut && $shift) {
+            $scheduledEnd = Carbon::parse($workDate->toDateString() . ' ' . $shift->end_time);
+            $actualEnd = Carbon::parse($workDate->toDateString() . ' ' . $clockOut);
+            if ($scheduledEnd->lessThanOrEqualTo(Carbon::parse($workDate->toDateString() . ' ' . $shift->start_time))) {
+                $scheduledEnd->addDay();
+            }
+            if ($actualEnd->lessThanOrEqualTo(Carbon::parse($workDate->toDateString() . ' ' . $shift->start_time))) {
+                $actualEnd->addDay();
+            }
+            if ($actualEnd->lessThan($scheduledEnd)) {
+                $earlyDepartureMinutes = $actualEnd->diffInMinutes($scheduledEnd);
+            }
+        }
+
+        $nightHours = $this->calculateNightHours($workDate, $clockIn, $clockOut, $productiveHours, $shift);
+
+        return [
+            'total_hours' => round($totalHours, 2),
+            'productive_hours' => round($productiveHours, 2),
+            'ordinary_hours' => round($ordinaryHours, 2),
+            'overtime_hours' => round($overtimeHours, 2),
+            'rest_day_hours' => round($restDayHours, 2),
+            'ph_hours' => round($publicHolidayHours, 2),
+            'night_hours' => round($nightHours, 2),
+            'late_minutes' => $lateMinutes,
+            'early_departure_minutes' => $earlyDepartureMinutes,
+        ];
+    }
+
+    private function calculateNightHours(
+        Carbon $workDate,
+        ?string $clockIn,
+        ?string $clockOut,
+        float $fallbackHours,
+        ?ShiftPattern $shift
+    ): float {
+        if ($clockIn && $clockOut) {
+            $start = Carbon::parse($workDate->toDateString() . ' ' . $clockIn);
+            $end = Carbon::parse($workDate->toDateString() . ' ' . $clockOut);
+            if ($end->lessThanOrEqualTo($start)) {
+                $end->addDay();
+            }
+
+            $nightMinutes = 0;
+            $cursor = $start->copy()->startOfDay();
+            while ($cursor->lte($end)) {
+                $windowStart = $cursor->copy()->setTime(20, 0);
+                $windowEnd = $cursor->copy()->addDay()->setTime(6, 0);
+                $overlapStart = $start->greaterThan($windowStart) ? $start : $windowStart;
+                $overlapEnd = $end->lessThan($windowEnd) ? $end : $windowEnd;
+
+                if ($overlapEnd->greaterThan($overlapStart)) {
+                    $nightMinutes += $overlapEnd->diffInMinutes($overlapStart);
+                }
+
+                $cursor->addDay();
+            }
+
+            return round($nightMinutes / 60, 2);
+        }
+
+        if ($shift?->is_night_shift) {
+            return round($fallbackHours, 2);
+        }
+
+        return 0.0;
+    }
+
+    private function mapStatusCodeToLegacyStatus(string $statusCode, int $lateMinutes, bool $isHoliday, float $productiveHours): string
+    {
+        if ($statusCode === 'A') {
+            return 'absent';
+        }
+
+        if (in_array($statusCode, ['AL', 'SLF', 'SLH', 'UL'], true)) {
+            return 'on_leave';
+        }
+
+        if ($isHoliday && $productiveHours > 0) {
+            return 'holiday';
+        }
+
+        if ($lateMinutes > 0) {
+            return 'late';
+        }
+
+        return 'present';
+    }
+
+    private function buildDailySummary(Collection $attendanceByEmployeeId, int $totalEmployees): array
+    {
+        $records = $attendanceByEmployeeId->values();
+
+        return [
+            'worked' => $records->whereIn('status_code', ['9', '12', 'M'])->count(),
+            'late' => $records->where('late_minutes', '>', 0)->count(),
+            'absent' => $records->where('status_code', 'A')->count(),
+            'leave' => $records->whereIn('status_code', ['AL', 'SLF', 'SLH', 'UL'])->count(),
+            'open_violations' => $records->sum(fn ($record) => count($record->violation_flags ?? [])),
+            'pending_approval' => $records->where('workflow_status', 'pending_approval')->count(),
+            'total' => $totalEmployees,
+        ];
+    }
+
+    private function buildPayrollFeedMetrics(int $clientId, Carbon $monthStart, Carbon $monthEnd): array
+    {
+        $attendance = Attendance::where('client_id', $clientId)
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->get();
+
+        return [
+            'ordinary_hours' => round((float) $attendance->sum('ordinary_hours'), 2),
+            'overtime_hours' => round((float) $attendance->sum('overtime_hours'), 2),
+            'rest_day_hours' => round((float) $attendance->sum('rest_day_hours'), 2),
+            'public_holiday_hours' => round((float) $attendance->sum('ph_hours'), 2),
+            'night_hours' => round((float) $attendance->sum('night_hours'), 2),
+            'violations' => AttendanceViolation::where('client_id', $clientId)
+                ->whereBetween('violation_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+                ->count(),
+        ];
+    }
+
+    private function refreshMonthlySummaries(int $clientId, Carbon $monthStart, Carbon $monthEnd, array $employeeIds): Collection
+    {
+        $employees = Employee::where('client_id', $clientId)
+            ->whereIn('id', $employeeIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($employees as $employee) {
+            $this->refreshMonthlySummaryForEmployee($clientId, $employee, $monthStart, $monthEnd);
+        }
+
+        return AttendanceMonthlySummary::with('employee')
+            ->where('client_id', $clientId)
+            ->where('month', $monthStart->month)
+            ->where('year', $monthStart->year)
+            ->orderByDesc('worked_days')
+            ->get();
+    }
+
+    private function refreshMonthlySummaryForEmployee(int $clientId, Employee $employee, Carbon $monthStart, Carbon $monthEnd): void
+    {
+        $attendance = Attendance::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->get();
+
+        AttendanceMonthlySummary::updateOrCreate(
+            [
+                'client_id' => $clientId,
+                'employee_id' => $employee->id,
+                'month' => $monthStart->month,
+                'year' => $monthStart->year,
+            ],
+            [
+                'total_days' => $monthStart->daysInMonth,
+                'worked_days' => $attendance->whereIn('status_code', ['9', '12', 'M'])->count(),
+                'absent_days' => $attendance->where('status_code', 'A')->count(),
+                'leave_days' => $attendance->whereIn('status_code', ['AL', 'SLF', 'SLH', 'UL'])->count(),
+                'overtime_hours' => round((float) $attendance->sum('overtime_hours'), 2),
+                'night_hours' => round((float) $attendance->sum('night_hours'), 2),
+            ]
+        );
+    }
+
+    private function syncViolations(Attendance $attendance, Employee $employee, Carbon $workDate): array
+    {
+        $types = [
+            'late_arrival',
+            'early_departure',
+            'absenteeism',
+            'daily_work_limit',
+            'weekly_work_limit',
+            'monthly_overtime_limit',
+            'weekly_rest_violation',
+        ];
+
+        AttendanceViolation::where('client_id', $attendance->client_id)
+            ->where('employee_id', $employee->id)
+            ->where('violation_date', $workDate->toDateString())
+            ->whereIn('violation_type', $types)
+            ->delete();
+
+        $flags = [];
+
+        if ((int) $attendance->late_minutes > 0) {
+            $flags[] = 'late_arrival';
+            $this->createViolation($attendance, $employee, $workDate, 'late_arrival', 'Late arrival detected (' . $attendance->late_minutes . ' minutes).');
+        }
+
+        if ((int) $attendance->early_departure_minutes > 0) {
+            $flags[] = 'early_departure';
+            $this->createViolation($attendance, $employee, $workDate, 'early_departure', 'Unauthorised early departure detected (' . $attendance->early_departure_minutes . ' minutes).');
+        }
+
+        if ($attendance->status_code === 'A') {
+            $flags[] = 'absenteeism';
+            $this->createViolation($attendance, $employee, $workDate, 'absenteeism', 'Employee marked absent without attendance hours recorded.');
+        }
+
+        if ((float) $attendance->total_hours > 12) {
+            $flags[] = 'daily_work_limit';
+            $this->createViolation($attendance, $employee, $workDate, 'daily_work_limit', 'Daily work exceeded 12 hours.');
+        }
+
+        $weekStart = $workDate->copy()->startOfWeek(Carbon::MONDAY);
+        $weekEnd = $workDate->copy()->endOfWeek(Carbon::SUNDAY);
+        $weekRecords = Attendance::where('client_id', $attendance->client_id)
+            ->where('employee_id', $employee->id)
+            ->whereBetween('attendance_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            ->get();
+        $weekHours = round((float) $weekRecords->sum(fn ($record) => (float) $record->ordinary_hours + (float) $record->overtime_hours + (float) $record->rest_day_hours + (float) $record->ph_hours), 2);
+
+        if ($weekHours > 45) {
+            $flags[] = 'weekly_work_limit';
+            $this->createViolation($attendance, $employee, $workDate, 'weekly_work_limit', 'Weekly hours reached ' . $weekHours . ', exceeding the 45-hour maximum.');
+        }
+
+        $workedDaysInWeek = $weekRecords->filter(function ($record) {
+            return ((float) $record->ordinary_hours + (float) $record->overtime_hours + (float) $record->rest_day_hours + (float) $record->ph_hours) > 0;
+        })->count();
+        if ($workedDaysInWeek >= 7) {
+            $flags[] = 'weekly_rest_violation';
+            $this->createViolation($attendance, $employee, $workDate, 'weekly_rest_violation', 'No 24-hour uninterrupted weekly rest period detected.');
+        }
+
+        $monthStart = $workDate->copy()->startOfMonth();
+        $monthEnd = $workDate->copy()->endOfMonth();
+        $monthlyOvertime = round((float) Attendance::where('client_id', $attendance->client_id)
+            ->where('employee_id', $employee->id)
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->sum('overtime_hours'), 2);
+        if ($monthlyOvertime > 50) {
+            $flags[] = 'monthly_overtime_limit';
+            $this->createViolation($attendance, $employee, $workDate, 'monthly_overtime_limit', 'Monthly overtime reached ' . $monthlyOvertime . ' hours, exceeding the 50-hour maximum.');
+        }
+
+        return array_values(array_unique($flags));
+    }
+
+    private function createViolation(Attendance $attendance, Employee $employee, Carbon $workDate, string $type, string $details): void
+    {
+        AttendanceViolation::updateOrCreate(
+            [
+                'client_id' => $attendance->client_id,
+                'employee_id' => $employee->id,
+                'attendance_id' => $attendance->id,
+                'violation_date' => $workDate->toDateString(),
+                'violation_type' => $type,
+            ],
+            [
+                'details' => $details,
+                'status' => 'open',
+                'action_triggered' => in_array($type, ['late_arrival', 'early_departure', 'absenteeism'], true),
+            ]
+        );
+    }
+
+    private function resolveShiftForEmployee(int $clientId, Employee $employee, Carbon $date): ?ShiftPattern
+    {
+        $assignment = EmployeeShift::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->whereDate('effective_from', '<=', $date->toDateString())
+            ->where(function ($query) use ($date) {
+                $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $date->toDateString());
+            })
+            ->latest('effective_from')
+            ->first();
+
+        if ($assignment) {
+            return ShiftPattern::find($assignment->shift_pattern_id);
+        }
+
+        return ShiftPattern::where('client_id', $clientId)->where('is_active', true)->orderBy('id')->first();
+    }
+
+    private function getShiftAssignmentsForDate(int $clientId, Carbon $date): Collection
+    {
+        $assignments = EmployeeShift::where('client_id', $clientId)
+            ->whereDate('effective_from', '<=', $date->toDateString())
+            ->where(function ($query) use ($date) {
+                $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $date->toDateString());
+            })
+            ->get()
+            ->keyBy('employee_id');
+
+        $shiftIds = $assignments->pluck('shift_pattern_id')->filter()->unique()->all();
+        $patterns = ShiftPattern::whereIn('id', $shiftIds)->get()->keyBy('id');
+
+        return $assignments->map(function (EmployeeShift $assignment) use ($patterns) {
+            $assignment->setRelation('shiftPattern', $patterns->get($assignment->shift_pattern_id));
+            return $assignment;
+        });
+    }
+
+    private function ensureEmployeeShiftAssignments(int $clientId, Collection $employees): void
+    {
+        $defaultShift = ShiftPattern::where('client_id', $clientId)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
+
+        if (!$defaultShift) {
+            return;
+        }
+
+        foreach ($employees as $employee) {
+            $exists = EmployeeShift::where('client_id', $clientId)
+                ->where('employee_id', $employee->id)
+                ->exists();
+
+            if (!$exists) {
+                EmployeeShift::create([
+                    'client_id' => $clientId,
+                    'employee_id' => $employee->id,
+                    'shift_pattern_id' => $defaultShift->id,
+                    'effective_from' => $employee->hire_date?->toDateString() ?: now()->toDateString(),
+                    'effective_to' => null,
+                ]);
+            }
+        }
+    }
+
+    private function getHolidayForDate(int $clientId, Carbon $date): ?PublicHoliday
+    {
+        return PublicHoliday::where(function ($query) use ($clientId) {
+                $query->where('client_id', $clientId)->orWhereNull('client_id');
+            })
+            ->whereDate('holiday_date', $date->toDateString())
+            ->first();
+    }
+
+    private function ensureReferenceData(int $clientId, int $year): void
+    {
+        $this->ensureShiftPatterns($clientId);
+        $this->ensureTanzaniaPublicHolidays($clientId, $year);
+    }
+
+    private function ensureShiftPatterns(int $clientId): void
+    {
+        $patterns = [
+            [
+                'shift_name' => 'Day Shift',
+                'start_time' => '08:00',
+                'end_time' => '17:00',
+                'break_duration' => 60,
+                'is_night_shift' => false,
+                'allowance_rate' => 0,
+            ],
+            [
+                'shift_name' => 'Early Shift',
+                'start_time' => '07:00',
+                'end_time' => '16:00',
+                'break_duration' => 60,
+                'is_night_shift' => false,
+                'allowance_rate' => 0,
+            ],
+            [
+                'shift_name' => 'Night Shift',
+                'start_time' => '20:00',
+                'end_time' => '06:00',
+                'break_duration' => 60,
+                'is_night_shift' => true,
+                'allowance_rate' => 5,
+            ],
+        ];
+
+        foreach ($patterns as $pattern) {
+            ShiftPattern::updateOrCreate(
+                [
+                    'client_id' => $clientId,
+                    'shift_name' => $pattern['shift_name'],
+                ],
+                array_merge($pattern, ['is_active' => true])
+            );
+        }
+    }
+
+    private function ensureTanzaniaPublicHolidays(int $clientId, int $year): void
+    {
+        $holidays = [
+            ['date' => Carbon::create($year, 1, 1), 'name' => 'New Year Day'],
+            ['date' => Carbon::create($year, 1, 12), 'name' => 'Zanzibar Revolution Day'],
+            ['date' => Carbon::create($year, 4, 7), 'name' => 'Karume Day'],
+            ['date' => Carbon::create($year, 4, 26), 'name' => 'Union Day'],
+            ['date' => Carbon::create($year, 5, 1), 'name' => 'Workers Day'],
+            ['date' => Carbon::create($year, 7, 7), 'name' => 'Saba Saba Day'],
+            ['date' => Carbon::create($year, 10, 14), 'name' => 'Nyerere Day'],
+            ['date' => Carbon::create($year, 12, 9), 'name' => 'Independence Day'],
+            ['date' => Carbon::create($year, 12, 25), 'name' => 'Christmas Day'],
+            ['date' => Carbon::create($year, 12, 26), 'name' => 'Boxing Day'],
+        ];
+
+        $easter = Carbon::instance(\DateTime::createFromFormat('U', (string) easter_date($year)));
+        $holidays[] = ['date' => $easter->copy()->subDays(2), 'name' => 'Good Friday'];
+        $holidays[] = ['date' => $easter->copy()->addDay(), 'name' => 'Easter Monday'];
+
+        foreach ($holidays as $holiday) {
+            PublicHoliday::updateOrCreate(
+                [
+                    'client_id' => $clientId,
+                    'holiday_date' => $holiday['date']->toDateString(),
+                ],
+                [
+                    'holiday_name' => $holiday['name'],
+                    'is_recurring' => true,
+                    'active_year' => $year,
+                ]
+            );
+        }
+    }
+
+    private function attendanceStatusReference(): array
+    {
+        return [
+            ['code' => 'A', 'meaning' => 'Absent', 'action' => 'Salary deduction and misconduct workflow if not authorised.'],
+            ['code' => 'AL', 'meaning' => 'Annual Leave', 'action' => 'Annual leave balance decremented and paid leave processed.'],
+            ['code' => 'SLF', 'meaning' => 'Sick Leave Full Pay', 'action' => 'Full pay sick leave processed.'],
+            ['code' => 'SLH', 'meaning' => 'Sick Leave Half Pay', 'action' => 'Half pay sick leave processed.'],
+            ['code' => 'UL', 'meaning' => 'Unpaid Leave', 'action' => 'Salary deduction applied against approved unpaid leave.'],
+            ['code' => 'M', 'meaning' => 'Official Mission', 'action' => 'Full pay processed with mission allowance reference.'],
+            ['code' => '9', 'meaning' => 'Ordinary Hours', 'action' => 'Standard day pay with no overtime.'],
+            ['code' => '12', 'meaning' => '12-Hour Shift', 'action' => 'Standard day pay plus 3 overtime hours at 1.5x rate.'],
+        ];
+    }
+
+    private function normalizeSource(?string $value): string
+    {
+        $value = strtolower(trim((string) $value));
+
+        return match ($value) {
+            'biometric', 'device' => 'biometric',
+            'mobile', 'mobile_clock_in' => 'mobile',
+            'manual' => 'manual',
+            default => 'web',
+        };
     }
 }

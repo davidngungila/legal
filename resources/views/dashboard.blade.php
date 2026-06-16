@@ -173,21 +173,38 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Critical Alerts</h3>
-                <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ count($alerts) ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' }}">
+                    {{ count($alerts) ? count($alerts) . ' open' : 'All clear' }}
+                </span>
             </div>
             <div class="space-y-3">
                 @forelse($alerts as $alert)
-                    <div class="flex items-start space-x-3 p-3 bg-{{ $alert['color'] }}-50 rounded-lg">
-                        <i data-feather="{{ $alert['icon'] }}" class="w-5 h-5 text-{{ $alert['color'] }}-600 mt-0.5"></i>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ $alert['title'] }}</p>
-                            <p class="text-xs text-gray-600">{{ $alert['description'] }}</p>
+                    <div class="p-3 bg-{{ $alert['color'] }}-50 rounded-lg border border-{{ $alert['color'] }}-100">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start space-x-3">
+                                <i data-feather="{{ $alert['icon'] }}" class="w-5 h-5 text-{{ $alert['color'] }}-600 mt-0.5"></i>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-medium text-gray-900">{{ $alert['title'] }}</p>
+                                        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium {{ $alert['severity'] === 'critical' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                            {{ ucfirst($alert['severity']) }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">{{ $alert['description'] }}</p>
+                                </div>
+                            </div>
+                            @if(!empty($alert['link']))
+                                <a href="{{ $alert['link'] }}" class="text-xs font-medium text-{{ $alert['color'] }}-700 hover:text-{{ $alert['color'] }}-800 whitespace-nowrap">
+                                    {{ $alert['action_label'] ?? 'Open' }}
+                                </a>
+                            @endif
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-4 text-gray-500">
+                    <div class="text-center py-6 text-gray-500">
                         <i data-feather="check-circle" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
                         <p class="text-sm">No critical alerts</p>
+                        <p class="text-xs text-gray-400 mt-1">Attendance, payroll, and requests are currently in a healthy state.</p>
                     </div>
                 @endforelse
             </div>
@@ -195,22 +212,32 @@
 
         <!-- Recent Activities -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Activities</h3>
+                <a href="{{ route('selfservice.index') }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-700">View All</a>
+            </div>
             <div class="space-y-3">
                 @forelse($recentActivities as $activity)
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 bg-{{ $activity['color'] }}-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i data-feather="{{ $activity['icon'] }}" class="w-4 h-4 text-{{ $activity['color'] }}-600"></i>
+                    @php($activityHref = $activity['link'] ?? '#')
+                    <a href="{{ $activityHref }}" class="block p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-{{ $activity['color'] }}-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-feather="{{ $activity['icon'] }}" class="w-4 h-4 text-{{ $activity['color'] }}-600"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $activity['title'] }}</p>
+                                    <span class="text-[11px] text-gray-400 whitespace-nowrap">{{ $activity['time'] }}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">{{ $activity['description'] }}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ $activity['title'] }}</p>
-                            <p class="text-xs text-gray-600">{{ $activity['description'] }} - {{ $activity['time'] }}</p>
-                        </div>
-                    </div>
+                    </a>
                 @empty
-                    <div class="text-center py-4 text-gray-500">
+                    <div class="text-center py-6 text-gray-500">
                         <i data-feather="activity" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
                         <p class="text-sm">No recent activities</p>
+                        <p class="text-xs text-gray-400 mt-1">New hires, payroll updates, and HR requests will appear here.</p>
                     </div>
                 @endforelse
             </div>
@@ -220,26 +247,22 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div class="space-y-3">
-                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-                    <i data-feather="user-plus" class="w-5 h-5 text-gray-600"></i>
-                    <span class="text-sm font-medium text-gray-900">Add New Employee</span>
-                </button>
-                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-                    <i data-feather="calendar" class="w-5 h-5 text-gray-600"></i>
-                    <span class="text-sm font-medium text-gray-900">Approve Leave Request</span>
-                </button>
-                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-                    <i data-feather="credit-card" class="w-5 h-5 text-gray-600"></i>
-                    <span class="text-sm font-medium text-gray-900">Process Payroll</span>
-                </button>
-                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-                    <i data-feather="file-plus" class="w-5 h-5 text-gray-600"></i>
-                    <span class="text-sm font-medium text-gray-900">Create Case File</span>
-                </button>
-                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-                    <i data-feather="trending-up" class="w-5 h-5 text-gray-600"></i>
-                    <span class="text-sm font-medium text-gray-900">Generate Reports</span>
-                </button>
+                @foreach(($quickActions ?? []) as $action)
+                    <a href="{{ $action['href'] }}" class="w-full flex items-start justify-between gap-3 p-3 bg-{{ $action['color'] }}-50 rounded-lg hover:bg-{{ $action['color'] }}-100 transition-colors text-left border border-{{ $action['color'] }}-100">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                                <i data-feather="{{ $action['icon'] }}" class="w-5 h-5 text-{{ $action['color'] }}-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $action['label'] }}</p>
+                                <p class="text-xs text-gray-600 mt-1">{{ $action['description'] }}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-[11px] font-medium bg-white text-{{ $action['color'] }}-700 whitespace-nowrap">
+                            {{ $action['badge'] }}
+                        </span>
+                    </a>
+                @endforeach
             </div>
         </div>
     </div>

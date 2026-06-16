@@ -34,6 +34,7 @@ use App\Http\Controllers\PersonnelIdController;
 use App\Http\Controllers\ContractManagementController;
 use App\Http\Controllers\EmploymentContractsController;
 use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\CaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -425,9 +426,10 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
     // Case Management Routes
     Route::prefix('casemanagement')->group(function () {
-        Route::get('/', function () {
-            return view('casemanagement.index');
-        })->name('casemanagement.index');
+        Route::get('/', [CaseController::class, 'index'])->name('casemanagement.index');
+        Route::post('/', [CaseController::class, 'store'])->name('casemanagement.store');
+        Route::put('/{case}', [CaseController::class, 'update'])->name('casemanagement.update');
+        Route::get('/export', [CaseController::class, 'export'])->name('casemanagement.export');
     });
 
     // Documents & Policies Routes

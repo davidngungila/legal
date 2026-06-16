@@ -9,6 +9,7 @@ use App\Models\Attendance;
 use App\Models\SelfService;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 use App\Models\EmployeeRegistration;
 use App\Models\EmployeeDocument;
@@ -50,10 +51,9 @@ class DashboardController extends Controller
         // Get alerts for current client
         $alerts = $this->getAlerts($currentClient->id);
         
-        // Get client information (use currentClient directly)
-        $client = $currentClient;
+        $quickActions = $this->getQuickActions($currentClient->id, $stats);
 
-        return view('dashboard', compact('stats', 'recentActivities', 'alerts', 'currentClient'));
+        return view('dashboard', compact('stats', 'recentActivities', 'alerts', 'quickActions', 'currentClient'));
     }
 
     /**
@@ -173,11 +173,13 @@ class DashboardController extends Controller
             $activities[] = [
                 'type' => 'request',
                 'title' => $this->getRequestTitle($request),
-                'description' => $request->title,
+                'description' => $request->title ?: ucfirst($request->request_type) . ' request submitted',
                 'time' => $request->created_at->diffForHumans(),
                 'status' => $request->status,
                 'icon' => $this->getRequestIcon($request->request_type),
                 'color' => $this->getRequestColor($request->status),
+                'sort_at' => optional($request->created_at)->timestamp ?? 0,
+                'link' => route('selfservice.index'),
             ];
         }
 
@@ -188,23 +190,50 @@ class DashboardController extends Controller
             ->get();
 
         foreach ($recentHires as $employee) {
+            $activityDate = $employee->hire_date ?? $employee->created_at;
             $activities[] = [
                 'type' => 'hire',
                 'title' => 'New Employee Onboarded',
-                'description' => $employee->first_name . ' ' . $employee->last_name,
-                'time' => $employee->hire_date->diffForHumans(),
+                'description' => trim($employee->first_name . ' ' . $employee->last_name) . ' joined ' . ($employee->department ?: 'the team'),
+                'time' => $activityDate ? $activityDate->diffForHumans() : 'Recently',
                 'status' => 'completed',
                 'icon' => 'user-plus',
                 'color' => 'green',
+                'sort_at' => optional($activityDate)->timestamp ?? 0,
+                'link' => route('employees.index'),
             ];
         }
 
-        // Sort by time
+        $recentPayrolls = Payroll::where('client_id', $clientId)
+            ->with('employee')
+            ->orderByDesc('updated_at')
+            ->take(3)
+            ->get();
+
+        foreach ($recentPayrolls as $payroll) {
+            $employeeName = trim(($payroll->employee?->first_name ?? '') . ' ' . ($payroll->employee?->last_name ?? ''));
+            $activities[] = [
+                'type' => 'payroll',
+                'title' => 'Payroll Record Updated',
+                'description' => ($employeeName ?: 'Employee #' . $payroll->employee_id) . ' - ' . $this->formatPayrollPeriod($payroll->payroll_period),
+                'time' => optional($payroll->updated_at ?? $payroll->created_at)->diffForHumans() ?? 'Recently',
+                'status' => $payroll->status,
+                'icon' => 'credit-card',
+                'color' => $payroll->status === 'paid' ? 'green' : 'blue',
+                'sort_at' => optional($payroll->updated_at ?? $payroll->created_at)->timestamp ?? 0,
+                'link' => route('payroll.index'),
+            ];
+        }
+
+        // Sort by actual timestamp instead of human-readable label
         usort($activities, function ($a, $b) {
-            return $b['time'] <=> $a['time'];
+            return ($b['sort_at'] ?? 0) <=> ($a['sort_at'] ?? 0);
         });
 
-        return array_slice($activities, 0, 8);
+        return array_map(function ($activity) {
+            unset($activity['sort_at']);
+            return $activity;
+        }, array_slice($activities, 0, 8));
     }
 
     /**
@@ -213,6 +242,57 @@ class DashboardController extends Controller
     private function getAlerts($clientId)
     {
         $alerts = [];
+        $today = now()->toDateString();
+
+        $activeEmployees = Employee::where('client_id', $clientId)
+            ->where('status', 'active')
+            ->count();
+
+        $markedToday = Attendance::where('client_id', $clientId)
+            ->whereDate('attendance_date', $today)
+            ->distinct('employee_id')
+            ->count('employee_id');
+
+        if ($activeEmployees > 0 && $markedToday === 0) {
+            $alerts[] = [
+                'type' => 'attendance_missing',
+                'title' => 'Attendance Not Submitted',
+                'description' => 'No attendance has been recorded for today.',
+                'severity' => 'critical',
+                'icon' => 'clock',
+                'color' => 'red',
+                'link' => route('attendance.index', ['date' => $today]),
+                'action_label' => 'Record Attendance',
+            ];
+        } elseif ($activeEmployees > 0 && $markedToday < $activeEmployees) {
+            $alerts[] = [
+                'type' => 'attendance_incomplete',
+                'title' => 'Attendance Incomplete',
+                'description' => $markedToday . ' of ' . $activeEmployees . ' active employees have been marked today.',
+                'severity' => 'warning',
+                'icon' => 'calendar',
+                'color' => 'yellow',
+                'link' => route('attendance.index', ['date' => $today]),
+                'action_label' => 'Complete Attendance',
+            ];
+        }
+
+        $currentPayrollCount = Payroll::where('client_id', $clientId)
+            ->where('payroll_period', now()->format('Y-m'))
+            ->count();
+
+        if ($activeEmployees > 0 && $currentPayrollCount === 0) {
+            $alerts[] = [
+                'type' => 'payroll_missing',
+                'title' => 'Payroll Not Processed',
+                'description' => 'No payroll has been processed for ' . now()->format('F Y') . '.',
+                'severity' => 'critical',
+                'icon' => 'credit-card',
+                'color' => 'red',
+                'link' => route('payroll.index'),
+                'action_label' => 'Process Payroll',
+            ];
+        }
         
         // Get employees with contracts expiring soon
         $expiringContracts = Employee::where('client_id', $clientId)
@@ -229,6 +309,8 @@ class DashboardController extends Controller
                 'severity' => $daysLeft <= 7 ? 'critical' : 'warning',
                 'icon' => 'alert-circle',
                 'color' => $daysLeft <= 7 ? 'red' : 'yellow',
+                'link' => route('employees.index'),
+                'action_label' => 'Review Employee',
             ];
         }
 
@@ -246,10 +328,88 @@ class DashboardController extends Controller
                 'severity' => 'warning',
                 'icon' => 'alert-triangle',
                 'color' => 'yellow',
+                'link' => route('selfservice.index'),
+                'action_label' => 'Review Request',
             ];
         }
 
+        usort($alerts, function ($a, $b) {
+            $severityRank = ['critical' => 2, 'warning' => 1, 'info' => 0];
+            return ($severityRank[$b['severity']] ?? 0) <=> ($severityRank[$a['severity']] ?? 0);
+        });
+
         return array_slice($alerts, 0, 5);
+    }
+
+    private function getQuickActions($clientId, array $stats): array
+    {
+        $pendingRequests = SelfService::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->count();
+
+        return [
+            [
+                'label' => 'Add New Employee',
+                'description' => 'Create and onboard a new employee profile.',
+                'href' => route('employees.create'),
+                'icon' => 'user-plus',
+                'color' => 'blue',
+                'badge' => 'HR',
+            ],
+            [
+                'label' => 'Record Attendance',
+                'description' => 'Capture attendance for today before payroll processing.',
+                'href' => route('attendance.index', ['date' => now()->toDateString()]),
+                'icon' => 'calendar',
+                'color' => 'purple',
+                'badge' => $stats['present_today'] . '/' . max(1, $stats['total_employees']),
+            ],
+            [
+                'label' => 'Review Leave Requests',
+                'description' => 'Check pending employee requests and approvals.',
+                'href' => route('selfservice.index'),
+                'icon' => 'clipboard',
+                'color' => 'yellow',
+                'badge' => $pendingRequests . ' pending',
+            ],
+            [
+                'label' => 'Process Payroll',
+                'description' => 'Generate, import, or update payroll for the current period.',
+                'href' => route('payroll.index'),
+                'icon' => 'credit-card',
+                'color' => 'green',
+                'badge' => now()->format('M Y'),
+            ],
+            [
+                'label' => 'Create Case File',
+                'description' => 'Open the case management workspace.',
+                'href' => route('casemanagement.index'),
+                'icon' => 'folder-plus',
+                'color' => 'red',
+                'badge' => 'Legal',
+            ],
+            [
+                'label' => 'Compliance Reports',
+                'description' => 'Review statutory filings and compliance output.',
+                'href' => route('compliance.index'),
+                'icon' => 'trending-up',
+                'color' => 'indigo',
+                'badge' => 'Reports',
+            ],
+        ];
+    }
+
+    private function formatPayrollPeriod(?string $period): string
+    {
+        if (!$period) {
+            return 'Current Period';
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m', $period)->format('F Y');
+        } catch (\Throwable $e) {
+            return $period;
+        }
     }
 
     /**

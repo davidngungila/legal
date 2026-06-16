@@ -144,7 +144,14 @@ class Employee extends Model
         return $this->hasMany(SelfService::class);
     }
 
-    
+    /**
+     * Get the shift assignments for the employee.
+     */
+    public function employeeShifts(): HasMany
+    {
+        return $this->hasMany(EmployeeShift::class);
+    }
+
     /**
      * Get the formatted status badge.
      */

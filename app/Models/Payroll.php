@@ -74,10 +74,10 @@ class Payroll extends Model
     public function getStatusBadgeAttribute()
     {
         $badges = [
-            'draft' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Draft</span>',
-            'processed' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Processed</span>',
-            'paid' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Paid</span>',
-            'cancelled' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Cancelled</span>',
+            'draft' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Prepared</span>',
+            'processed' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Reviewed</span>',
+            'paid' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>',
+            'cancelled' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Reversed</span>',
         ];
 
         return $badges[$this->status] ?? $badges['draft'];
@@ -142,7 +142,7 @@ class Payroll extends Model
      */
     public function calculateTotalDeductions()
     {
-        $this->total_deductions = $this->tax_deductions + $this->social_security + $this->pension + $this->other_deductions;
+        $this->total_deductions = $this->tax_deductions + $this->social_security + $this->other_deductions;
         return $this;
     }
 
