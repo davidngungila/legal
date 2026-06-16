@@ -91,7 +91,9 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // User Management Routes
     Route::prefix('users')->group(function () {
         Route::get('/', function () {
-            return view('users.index');
+            $clientId = session('current_client_id');
+            $currentClient = $clientId ? \App\Models\Client::find($clientId) : null;
+            return view('users.index', compact('currentClient'));
         })->name('users.index');
         
         Route::get('/create', function () {
