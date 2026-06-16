@@ -398,32 +398,25 @@ function closeEditRoleModal() {
 }
 
 // CRUD operations
-async function editRole(roleId) {
-    try {
-        const response = await fetch(`${API_BASE}/${roleId}`);
-        const data = await response.json();
+function editRole(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (role) {
+        document.getElementById('editRoleId').value = role.id;
+        document.getElementById('editRoleName').value = role.name;
+        document.getElementById('editRoleDisplayName').value = role.display_name;
+        document.getElementById('editRoleDescription').value = role.description || '';
+        document.getElementById('editRoleActive').checked = role.is_active;
         
-        if (data.success) {
-            const role = data.role;
-            document.getElementById('editRoleId').value = role.id;
-            document.getElementById('editRoleName').value = role.name;
-            document.getElementById('editRoleDisplayName').value = role.display_name;
-            document.getElementById('editRoleDescription').value = role.description || '';
-            document.getElementById('editRoleActive').checked = role.is_active;
-            
-            // Check permissions
-            const checkboxes = document.querySelectorAll('#editPermissionsContainer input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = role.permissions && role.permissions.some(p => p.id == checkbox.value);
-            });
-            
-            showEditRoleModal();
-        } else {
-            showNotification('Failed to load role', 'error');
-        }
-    } catch (error) {
-        console.error('Error loading role:', error);
-        showNotification('Error loading role', 'error');
+        // Check permissions
+        const checkboxes = document.querySelectorAll('#editPermissionsContainer input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            const rolePermissionIds = (role.permissions || []).map(p => p.id);
+            checkbox.checked = rolePermissionIds.includes(parseInt(checkbox.value));
+        });
+        
+        showEditRoleModal();
+    } else {
+        showNotification('Role not found', 'error');
     }
 }
 
@@ -445,7 +438,7 @@ async function deleteRole(roleId) {
         
         if (data.success) {
             showNotification('Role deleted successfully', 'success');
-            loadRoles();
+            refreshRoles();
         } else {
             showNotification(data.message || 'Failed to delete role', 'error');
         }
@@ -456,6 +449,25 @@ async function deleteRole(roleId) {
 }
 
 // Form submissions
+// Refresh roles from API (for after create/update/delete)
+async function refreshRoles() {
+    try {
+        const response = await fetch(API_BASE);
+        const data = await response.json();
+        
+        if (data.success) {
+            roles = data.roles;
+            renderRoles();
+            updateStats();
+        } else {
+            showNotification('Failed to refresh roles', 'error');
+        }
+    } catch (error) {
+        console.error('Error refreshing roles:', error);
+        showNotification('Error refreshing roles', 'error');
+    }
+}
+
 document.getElementById('createRoleForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -477,7 +489,7 @@ document.getElementById('createRoleForm').addEventListener('submit', async funct
         if (data.success) {
             closeCreateRoleModal();
             showNotification('Role created successfully', 'success');
-            loadRoles();
+            refreshRoles();
         } else {
             showNotification(data.message || 'Failed to create role', 'error');
             if (data.errors) {
@@ -512,7 +524,7 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
         if (data.success) {
             closeEditRoleModal();
             showNotification('Role updated successfully', 'success');
-            loadRoles();
+            refreshRoles();
         } else {
             showNotification(data.message || 'Failed to update role', 'error');
             if (data.errors) {
