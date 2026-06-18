@@ -93,7 +93,7 @@ class LeaveController extends Controller
         return back()->with('success', 'Leave request updated!');
     }
 
-    public function balances()
+    public function balances(Request $request)
     {
         $clientId = session('current_client_id');
         if (!$clientId) {
@@ -101,7 +101,21 @@ class LeaveController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        return view('leave.balances', ['currentClient' => $currentClient]);
+        
+        $employees = Employee::where('client_id', $clientId)->where('status', 'active')->get();
+        $selectedEmployee = $request->get('employee_id', null);
+        
+        if ($selectedEmployee) {
+            $employee = Employee::where('client_id', $clientId)->findOrFail($selectedEmployee);
+            $leaveEntitlements = LeaveEntitlement::with('leaveType')->where('employee_id', $selectedEmployee)->where('client_id', $clientId)->get();
+        } else {
+            $employee = null;
+            $leaveEntitlements = [];
+        }
+        
+        $leaveTypes = LeaveType::where('client_id', $clientId)->where('is_active', true)->get();
+        
+        return view('leave.balances', compact('currentClient', 'employees', 'selectedEmployee', 'employee', 'leaveEntitlements', 'leaveTypes'));
     }
 
     public function calendar()
