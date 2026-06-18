@@ -280,41 +280,6 @@
                     <li class="sidebar-dropdown">
                         <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
                             <div class="flex items-center space-x-3">
-                                <i data-feather="calendar" class="w-3.5 h-3.5"></i>
-                                <span class="text-xs">Leave</span>
-                            </div>
-                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
-                        </button>
-                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                            <li>
-                                <a href="{{ route('leave.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="file-text" class="w-3 h-3"></i>
-                                    <span class="text-xs">Applications</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('leave.balances') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.balances') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="pie-chart" class="w-3 h-3"></i>
-                                    <span class="text-xs">Balances</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('leave.calendar') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.calendar') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="calendar" class="w-3 h-3"></i>
-                                    <span class="text-xs">Calendar</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('leave.reports') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.reports') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
-                                    <span class="text-xs">Reports</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li class="sidebar-dropdown">
-                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
-                            <div class="flex items-center space-x-3">
                                 <i data-feather="credit-card" class="w-3.5 h-3.5"></i>
                                 <span class="text-xs">Payroll</span>
                             </div>
@@ -640,11 +605,40 @@
                             <span class="text-xs">Overview</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('selfservice.leave') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.leave') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="calendar" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Leave</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="calendar" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Leave</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('leave.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file-text" class="w-3 h-3"></i>
+                                    <span class="text-xs">Applications</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('leave.balances') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.balances') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="pie-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Balances</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('leave.calendar') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.calendar') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="calendar" class="w-3 h-3"></i>
+                                    <span class="text-xs">Calendar</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('leave.reports') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.reports') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Reports</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li>
                         <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.payslip') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
