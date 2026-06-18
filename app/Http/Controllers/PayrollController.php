@@ -1007,4 +1007,15 @@ class PayrollController extends Controller
         return redirect()->route('payroll.index')
             ->with('success', 'Payroll record deleted successfully.');
     }
+
+    public function reports()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('payroll.reports', ['currentClient' => $currentClient]);
+    }
 }

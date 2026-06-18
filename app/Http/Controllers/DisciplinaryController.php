@@ -53,4 +53,37 @@ class DisciplinaryController extends Controller
 
         return back()->with('success', 'Disciplinary case opened!');
     }
+
+    public function investigations()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('discipline.investigations', ['currentClient' => $currentClient]);
+    }
+
+    public function hearings()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('discipline.hearings', ['currentClient' => $currentClient]);
+    }
+
+    public function documents()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('discipline.documents', ['currentClient' => $currentClient]);
+    }
 }

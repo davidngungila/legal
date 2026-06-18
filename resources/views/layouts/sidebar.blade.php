@@ -13,13 +13,15 @@
             </div>
         </div>
         
-        <!-- Client Selector -->
+        <!-- Client Selector (only for Super Admin) -->
+        @if($currentUser && $currentUser->hasRole('super_admin'))
         <div class="mt-4">
             <label class="text-[10px] uppercase tracking-tighter text-indigo-300 block mb-1">Current Client:</label>
             <select id="clientSelector" class="w-full bg-indigo-700/50 text-white border border-white/10 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-500" onchange="switchClient(this.value)">
                 <option value="">Select Client...</option>
             </select>
         </div>
+        @endif
     </div>
     
     <!-- Navigation Menu -->
@@ -34,6 +36,7 @@
             </li>
 
             <!-- Organization -->
+            @hasPermission('organization.view')
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -43,16 +46,32 @@
                     <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
                 </button>
                 <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                    @hasRole('super_admin')
                     <li>
                         <a href="{{ route('clients.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('clients.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="users" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Clients</span>
                         </a>
                     </li>
+                    @endhasRole
+                    <li>
+                        <a href="{{ route('departments.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('departments.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="grid" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Departments</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('positions.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('positions.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="briefcase" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Positions</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
+            @endhasPermission
 
             <!-- Talent Acquisition -->
+            @hasPermission('recruitment.view')
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -86,8 +105,40 @@
                             <span class="text-xs">Onboarding</span>
                         </a>
                     </li>
+                    @hasPermission('talent.view')
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="users" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Succession</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('succession.talent-pools') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('succession.talent-pools') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="users" class="w-3 h-3"></i>
+                                    <span class="text-xs">Talent Pools</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('succession.readiness') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('succession.readiness') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="check-circle" class="w-3 h-3"></i>
+                                    <span class="text-xs">Readiness</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('succession.career-paths') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('succession.career-paths') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="arrow-right" class="w-3 h-3"></i>
+                                    <span class="text-xs">Career Paths</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endhasPermission
                 </ul>
             </li>
+            @endhasPermission
 
             <!-- Human Resources -->
             <li class="sidebar-dropdown">
@@ -102,13 +153,19 @@
                     <li>
                         <a href="{{ route('hris.dashboard') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('hris.dashboard') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="grid" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">HRIS Dashboard</span>
+                            <span class="text-xs">HRIS Dashboard / Org Chart</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('employees.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('employees.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="user" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Employee Master</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('positions.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('positions.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="briefcase" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Positions</span>
                         </a>
                     </li>
                     <li>
@@ -185,29 +242,174 @@
                     <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
                 </button>
                 <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                    <li>
-                        <a href="{{ route('attendance.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('attendance.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="check-square" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Attendance</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="check-square" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Attendance</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('attendance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('attendance.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="check-square" class="w-3 h-3"></i>
+                                    <span class="text-xs">Attendance</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('attendance.timesheets') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('attendance.timesheets') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file" class="w-3 h-3"></i>
+                                    <span class="text-xs">Timesheets</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('attendance.shifts') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('attendance.shifts') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="clock" class="w-3 h-3"></i>
+                                    <span class="text-xs">Shifts</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('attendance.violations') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('attendance.violations') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="alert-triangle" class="w-3 h-3"></i>
+                                    <span class="text-xs">Violations</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li>
-                        <a href="{{ route('leave.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="calendar" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Leave Management</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="calendar" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Leave</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('leave.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file-text" class="w-3 h-3"></i>
+                                    <span class="text-xs">Applications</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('leave.balances') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.balances') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="pie-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Balances</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('leave.calendar') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.calendar') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="calendar" class="w-3 h-3"></i>
+                                    <span class="text-xs">Calendar</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('leave.reports') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.reports') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Reports</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li>
-                        <a href="{{ route('payroll.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('payroll.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="credit-card" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Payroll Management</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="credit-card" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Payroll</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('payroll.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('payroll.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="calendar" class="w-3 h-3"></i>
+                                    <span class="text-xs">Payroll Runs</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.payslip') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file-text" class="w-3 h-3"></i>
+                                    <span class="text-xs">Payslips</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compensation.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="settings" class="w-3 h-3"></i>
+                                    <span class="text-xs">Configuration</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('payroll.reports') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('payroll.reports') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Reports</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li>
-                        <a href="{{ route('compensation.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="dollar-sign" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Compensation</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="dollar-sign" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Compensation</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('compensation.salary-structures') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.salary-structures') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="grid" class="w-3 h-3"></i>
+                                    <span class="text-xs">Salary Structures</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compensation.merit-review') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.merit-review') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="trending-up" class="w-3 h-3"></i>
+                                    <span class="text-xs">Merit Review</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compensation.allowances') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.allowances') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="plus-circle" class="w-3 h-3"></i>
+                                    <span class="text-xs">Allowances</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compensation.loans') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compensation.loans') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="dollar-sign" class="w-3 h-3"></i>
+                                    <span class="text-xs">Loans</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="gift" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Benefits</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('benefits.enrollment') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('benefits.enrollment') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="edit" class="w-3 h-3"></i>
+                                    <span class="text-xs">Enrollment</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('benefits.life-events') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('benefits.life-events') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="heart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Life Events</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('benefits.plans') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('benefits.plans') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="package" class="w-3 h-3"></i>
+                                    <span class="text-xs">Plans</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </li>
@@ -222,17 +424,69 @@
                     <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
                 </button>
                 <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                    <li>
-                        <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="bar-chart" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Performance</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="trending-up" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Performance</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('performance.goals') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.goals') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="target" class="w-3 h-3"></i>
+                                    <span class="text-xs">Goals</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="star" class="w-3 h-3"></i>
+                                    <span class="text-xs">Appraisals</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('performance.pip') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.pip') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="activity" class="w-3 h-3"></i>
+                                    <span class="text-xs">PIP</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('performance.analytics') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.analytics') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Analytics</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li>
-                        <a href="{{ route('training.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('training.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="award" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Training</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="award" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Training</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('training.plans') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('training.plans') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="clipboard" class="w-3 h-3"></i>
+                                    <span class="text-xs">Training Plans</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('training.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('training.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="book-open" class="w-3 h-3"></i>
+                                    <span class="text-xs">Courses</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('training.completions') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('training.completions') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="check-circle" class="w-3 h-3"></i>
+                                    <span class="text-xs">Completions</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </li>
@@ -247,14 +501,37 @@
                     <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
                 </button>
                 <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                    <li>
-                        <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="shield" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Compliance & Legal</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="shield" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Compliance</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('compliance.statutory-filings') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.statutory-filings') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file-text" class="w-3 h-3"></i>
+                                    <span class="text-xs">Statutory Filings</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compliance.deadlines') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.deadlines') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="calendar" class="w-3 h-3"></i>
+                                    <span class="text-xs">Deadlines</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Reports</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li>
-                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('casemanagement.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('casemanagement.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="folder" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Case Management</span>
                         </a>
@@ -272,14 +549,43 @@
                     <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
                 </button>
                 <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                    <li>
-                        <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="alert-triangle" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Disciplinary Management</span>
-                        </a>
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="alert-triangle" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Disciplinary</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('discipline.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="folder" class="w-3 h-3"></i>
+                                    <span class="text-xs">Cases</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('discipline.investigations') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.investigations') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="search" class="w-3 h-3"></i>
+                                    <span class="text-xs">Investigations</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('discipline.hearings') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.hearings') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="users" class="w-3 h-3"></i>
+                                    <span class="text-xs">Hearings</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('discipline.documents') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('discipline.documents') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file-text" class="w-3 h-3"></i>
+                                    <span class="text-xs">Documents</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li>
-                        <a href="{{ route('exit.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('exit.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                        <a href="{{ route('exit.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('exit.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="log-out" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Exit Management</span>
                         </a>
@@ -288,11 +594,34 @@
             </li>
 
             <!-- Analytics -->
-            <li>
-                <a href="{{ route('analytics.index') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('analytics.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
-                    <i data-feather="bar-chart-2" class="w-4 h-4"></i>
-                    <span class="text-sm font-medium">Analytics</span>
-                </a>
+            <li class="sidebar-dropdown">
+                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="bar-chart-2" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Analytics</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
+                </button>
+                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                    <li>
+                        <a href="{{ route('analytics.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('analytics.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="grid" class="w-3 h-3"></i>
+                            <span class="text-xs">Dashboards</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('analytics.hr-intelligence') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('analytics.hr-intelligence') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="brain" class="w-3 h-3"></i>
+                            <span class="text-xs">HR Intelligence</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('analytics.predictive') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('analytics.predictive') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="trending-up" class="w-3 h-3"></i>
+                            <span class="text-xs">Predictive Reports</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
             <!-- Self Service -->
@@ -386,6 +715,12 @@
                             <span class="text-xs">Permissions</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('audit-trail.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('audit-trail.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="activity" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Audit Trail</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
         </ul>
@@ -406,7 +741,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasActiveChild = menu.querySelector('.text-white.font-medium') !== null;
         
         if (hasActiveChild) {
-            menu.style.maxHeight = menu.scrollHeight + 'px';
+            menu.style.maxHeight = '2000px';
             menu.style.opacity = '1';
             arrow.style.transform = 'rotate(180deg)';
             button.classList.add('bg-white/5');
@@ -436,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 arrow.style.transform = 'rotate(0deg)';
                 button.classList.remove('bg-white/5');
             } else {
-                menu.style.maxHeight = menu.scrollHeight + 'px';
+                menu.style.maxHeight = '2000px';
                 menu.style.opacity = '1';
                 arrow.style.transform = 'rotate(180deg)';
                 button.classList.add('bg-white/5');

@@ -113,14 +113,15 @@ class CaseController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        $templates = collect([
+        // Get templates from session or use default
+        $templates = session('case_templates', collect([
             ['name' => 'Disciplinary Notice', 'type' => 'disciplinary', 'uses' => 45, 'status' => 'Active', 'subject' => 'Disciplinary hearing notice'],
             ['name' => 'Grievance Form', 'type' => 'grievance', 'uses' => 32, 'status' => 'Active', 'subject' => 'Employee grievance intake'],
             ['name' => 'Warning Letter', 'type' => 'disciplinary', 'uses' => 28, 'status' => 'Active', 'subject' => 'Formal written warning'],
             ['name' => 'Termination Notice', 'type' => 'legal', 'uses' => 15, 'status' => 'Active', 'subject' => 'Contract termination review'],
             ['name' => 'Complaint Form', 'type' => 'complaint', 'uses' => 22, 'status' => 'Active', 'subject' => 'Workplace complaint review'],
             ['name' => 'Settlement Agreement', 'type' => 'legal', 'uses' => 8, 'status' => 'Active', 'subject' => 'Dispute settlement preparation'],
-        ]);
+        ]));
 
         $casesJson = $cases->map(function (LegalCase $case) {
             return [
@@ -305,5 +306,78 @@ class CaseController extends Controller
             'old_values' => $oldValues ?: null,
             'new_values' => $newValues ?: null,
         ]);
+    }
+
+    public function storeTemplate(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:disciplinary,grievance,complaint,legal',
+            'subject' => 'required|string|max:255',
+            'status' => 'required|in:Active,Inactive',
+        ]);
+
+        // Get current templates from session or default
+        $templates = session('case_templates', collect([
+            ['name' => 'Disciplinary Notice', 'type' => 'disciplinary', 'uses' => 45, 'status' => 'Active', 'subject' => 'Disciplinary hearing notice'],
+            ['name' => 'Grievance Form', 'type' => 'grievance', 'uses' => 32, 'status' => 'Active', 'subject' => 'Employee grievance intake'],
+            ['name' => 'Warning Letter', 'type' => 'disciplinary', 'uses' => 28, 'status' => 'Active', 'subject' => 'Formal written warning'],
+            ['name' => 'Termination Notice', 'type' => 'legal', 'uses' => 15, 'status' => 'Active', 'subject' => 'Contract termination review'],
+            ['name' => 'Complaint Form', 'type' => 'complaint', 'uses' => 22, 'status' => 'Active', 'subject' => 'Workplace complaint review'],
+            ['name' => 'Settlement Agreement', 'type' => 'legal', 'uses' => 8, 'status' => 'Active', 'subject' => 'Dispute settlement preparation'],
+        ]));
+
+        // Add new template
+        $templates->push([
+            'name' => $validated['name'],
+            'type' => $validated['type'],
+            'subject' => $validated['subject'],
+            'status' => $validated['status'],
+            'uses' => 0,
+        ]);
+
+        // Save back to session
+        session(['case_templates' => $templates]);
+
+        return redirect()->route('casemanagement.index')->with('success', 'Template created successfully!');
+    }
+
+    public function updateTemplate(Request $request, int $index)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:disciplinary,grievance,complaint,legal',
+            'subject' => 'required|string|max:255',
+            'status' => 'required|in:Active,Inactive',
+        ]);
+
+        // Get current templates from session or default
+        $templates = session('case_templates', collect([
+            ['name' => 'Disciplinary Notice', 'type' => 'disciplinary', 'uses' => 45, 'status' => 'Active', 'subject' => 'Disciplinary hearing notice'],
+            ['name' => 'Grievance Form', 'type' => 'grievance', 'uses' => 32, 'status' => 'Active', 'subject' => 'Employee grievance intake'],
+            ['name' => 'Warning Letter', 'type' => 'disciplinary', 'uses' => 28, 'status' => 'Active', 'subject' => 'Formal written warning'],
+            ['name' => 'Termination Notice', 'type' => 'legal', 'uses' => 15, 'status' => 'Active', 'subject' => 'Contract termination review'],
+            ['name' => 'Complaint Form', 'type' => 'complaint', 'uses' => 22, 'status' => 'Active', 'subject' => 'Workplace complaint review'],
+            ['name' => 'Settlement Agreement', 'type' => 'legal', 'uses' => 8, 'status' => 'Active', 'subject' => 'Dispute settlement preparation'],
+        ]));
+
+        // Update template at index
+        if ($templates->has($index)) {
+            $template = $templates->get($index);
+            $templates->put($index, [
+                'name' => $validated['name'],
+                'type' => $validated['type'],
+                'subject' => $validated['subject'],
+                'status' => $validated['status'],
+                'uses' => $template['uses'] ?? 0,
+            ]);
+
+            // Save back to session
+            session(['case_templates' => $templates]);
+
+            return redirect()->route('casemanagement.index')->with('success', 'Template updated successfully!');
+        }
+
+        return redirect()->route('casemanagement.index')->with('error', 'Template not found!');
     }
 }

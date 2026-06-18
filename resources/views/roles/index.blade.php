@@ -226,8 +226,25 @@
 
 @push('scripts')
 <script>
+// Helper function to serialize FormData with array support
+function serializeFormData(formData) {
+    const data = {};
+    for (const [key, value] of formData.entries()) {
+        if (key.endsWith('[]')) {
+            const actualKey = key.slice(0, -2);
+            if (!data[actualKey]) {
+                data[actualKey] = [];
+            }
+            data[actualKey].push(value);
+        } else {
+            data[key] = value;
+        }
+    }
+    return data;
+}
+
 // API endpoints
-const API_BASE = '/api/roles';
+const API_BASE = '/roles';
 
 let roles = @json($roles);
 let permissions = @json($permissions);
@@ -452,7 +469,11 @@ async function deleteRole(roleId) {
 // Refresh roles from API (for after create/update/delete)
 async function refreshRoles() {
     try {
-        const response = await fetch(API_BASE);
+        const response = await fetch(API_BASE, {
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -472,6 +493,15 @@ document.getElementById('createRoleForm').addEventListener('submit', async funct
     e.preventDefault();
     
     const formData = new FormData(this);
+    const data = serializeFormData(formData);
+    
+    // Convert is_active to boolean
+    data.is_active = data.is_active === 'on';
+    
+    // Convert permission ids to integers
+    if (data.permissions) {
+        data.permissions = data.permissions.map(id => parseInt(id));
+    }
     
     try {
         const response = await fetch(API_BASE, {
@@ -481,19 +511,19 @@ document.getElementById('createRoleForm').addEventListener('submit', async funct
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(Object.fromEntries(formData))
+            body: JSON.stringify(data)
         });
         
-        const data = await response.json();
+        const responseData = await response.json();
         
-        if (data.success) {
+        if (responseData.success) {
             closeCreateRoleModal();
             showNotification('Role created successfully', 'success');
             refreshRoles();
         } else {
-            showNotification(data.message || 'Failed to create role', 'error');
-            if (data.errors) {
-                console.error('Validation errors:', data.errors);
+            showNotification(responseData.message || 'Failed to create role', 'error');
+            if (responseData.errors) {
+                console.error('Validation errors:', responseData.errors);
             }
         }
     } catch (error) {
@@ -506,7 +536,17 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
     e.preventDefault();
     
     const formData = new FormData(this);
-    const roleId = formData.get('role_id');
+    const data = serializeFormData(formData);
+    const roleId = data.role_id;
+    delete data.role_id;
+    
+    // Convert is_active to boolean
+    data.is_active = data.is_active === 'on';
+    
+    // Convert permission ids to integers
+    if (data.permissions) {
+        data.permissions = data.permissions.map(id => parseInt(id));
+    }
     
     try {
         const response = await fetch(`${API_BASE}/${roleId}`, {
@@ -516,19 +556,19 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(Object.fromEntries(formData))
+            body: JSON.stringify(data)
         });
         
-        const data = await response.json();
+        const responseData = await response.json();
         
-        if (data.success) {
+        if (responseData.success) {
             closeEditRoleModal();
             showNotification('Role updated successfully', 'success');
             refreshRoles();
         } else {
-            showNotification(data.message || 'Failed to update role', 'error');
-            if (data.errors) {
-                console.error('Validation errors:', data.errors);
+            showNotification(responseData.message || 'Failed to update role', 'error');
+            if (responseData.errors) {
+                console.error('Validation errors:', responseData.errors);
             }
         }
     } catch (error) {

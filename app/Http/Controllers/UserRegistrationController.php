@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserRegistration;
+use App\Models\User;
+use App\Models\Client;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\UserRegistrationConfirmation;
+use App\Helpers\AuditLogger;
+use Illuminate\Support\Facades\DB;
 
 class UserRegistrationController extends Controller
 {
@@ -17,7 +22,13 @@ class UserRegistrationController extends Controller
      */
     public function create()
     {
-        return view('hris.user-registration.create');
+        $currentUser = auth()->user();
+        $isSuperAdmin = $currentUser->hasRole('super_admin');
+        
+        $clients = $isSuperAdmin ? Client::all() : Client::where('id', $currentUser->current_client_id)->get();
+        $roles = Role::whereIn('name', ['employee', 'line_manager', 'hr_officer', 'lead_hr_admin', 'finance_payroll_officer'])->get();
+        
+        return view('hris.user-registration.create', compact('clients', 'roles', 'isSuperAdmin'));
     }
 
     /**
@@ -25,24 +36,39 @@ class UserRegistrationController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $currentUser = auth()->user();
+        $isSuperAdmin = $currentUser->hasRole('super_admin');
+        
+        $minDate = now()->subYears(120)->format('Y-m-d');
+        
+        $rules = [
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'surname' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:user_registrations',
+            'email' => 'required|string|email|max:255|unique:user_registrations|unique:users',
             'phone_number' => 'required|string|max:20|unique:user_registrations',
-            'date_of_birth' => 'required|date|before:today',
+            'date_of_birth' => ['required', 'date', 'before_or_equal:today', 'after_or_equal:' . $minDate],
             'gender' => 'required|in:male,female,other',
             'department_name' => 'required|string|max:255',
             'section_name' => 'required|string|max:255',
             'designation' => 'required|string|max:255',
             'project_location' => 'required|string|max:255',
+            'role_id' => 'required|exists:roles,id',
             'password' => 'required|string|min:8|confirmed',
-        ], [
+        ];
+
+        $customMessages = [
             'email.unique' => 'User created already exist - This email is already registered.',
             'phone_number.unique' => 'User created already exist - This phone number is already registered.',
-            'date_of_birth.before' => 'Date of birth must be before today.',
-        ]);
+            'date_of_birth.before_or_equal' => 'Date of birth cannot be in the future',
+            'date_of_birth.after_or_equal' => 'Date of birth cannot be more than 120 years ago',
+        ];
+        
+        if ($isSuperAdmin) {
+            $rules['client_id'] = 'required|exists:clients,id';
+        }
+
+        $validator = Validator::make($request->all(), $rules, $customMessages);
 
         if ($validator->fails()) {
             return response()->json([
@@ -53,7 +79,11 @@ class UserRegistrationController extends Controller
         }
 
         try {
-            $user = UserRegistration::create([
+            DB::beginTransaction();
+            
+            $clientId = $isSuperAdmin ? $request->client_id : $currentUser->current_client_id;
+            
+            $userRegistration = UserRegistration::create([
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
                 'surname' => $request->surname,
@@ -67,22 +97,63 @@ class UserRegistrationController extends Controller
                 'project_location' => $request->project_location,
                 'password' => Hash::make($request->password),
                 'email_verified_at' => now(),
+                'client_id' => $clientId,
+                'role_id' => $request->role_id,
             ]);
-
+            
+            // Now create User record too!
+            $user = User::create([
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->surname,
+                'email' => $request->email,
+                'phone' => $request->phone_number,
+                'password' => Hash::make($request->password),
+                'email_verified_at' => now(),
+                'current_client_id' => $clientId,
+            ]);
+            
+            // Assign role to User
+            $role = Role::find($request->role_id);
+            if ($role) {
+                $user->roles()->attach($role->id);
+            }
+            
+            // Attach user to client
+            $user->clients()->syncWithoutDetaching([
+                $clientId => [
+                    'role' => $role->name === 'line_manager' ? 'manager' : ($role->name === 'employee' ? 'employee' : 'admin'),
+                    'is_active' => true,
+                    'joined_at' => now(),
+                ]
+            ]);
+            
             // Send confirmation email
             try {
-                Mail::to($user->email)->send(new UserRegistrationConfirmation($user));
+                Mail::to($userRegistration->email)->send(new UserRegistrationConfirmation($userRegistration));
             } catch (\Exception $e) {
                 \Log::error('Failed to send registration email: ' . $e->getMessage());
             }
+            
+            AuditLogger::log(
+                'created',
+                $user,
+                'Users',
+                "Created user: {$user->first_name} {$user->last_name}",
+                null,
+                $user->toArray()
+            );
+            
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'User registered successfully',
-                'user' => $user
+                'user' => $userRegistration
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('User registration failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,

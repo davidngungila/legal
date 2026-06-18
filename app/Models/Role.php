@@ -14,12 +14,10 @@ class Role extends Model
         'name',
         'display_name',
         'description',
-        'permissions',
         'is_active',
     ];
 
     protected $casts = [
-        'permissions' => 'array',
         'is_active' => 'boolean',
     ];
 
@@ -44,12 +42,6 @@ class Role extends Model
      */
     public function hasPermission($permission): bool
     {
-        // Check in permissions array
-        if ($this->permissions && in_array($permission, $this->permissions)) {
-            return true;
-        }
-
-        // Check in related permissions
         return $this->permissions()->where('name', $permission)->exists();
     }
 }

@@ -22,7 +22,9 @@
             <div class="hidden md:flex items-center space-x-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
                 <i data-feather="briefcase" class="w-4 h-4 text-green-600"></i>
                 <div class="text-sm">
-                    <span class="text-xs text-gray-500">Current:</span>
+                    @if($currentUser && $currentUser->hasRole('super_admin'))
+                        <span class="text-xs text-gray-500">Current:</span>
+                    @endif
                     <span class="font-medium text-green-800">{{ $currentClient->name }}</span>
                 </div>
             </div>
@@ -144,7 +146,7 @@
                             <i data-feather="chevron-right" class="w-4 h-4 text-gray-400"></i>
                         </a>
                         
-                        <a href="{{ route('settings') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                        <a href="{{ route('settings.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
                             <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
                                 <i data-feather="settings" class="w-4 h-4 text-gray-600 group-hover:text-indigo-600 transition-colors"></i>
                             </div>

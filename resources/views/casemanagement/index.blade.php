@@ -254,10 +254,13 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900">Legal Document Templates</h3>
-            <span class="text-sm text-gray-500">Use a template to prefill a new case</span>
+            <button type="button" onclick="openTemplateModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
+                <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
+                Create Template
+            </button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($templates as $template)
+            @foreach($templates as $index => $template)
             <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between mb-3">
                     <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">{{ $template['status'] }}</span>
@@ -274,7 +277,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                     <button type="button" onclick="useTemplate('{{ $template['type'] }}', @js($template['subject']))" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Use Template</button>
-                    <button type="button" onclick="openCreateCaseModal()" class="text-gray-600 hover:text-gray-800 text-sm">New Case</button>
+                    <button type="button" onclick="openTemplateModal({{ $index }})" class="text-gray-600 hover:text-gray-800 text-sm font-medium underline">Edit</button>
                 </div>
             </div>
             @endforeach
@@ -443,6 +446,57 @@
         </div>
     </div>
 </div>
+
+<div id="templateModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div>
+                <h3 id="templateModalTitle" class="text-xl font-semibold text-gray-900">Create Template</h3>
+                <p class="text-sm text-gray-500">Create or edit a legal document template.</p>
+            </div>
+            <button type="button" onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <form id="templateForm" method="POST" class="p-6 space-y-4">
+            @csrf
+            <input type="hidden" id="templateId">
+            <input type="hidden" id="templateMethod" name="_method" value="POST">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Template Name</label>
+                <input type="text" id="templateName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Case Type</label>
+                <select id="templateType" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                    <option value="disciplinary">Disciplinary</option>
+                    <option value="grievance">Grievance</option>
+                    <option value="complaint">Complaint</option>
+                    <option value="legal">Legal</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Default Subject</label>
+                <input type="text" id="templateSubject" name="subject" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="templateStatus" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="closeTemplateModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Save Template
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -531,6 +585,42 @@ function useTemplate(type, subject) {
     document.getElementById('caseType').value = type;
     document.getElementById('caseSubject').value = subject || '';
     document.getElementById('caseDescription').value = `Template started for ${titleCase(type)} case: ${subject || ''}`;
+}
+
+let templatesData = @js($templates);
+
+function openTemplateModal(templateIndex = null) {
+        const modal = document.getElementById('templateModal');
+        const title = document.getElementById('templateModalTitle');
+        const form = document.getElementById('templateForm');
+        const methodInput = document.getElementById('templateMethod');
+        
+        if (templateIndex !== null) {
+            const template = templatesData[templateIndex];
+            title.textContent = 'Edit Template';
+            document.getElementById('templateId').value = templateIndex;
+            document.getElementById('templateName').value = template.name;
+            document.getElementById('templateType').value = template.type;
+            document.getElementById('templateSubject').value = template.subject;
+            document.getElementById('templateStatus').value = template.status;
+            // Set form action to update route
+            form.action = '{{ route('casemanagement.index') }}/templates/' + templateIndex;
+            methodInput.value = 'PUT';
+        } else {
+            title.textContent = 'Create Template';
+            form.reset();
+            document.getElementById('templateId').value = '';
+            // Set form action to store route
+            form.action = '{{ route('casemanagement.templates.store') }}';
+            methodInput.value = 'POST';
+        }
+        
+        modal.classList.remove('hidden');
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+function closeTemplateModal() {
+    document.getElementById('templateModal').classList.add('hidden');
 }
 
 function titleCase(value) {

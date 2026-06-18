@@ -3,22 +3,24 @@
 @section('title', 'User Registration - Orvion HRIS')
 
 @section('content')
-<div class="p-6 max-w-4xl mx-auto">
+<div class="p-6">
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 font-manrope">User Registration</h1>
-        <p class="text-gray-600 mt-2">Create a new user account for the Orvion HRIS system</p>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 font-manrope">User Registration</h1>
+            <p class="text-gray-600 mt-2">Create a new user account for the Orvion HRIS system</p>
+        </div>
     </div>
 
     <!-- Registration Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <form id="userRegistrationForm" class="p-6 space-y-6">
+        <form id="userRegistrationForm" class="p-6 space-y-6" novalidate>
             <!-- Personal Information Section -->
-            <div class="border-b border-gray-200 pb-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Personal Information</h2>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             First Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="first_name" required
@@ -26,14 +28,14 @@
                         <span class="text-red-500 text-sm hidden" id="first_name_error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Middle Name
                         </label>
                         <input type="text" name="middle_name"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Surname <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="surname" required
@@ -44,7 +46,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Email Address <span class="text-red-500">*</span>
                         </label>
                         <input type="email" name="email" required
@@ -52,7 +54,7 @@
                         <span class="text-red-500 text-sm hidden" id="email_error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Phone Number <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" name="phone_number" required
@@ -63,15 +65,16 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Date of Birth <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="date_of_birth" required
+                        <input type="date" name="date_of_birth" id="dateOfBirth" required
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <span class="text-red-500 text-sm hidden" id="date_of_birth_error"></span>
+                        <p class="text-xs text-gray-500 mt-1">Must be between 120 years ago and today</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Gender <span class="text-red-500">*</span>
                         </label>
                         <select name="gender" required
@@ -84,7 +87,7 @@
                         <span class="text-red-500 text-sm hidden" id="gender_error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Project Location <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="project_location" required
@@ -95,11 +98,11 @@
             </div>
 
             <!-- Professional Information Section -->
-            <div class="border-b border-gray-200 pb-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Professional Information</h2>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Professional Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Department Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="department_name" required
@@ -107,7 +110,7 @@
                         <span class="text-red-500 text-sm hidden" id="department_name_error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Section Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="section_name" required
@@ -115,7 +118,7 @@
                         <span class="text-red-500 text-sm hidden" id="section_name_error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Designation/Title <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="designation" required
@@ -123,14 +126,46 @@
                         <span class="text-red-500 text-sm hidden" id="designation_error"></span>
                     </div>
                 </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Role <span class="text-red-500">*</span>
+                        </label>
+                        <select name="role_id" id="roleSelect" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Role</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->id }}">{{ $role->display_name ?? $role->name }}</option>
+                            @endforeach
+                        </select>
+                        <span class="text-red-500 text-sm hidden" id="role_id_error"></span>
+                    </div>
+                    
+                    @if($isSuperAdmin)
+                    <div id="companyContainer">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Company <span class="text-red-500">*</span>
+                        </label>
+                        <select name="client_id" id="clientSelect" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Company</option>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}">{{ $client->name }}</option>
+                            @endforeach
+                        </select>
+                        <span class="text-red-500 text-sm hidden" id="client_id_error"></span>
+                    </div>
+                    @endif
+                </div>
             </div>
 
             <!-- Account Security Section -->
-            <div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Account Security</h2>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Account Security</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Password <span class="text-red-500">*</span>
                         </label>
                         <input type="password" name="password" id="password" required
@@ -139,7 +174,7 @@
                         <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Confirm Password <span class="text-red-500">*</span>
                         </label>
                         <input type="password" name="password_confirmation" required
@@ -157,6 +192,7 @@
                 </button>
                 <button type="submit" id="submitBtn"
                         class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                    <i data-feather="save" class="w-4 h-4 mr-2"></i>
                     <span id="btnText">Register User</span>
                     <div id="btnLoader" class="hidden ml-2">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -180,13 +216,46 @@ class UserRegistrationManager {
         this.submitBtn = document.getElementById('submitBtn');
         this.btnText = document.getElementById('btnText');
         this.btnLoader = document.getElementById('btnLoader');
+        this.roleSelect = document.getElementById('roleSelect');
+        this.companyContainer = document.getElementById('companyContainer');
         
         this.init();
     }
 
     init() {
+        this.setupDateConstraints();
         this.setupEventListeners();
         this.setupFormValidation();
+    }
+
+    setupDateConstraints() {
+        const dateOfBirthInput = document.getElementById('dateOfBirth');
+        if (!dateOfBirthInput) return;
+        
+        // Function to format date as YYYY-MM-DD in local time
+        const formatDateLocal = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        // Set max date to today (local time)
+        const today = new Date();
+        const todayFormatted = formatDateLocal(today);
+        dateOfBirthInput.max = todayFormatted;
+        
+        // Set min date to 120 years ago (local time)
+        const minDate = new Date();
+        minDate.setFullYear(minDate.getFullYear() - 120);
+        const minDateFormatted = formatDateLocal(minDate);
+        dateOfBirthInput.min = minDateFormatted;
+        
+        console.log('Date of Birth Constraints:', {
+            today: todayFormatted,
+            minDate: minDateFormatted,
+            currentValue: dateOfBirthInput.value
+        });
     }
 
     setupEventListeners() {
@@ -201,6 +270,36 @@ class UserRegistrationManager {
             input.addEventListener('blur', () => this.validateField(input));
             input.addEventListener('input', () => this.clearFieldError(input));
         });
+        
+        // Hide company when role is admin? Wait user said when admin selected, company disappears
+        if (this.roleSelect) {
+            this.roleSelect.addEventListener('change', (e) => {
+                this.handleRoleChange(e.target.value);
+            });
+        }
+    }
+    
+    handleRoleChange(roleId) {
+        // Find selected role name
+        const selectedOption = this.roleSelect.options[this.roleSelect.selectedIndex];
+        const roleName = selectedOption.textContent.toLowerCase();
+        
+        if (this.companyContainer) {
+            // If selected role has admin, hide company container
+            if (roleName.includes('admin')) {
+                this.companyContainer.style.display = 'none';
+                const clientSelect = document.getElementById('clientSelect');
+                if (clientSelect) {
+                    clientSelect.required = false;
+                }
+            } else {
+                this.companyContainer.style.display = 'block';
+                const clientSelect = document.getElementById('clientSelect');
+                if (clientSelect) {
+                    clientSelect.required = true;
+                }
+            }
+        }
     }
 
     setupFormValidation() {
@@ -245,8 +344,9 @@ class UserRegistrationManager {
                 }
                 break;
             case 'date_of_birth':
-                if (!this.isValidDateOfBirth(value)) {
-                    this.showFieldError(fieldName, 'Date of birth must be before today');
+                const dobValidation = this.isValidDateOfBirth(value);
+                if (dobValidation !== true) {
+                    this.showFieldError(fieldName, dobValidation);
                     return false;
                 }
                 break;
@@ -277,9 +377,29 @@ class UserRegistrationManager {
     }
 
     isValidDateOfBirth(dateString) {
-        const date = new Date(dateString);
+        if (!dateString) return 'Date of birth is required';
+        
+        // Parse date as local date
+        const [year, month, day] = dateString.split('-').map(Number);
+        const date = new Date(year, month - 1, day); // month is 0-indexed
         const today = new Date();
-        return date < today;
+        today.setHours(0, 0, 0, 0);
+        
+        // Check if date is in future
+        if (date > today) {
+            return 'Date of birth cannot be in the future';
+        }
+        
+        // Check if date is older than 120 years
+        const minDate = new Date();
+        minDate.setFullYear(minDate.getFullYear() - 120);
+        minDate.setHours(0, 0, 0, 0);
+        
+        if (date < minDate) {
+            return 'Date of birth cannot be more than 120 years ago';
+        }
+        
+        return true;
     }
 
     showFieldError(fieldName, message) {
@@ -313,6 +433,13 @@ class UserRegistrationManager {
         let isValid = true;
         
         inputs.forEach(input => {
+            // Skip company select if hidden
+            if (input.name === 'client_id' && 
+                this.companyContainer && 
+                this.companyContainer.style.display === 'none') {
+                return;
+            }
+            
             if (!this.validateField(input)) {
                 isValid = false;
             }
@@ -329,6 +456,12 @@ class UserRegistrationManager {
         try {
             const formData = new FormData(this.form);
             const data = Object.fromEntries(formData.entries());
+            
+            // Remove client_id if company container is hidden
+            if (this.companyContainer && 
+                this.companyContainer.style.display === 'none') {
+                delete data.client_id;
+            }
 
             const response = await fetch('/user-registration', {
                 method: 'POST',

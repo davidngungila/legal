@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             PerformanceManagementDemoSeeder::class,
             DisciplinaryManagementDemoSeeder::class,
             ExitManagementDemoSeeder::class,
+            SampleClientUsersSeeder::class,
         ]);
     }
 }

@@ -306,4 +306,48 @@ class CompensationController extends Controller
 
         return implode(',', $escaped);
     }
+
+    public function salaryStructures()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('compensation.salary-structures', ['currentClient' => $currentClient]);
+    }
+
+    public function meritReview()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('compensation.merit-review', ['currentClient' => $currentClient]);
+    }
+
+    public function allowances()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('compensation.allowances', ['currentClient' => $currentClient]);
+    }
+
+    public function loans()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('compensation.loans', ['currentClient' => $currentClient]);
+    }
 }

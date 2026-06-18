@@ -380,6 +380,44 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.index')->with('success', $message);
     }
 
+    public function timesheets()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('attendance.timesheets', ['currentClient' => $currentClient]);
+    }
+
+    public function shifts()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        $shiftPatterns = \App\Models\ShiftPattern::where('client_id', $clientId)->get();
+        return view('attendance.shifts', ['currentClient' => $currentClient, 'shiftPatterns' => $shiftPatterns]);
+    }
+
+    public function violations()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        $violations = \App\Models\AttendanceViolation::with('employee')
+            ->where('client_id', $clientId)
+            ->latest('violation_date')
+            ->paginate(20);
+        return view('attendance.violations', ['currentClient' => $currentClient, 'violations' => $violations]);
+    }
+
     private function resolveEmployee(int $clientId, array $row): ?Employee
     {
         $employeeIdentifier = trim((string) ($row['employee_id'] ?? ''));

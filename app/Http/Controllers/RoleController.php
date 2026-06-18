@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\AuditLogger;
 
 class RoleController
 {
@@ -55,15 +56,21 @@ class RoleController
                 'display_name' => $request->get('display_name'),
                 'description' => $request->get('description'),
                 'is_active' => $request->get('is_active', 1),
-                'permissions' => json_encode($request->get('permissions', [])),
-                'created_at' => now(),
-                'updated_at' => now()
             ]);
             
             // Assign permissions if provided
             if ($request->has('permissions')) {
                 $role->permissions()->sync($request->get('permissions'));
             }
+            
+            AuditLogger::log(
+                'created',
+                $role,
+                'Roles',
+                "Created role: {$role->display_name}",
+                null,
+                $role->toArray()
+            );
             
             return response()->json([
                 'success' => true,
@@ -82,39 +89,21 @@ class RoleController
     /**
      * Display the specified role.
      */
-    public function show($id)
+    public function show(Role $role)
     {
-        $role = Role::with('permissions')->find($id);
-        
-        if (!$role) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Role not found'
-            ], 404);
-        }
-        
         return response()->json([
             'success' => true,
-            'role' => $role
+            'role' => $role->load('permissions')
         ]);
     }
     
     /**
      * Update the specified role in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Role $role)
     {
-        $role = Role::find($id);
-        
-        if (!$role) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Role not found'
-            ], 404);
-        }
-        
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:roles,name,' . $id,
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
             'display_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'required|boolean',
@@ -130,19 +119,30 @@ class RoleController
         }
         
         try {
+            $oldValues = $role->toArray();
+            $oldPermissions = $role->permissions->pluck('id')->toArray();
+            
             $role->update([
                 'name' => $request->get('name'),
                 'display_name' => $request->get('display_name'),
                 'description' => $request->get('description'),
                 'is_active' => $request->get('is_active'),
-                'permissions' => json_encode($request->get('permissions', [])),
-                'updated_at' => now()
             ]);
             
-            // Update permissions if provided
-            if ($request->has('permissions')) {
-                $role->permissions()->sync($request->get('permissions'));
-            }
+            // Always update permissions (even if empty)
+            $role->permissions()->sync($request->get('permissions', []));
+            
+            $newValues = $role->toArray();
+            $newPermissions = $request->get('permissions', []);
+            
+            AuditLogger::log(
+                'updated',
+                $role,
+                'Roles',
+                "Updated role: {$role->display_name}",
+                array_merge($oldValues, ['permissions' => $oldPermissions]),
+                array_merge($newValues, ['permissions' => $newPermissions])
+            );
             
             return response()->json([
                 'success' => true,
@@ -161,17 +161,8 @@ class RoleController
     /**
      * Remove the specified role from storage.
      */
-    public function destroy($id)
+    public function destroy(Role $role)
     {
-        $role = Role::find($id);
-        
-        if (!$role) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Role not found'
-            ], 404);
-        }
-        
         try {
             // Prevent deletion of roles assigned to users
             if ($role->users()->count() > 0) {
@@ -181,8 +172,20 @@ class RoleController
                 ], 403);
             }
             
+            $oldValues = $role->toArray();
+            $roleName = $role->display_name;
+            
             $role->permissions()->detach();
             $role->delete();
+            
+            AuditLogger::log(
+                'deleted',
+                $role,
+                'Roles',
+                "Deleted role: {$roleName}",
+                $oldValues,
+                null
+            );
             
             return response()->json([
                 'success' => true,

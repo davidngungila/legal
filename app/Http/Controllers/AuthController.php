@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Client;
 use App\Models\Role;
+use App\Helpers\AuditLogger;
 
 class AuthController
 {
@@ -40,6 +41,24 @@ class AuthController
                 'last_login_ip' => $request->ip(),
             ]);
             
+            // Set current client for the user
+            if ($user->current_client_id) {
+                $request->session()->put('current_client_id', $user->current_client_id);
+            } else {
+                $firstClient = $user->clients()->first();
+                if ($firstClient) {
+                    $request->session()->put('current_client_id', $firstClient->id);
+                    $user->update(['current_client_id' => $firstClient->id]);
+                }
+            }
+            
+            AuditLogger::log(
+                'login',
+                null,
+                'Authentication',
+                "User logged in: {$user->email}"
+            );
+            
             return redirect('/dashboard')->with('success', 'Login successful!');
         }
 
@@ -53,6 +72,17 @@ class AuthController
      */
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        
+        if ($user) {
+            AuditLogger::log(
+                'logout',
+                null,
+                'Authentication',
+                "User logged out: {$user->email}"
+            );
+        }
+        
         Auth::logout();
         
         $request->session()->invalidate();
@@ -163,6 +193,15 @@ class AuthController
 
             Auth::login($user);
             $request->session()->regenerate();
+            
+            AuditLogger::log(
+                'registered',
+                $user,
+                'Users',
+                "New user registered: {$user->email}",
+                null,
+                $user->toArray()
+            );
 
             return redirect('/dashboard')->with('success', 'Account created successfully!');
         });

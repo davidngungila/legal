@@ -82,4 +82,37 @@ class PerformanceController extends Controller
         $review->update(['status' => $request->get('status', 'completed')]);
         return back()->with('success', 'Review status updated!');
     }
+
+    public function goals()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('performance.goals', ['currentClient' => $currentClient]);
+    }
+
+    public function pip()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('performance.pip', ['currentClient' => $currentClient]);
+    }
+
+    public function analytics()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = \App\Models\Client::find($clientId);
+        return view('performance.analytics', ['currentClient' => $currentClient]);
+    }
 }

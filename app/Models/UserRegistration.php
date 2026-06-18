@@ -27,6 +27,8 @@ class UserRegistration extends Authenticatable
         'is_active',
         'email_verified_at',
         'password',
+        'client_id',
+        'role_id'
     ];
 
     protected $hidden = [
@@ -58,5 +60,15 @@ class UserRegistration extends Authenticatable
     public function sendEmailVerificationNotification()
     {
         $this->notify(new \App\Notifications\VerifyEmail());
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
 }

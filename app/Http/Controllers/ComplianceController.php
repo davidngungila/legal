@@ -402,4 +402,26 @@ class ComplianceController extends Controller
         
         return $recommendations;
     }
+
+    public function statutoryFilings()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('compliance.statutory-filings', ['currentClient' => $currentClient]);
+    }
+
+    public function deadlines()
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $currentClient = Client::find($clientId);
+        return view('compliance.deadlines', ['currentClient' => $currentClient]);
+    }
 }
