@@ -59,7 +59,11 @@
 
                         <div>
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
-                            <input type="date" name="date_of_birth" id="date_of_birth" value="{{ old('date_of_birth', $employee->date_of_birth ? $employee->date_of_birth->format('Y-m-d') : '') }}" required
+                            <input type="date" name="date_of_birth" id="date_of_birth" 
+                                value="{{ old('date_of_birth', $employee->date_of_birth ? $employee->date_of_birth->format('Y-m-d') : '') }}" 
+                                min="{{ now()->subYears(100)->format('Y-m-d') }}" 
+                                max="{{ now()->subYears(16)->format('Y-m-d') }}" 
+                                required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('date_of_birth') border-red-500 @enderror">
                             @error('date_of_birth') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
@@ -133,9 +137,8 @@
                             <select name="status" id="status" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('status') border-red-500 @enderror">
                                 <option value="active" {{ old('status', $employee->status) == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="probation" {{ old('status', $employee->status) == 'probation' ? 'selected' : '' }}>Probation</option>
+                                <option value="inactive" {{ old('status', $employee->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                 <option value="on_leave" {{ old('status', $employee->status) == 'on_leave' ? 'selected' : '' }}>On Leave</option>
-                                <option value="suspended" {{ old('status', $employee->status) == 'suspended' ? 'selected' : '' }}>Suspended</option>
                                 <option value="terminated" {{ old('status', $employee->status) == 'terminated' ? 'selected' : '' }}>Terminated</option>
                             </select>
                             @error('status') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
@@ -175,10 +178,9 @@
                     <h2 class="text-xl font-bold text-gray-900 mb-6">Profile Photo</h2>
                     <div class="text-center">
                         <div class="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border-2 border-indigo-500">
-                            @if($employee->profile_photo)
-                                <img src="{{ Storage::url($employee->profile_photo) }}" alt="{{ $employee->full_name }}" class="w-full h-full object-cover">
-                            @else
-                                <span class="text-4xl font-bold text-indigo-600">{{ substr($employee->first_name, 0, 1) }}{{ substr($employee->last_name, 0, 1) }}</span>
+                            <img id="profile_photo_preview" src="{{ $employee->profile_photo ? Storage::url($employee->profile_photo) : '' }}" alt="{{ $employee->full_name }}" class="w-full h-full object-cover {{ $employee->profile_photo ? '' : 'hidden' }}">
+                            @if(!$employee->profile_photo)
+                                <span id="profile_photo_placeholder" class="text-4xl font-bold text-indigo-600">{{ substr($employee->first_name, 0, 1) }}{{ substr($employee->last_name, 0, 1) }}</span>
                             @endif
                         </div>
                         <input type="file" name="profile_photo" id="profile_photo" class="hidden" accept="image/*">
@@ -216,4 +218,39 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile photo preview
+    const profilePhotoInput = document.getElementById('profile_photo');
+    const profilePhotoPreview = document.getElementById('profile_photo_preview');
+    const profilePhotoPlaceholder = document.getElementById('profile_photo_placeholder');
+
+    profilePhotoInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePhotoPreview.src = e.target.result;
+                profilePhotoPreview.classList.remove('hidden');
+                if (profilePhotoPlaceholder) {
+                    profilePhotoPlaceholder.classList.add('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // If no file selected, revert to original or placeholder
+            @if($employee->profile_photo)
+                profilePhotoPreview.src = "{{ Storage::url($employee->profile_photo) }}";
+                profilePhotoPreview.classList.remove('hidden');
+            @else
+                profilePhotoPreview.classList.add('hidden');
+                if (profilePhotoPlaceholder) {
+                    profilePhotoPlaceholder.classList.remove('hidden');
+                }
+            @endif
+        }
+    });
+});
+</script>
 @endsection

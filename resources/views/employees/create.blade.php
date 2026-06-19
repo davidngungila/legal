@@ -58,7 +58,11 @@
 
                         <div>
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
-                            <input type="date" name="date_of_birth" id="date_of_birth" value="{{ old('date_of_birth') }}" required
+                            <input type="date" name="date_of_birth" id="date_of_birth" 
+                                value="{{ old('date_of_birth') }}" 
+                                min="{{ now()->subYears(100)->format('Y-m-d') }}" 
+                                max="{{ now()->subYears(16)->format('Y-m-d') }}" 
+                                required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('date_of_birth') border-red-500 @enderror">
                             @error('date_of_birth') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
@@ -136,8 +140,9 @@
                             <select name="status" id="status" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('status') border-red-500 @enderror">
                                 <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="probation" {{ old('status', 'probation') == 'probation' ? 'selected' : '' }}>Probation</option>
+                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                 <option value="on_leave" {{ old('status') == 'on_leave' ? 'selected' : '' }}>On Leave</option>
+                                <option value="terminated" {{ old('status') == 'terminated' ? 'selected' : '' }}>Terminated</option>
                             </select>
                             @error('status') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
@@ -176,7 +181,8 @@
                     <h2 class="text-xl font-bold text-gray-900 mb-6">Profile Photo</h2>
                     <div class="text-center">
                         <div class="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border-2 border-dashed border-indigo-300">
-                            <i data-feather="user" class="w-12 h-12 text-indigo-300"></i>
+                            <img id="profile_photo_preview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                            <i id="profile_photo_placeholder" data-feather="user" class="w-12 h-12 text-indigo-300"></i>
                         </div>
                         <input type="file" name="profile_photo" id="profile_photo" class="hidden" accept="image/*">
                         <label for="profile_photo" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition-colors">
@@ -213,4 +219,29 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile photo preview
+    const profilePhotoInput = document.getElementById('profile_photo');
+    const profilePhotoPreview = document.getElementById('profile_photo_preview');
+    const profilePhotoPlaceholder = document.getElementById('profile_photo_placeholder');
+
+    profilePhotoInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePhotoPreview.src = e.target.result;
+                profilePhotoPreview.classList.remove('hidden');
+                profilePhotoPlaceholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            profilePhotoPreview.classList.add('hidden');
+            profilePhotoPlaceholder.classList.remove('hidden');
+        }
+    });
+});
+</script>
 @endsection

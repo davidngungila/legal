@@ -172,11 +172,11 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
                 Route::get('/payslip', function () {
                     return view('payroll.payslip');
                 })->name('payroll.payslip');
+                Route::get('/reports', [PayrollController::class, 'reports'])->name('payroll.reports');
                 Route::get('/{id}', [PayrollController::class, 'show'])->name('payroll.show');
                 Route::put('/{payroll}', [PayrollController::class, 'update'])->name('payroll.update');
                 Route::put('/{id}/status', [PayrollController::class, 'updateStatus'])->name('payroll.update.status');
                 Route::delete('/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
-                Route::get('/reports', [PayrollController::class, 'reports'])->name('payroll.reports');
             });
 
             Route::prefix('leave')->name('leave.')->group(function () {

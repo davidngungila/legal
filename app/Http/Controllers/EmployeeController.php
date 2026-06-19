@@ -80,6 +80,14 @@ class EmployeeController extends Controller
         $clientId = session('current_client_id');
         
         $validated = $request->validate([
+            'employee_id' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('employees')->where(function ($query) use ($clientId) {
+                    return $query->where('client_id', $clientId);
+                })
+            ],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => [
@@ -90,7 +98,12 @@ class EmployeeController extends Controller
                 })
             ],
             'phone' => 'nullable|string|max:20',
-            'date_of_birth' => 'required|date|before:today',
+            'date_of_birth' => [
+                'required',
+                'date',
+                'before_or_equal:' . now()->subYears(16)->format('Y-m-d'),
+                'after_or_equal:' . now()->subYears(100)->format('Y-m-d')
+            ],
             'gender' => 'required|in:male,female,other',
             'national_id' => [
                 'required',
@@ -108,7 +121,8 @@ class EmployeeController extends Controller
             'department' => 'required|string|max:255',
             'manager_id' => 'nullable|exists:employees,id',
             'hire_date' => 'required|date',
-            'employment_type' => 'required|in:permanent,contract,probation,intern,consultant,part_time,temporary',
+            'employment_type' => 'required|in:full_time,part_time,contract,intern',
+            'status' => 'required|in:active,inactive,terminated,on_leave',
             'salary' => 'required|numeric|min:0',
             'currency' => 'required|in:TZS,USD,EUR,GBP',
             'payment_frequency' => 'required|in:monthly,bi-weekly,weekly',
@@ -130,12 +144,19 @@ class EmployeeController extends Controller
             'skills' => 'nullable|array',
             'languages' => 'nullable|array',
             'notes' => 'nullable|string|max:2000',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Force client_id from session
         $validated['client_id'] = $clientId;
         // Add created by user
         $validated['created_by'] = Auth::id();
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            $path = $request->file('profile_photo')->store('employees/photos', 'public');
+            $validated['profile_photo'] = $path;
+        }
 
         $employee = Employee::create($validated);
 
@@ -188,14 +209,37 @@ class EmployeeController extends Controller
             abort(403, 'Unauthorized access to employee record.');
         }
 
+        $clientId = session('current_client_id');
+        
         $validated = $request->validate([
+            'employee_id' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('employees')->ignore($employee->id)->where(function ($query) use ($clientId) {
+                    return $query->where('client_id', $clientId);
+                })
+            ],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:employees,email,' . $employee->id . ',' . $request->client_id,
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('employees')->ignore($employee->id)->where(function ($query) use ($clientId) {
+                    return $query->where('client_id', $clientId);
+                })
+            ],
             'phone' => 'nullable|string|max:20',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other',
-            'national_id' => 'required|string|max:50|unique:employees,national_id,' . $employee->id . ',' . $request->client_id,
+            'national_id' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('employees')->ignore($employee->id)->where(function ($query) use ($clientId) {
+                    return $query->where('client_id', $clientId);
+                })
+            ],
             'passport_number' => 'nullable|string|max:50',
             'tin_number' => 'nullable|string|max:30',
             'nssf_number' => 'nullable|string|max:30',
@@ -204,7 +248,8 @@ class EmployeeController extends Controller
             'department' => 'required|string|max:255',
             'manager_id' => 'nullable|exists:employees,id',
             'hire_date' => 'required|date',
-            'employment_type' => 'required|in:permanent,contract,probation,intern,consultant,part_time,temporary',
+            'employment_type' => 'required|in:full_time,part_time,contract,intern',
+            'status' => 'required|in:active,inactive,terminated,on_leave',
             'salary' => 'required|numeric|min:0',
             'currency' => 'required|in:TZS,USD,EUR,GBP',
             'payment_frequency' => 'required|in:monthly,bi-weekly,weekly',
@@ -226,10 +271,21 @@ class EmployeeController extends Controller
             'skills' => 'nullable|array',
             'languages' => 'nullable|array',
             'notes' => 'nullable|string|max:2000',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Add updated by user
         $validated['updated_by'] = Auth::id();
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($employee->profile_photo) {
+                Storage::disk('public')->delete($employee->profile_photo);
+            }
+            $path = $request->file('profile_photo')->store('employees/photos', 'public');
+            $validated['profile_photo'] = $path;
+        }
 
         $employee->update($validated);
 
@@ -458,13 +514,10 @@ class EmployeeController extends Controller
     private function getEmploymentTypes(): array
     {
         return [
-            'permanent' => 'Permanent',
-            'contract' => 'Contract',
-            'probation' => 'Probation',
-            'intern' => 'Intern',
-            'consultant' => 'Consultant',
+            'full_time' => 'Full-Time',
             'part_time' => 'Part-Time',
-            'temporary' => 'Temporary',
+            'contract' => 'Contract',
+            'intern' => 'Intern',
         ];
     }
 

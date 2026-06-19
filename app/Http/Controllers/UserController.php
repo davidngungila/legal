@@ -81,13 +81,43 @@ class UserController
      */
     public function store(Request $request)
     {
+        $currentUser = auth()->user();
+        
+        // Define role hierarchy
+        $roleHierarchy = [
+            'super_admin' => ['super_admin', 'lead_hr_admin', 'hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'lead_hr_admin' => ['hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'hr_officer' => ['line_manager', 'employee'],
+            'finance_payroll_officer' => ['employee'],
+            'line_manager' => ['employee'],
+            'employee' => [],
+            'external_auditor' => [],
+        ];
+        
+        // Get current user's roles
+        $userRoleNames = $currentUser->roles->pluck('name')->toArray();
+        
+        // Collect all allowed roles
+        $allowedRoles = [];
+        foreach ($userRoleNames as $roleName) {
+            if (isset($roleHierarchy[$roleName])) {
+                $allowedRoles = array_merge($allowedRoles, $roleHierarchy[$roleName]);
+            }
+        }
+        $allowedRoles = array_unique($allowedRoles);
+        
+        // If no allowed roles (e.g., super admin has none, add all
+        if (empty($allowedRoles)) {
+            $allowedRoles = array_keys($roleHierarchy);
+        }
+        
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|exists:roles,name',
+            'role' => ['required', 'exists:roles,name', Rule::in($allowedRoles)],
             'is_active' => 'required|boolean',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name'
@@ -188,12 +218,42 @@ class UserController
             ], 404);
         }
         
+        $currentUser = auth()->user();
+        
+        // Define role hierarchy
+        $roleHierarchy = [
+            'super_admin' => ['super_admin', 'lead_hr_admin', 'hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'lead_hr_admin' => ['hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'hr_officer' => ['line_manager', 'employee'],
+            'finance_payroll_officer' => ['employee'],
+            'line_manager' => ['employee'],
+            'employee' => [],
+            'external_auditor' => [],
+        ];
+        
+        // Get current user's roles
+        $userRoleNames = $currentUser->roles->pluck('name')->toArray();
+        
+        // Collect all allowed roles
+        $allowedRoles = [];
+        foreach ($userRoleNames as $roleName) {
+            if (isset($roleHierarchy[$roleName])) {
+                $allowedRoles = array_merge($allowedRoles, $roleHierarchy[$roleName]);
+            }
+        }
+        $allowedRoles = array_unique($allowedRoles);
+        
+        // If no allowed roles (e.g., super admin has none, add all
+        if (empty($allowedRoles)) {
+            $allowedRoles = array_keys($roleHierarchy);
+        }
+        
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|' . Rule::unique('users')->ignore($id),
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|exists:roles,name',
+            'role' => ['required', 'exists:roles,name', Rule::in($allowedRoles)],
             'is_active' => 'required|boolean',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name'
@@ -328,7 +388,38 @@ class UserController
      */
     public function getRolesAndPermissions()
     {
-        $roles = Role::with('permissions')->get();
+        $currentUser = auth()->user();
+        
+        // Define role hierarchy
+        $roleHierarchy = [
+            'super_admin' => ['super_admin', 'lead_hr_admin', 'hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'lead_hr_admin' => ['hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'hr_officer' => ['line_manager', 'employee'],
+            'finance_payroll_officer' => ['employee'],
+            'line_manager' => ['employee'],
+            'employee' => [],
+            'external_auditor' => [],
+        ];
+        
+        // Get current user's roles
+        $userRoleNames = $currentUser->roles->pluck('name')->toArray();
+        
+        // Collect all allowed roles
+        $allowedRoles = [];
+        foreach ($userRoleNames as $roleName) {
+            if (isset($roleHierarchy[$roleName])) {
+                $allowedRoles = array_merge($allowedRoles, $roleHierarchy[$roleName]);
+            }
+        }
+        $allowedRoles = array_unique($allowedRoles);
+        
+        // If no allowed roles (e.g., super admin has none, add all
+        if (empty($allowedRoles)) {
+            $allowedRoles = array_keys($roleHierarchy);
+        }
+        
+        // Get roles based on allowed roles
+        $roles = Role::with('permissions')->whereIn('name', $allowedRoles)->get();
         $permissions = Permission::all();
         
         return response()->json([

@@ -1016,6 +1016,78 @@ class PayrollController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        return view('payroll.reports', ['currentClient' => $currentClient]);
+        
+        // Get payroll data for reports
+        $payrolls = Payroll::where('client_id', $clientId)
+            ->with('employee')
+            ->orderBy('payroll_period', 'desc')
+            ->get();
+            
+        // Calculate summary metrics
+        $totalEmployees = $payrolls->pluck('employee_id')->unique()->count();
+        $totalGrossPay = $payrolls->sum('gross_pay');
+        $totalNetPay = $payrolls->sum('net_pay');
+        $totalDeductions = $payrolls->sum('total_deductions');
+        $totalPAYE = $payrolls->sum('tax_deductions');
+        $totalNSSF = $payrolls->sum('social_security');
+        $totalPension = $payrolls->sum('pension');
+        
+        // Get payroll periods
+        $periods = $payrolls->pluck('payroll_period')->unique()->sort()->values();
+        
+        // Get department-wise payroll summary if employee has department
+        $departmentSummary = [];
+        foreach ($payrolls as $payroll) {
+            if ($payroll->employee && $payroll->employee->department) {
+                $dept = $payroll->employee->department;
+                if (!isset($departmentSummary[$dept])) {
+                    $departmentSummary[$dept] = [
+                        'total_employees' => 0,
+                        'total_gross' => 0,
+                        'total_net' => 0,
+                    ];
+                }
+                $departmentSummary[$dept]['total_gross'] += $payroll->gross_pay;
+                $departmentSummary[$dept]['total_net'] += $payroll->net_pay;
+            }
+        }
+        
+        // Count unique employees per department
+        foreach ($payrolls as $payroll) {
+            if ($payroll->employee && $payroll->employee->department) {
+                $dept = $payroll->employee->department;
+                $empId = $payroll->employee_id;
+                $departmentSummary[$dept]['employees'] = $departmentSummary[$dept]['employees'] ?? [];
+                if (!in_array($empId, $departmentSummary[$dept]['employees'])) {
+                    $departmentSummary[$dept]['employees'][] = $empId;
+                    $departmentSummary[$dept]['total_employees']++;
+                }
+            }
+        }
+        
+        // Remove temporary employees array
+        foreach ($departmentSummary as &$dept) {
+            unset($dept['employees']);
+        }
+        
+        // Get latest period summary
+        $latestPeriod = $periods->isNotEmpty() ? $periods->last() : null;
+        $latestPeriodPayrolls = $latestPeriod ? $payrolls->where('payroll_period', $latestPeriod) : collect();
+        
+        return view('payroll.reports', [
+            'currentClient' => $currentClient,
+            'payrolls' => $payrolls,
+            'totalEmployees' => $totalEmployees,
+            'totalGrossPay' => $totalGrossPay,
+            'totalNetPay' => $totalNetPay,
+            'totalDeductions' => $totalDeductions,
+            'totalPAYE' => $totalPAYE,
+            'totalNSSF' => $totalNSSF,
+            'totalPension' => $totalPension,
+            'periods' => $periods,
+            'departmentSummary' => $departmentSummary,
+            'latestPeriod' => $latestPeriod,
+            'latestPeriodPayrolls' => $latestPeriodPayrolls
+        ]);
     }
 }

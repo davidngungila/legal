@@ -21,10 +21,10 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <a href="{{ route('employees.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
                 <i data-feather="user-plus" class="w-4 h-4 inline mr-2"></i>
                 Add Employee
-            </button>
+            </a>
             <a href="{{ route('personnel-id.index') }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors inline-flex items-center">
                 <i data-feather="credit-card" class="w-4 h-4 inline mr-2"></i>
                 Personnel ID
@@ -360,11 +360,11 @@ document.getElementById('employmentTypeFilter')?.addEventListener('change', filt
 document.getElementById('statusFilter')?.addEventListener('change', filterEmployees);
 
 // Export button functionality
-document.querySelector('button:has(.fa-download)')?.addEventListener('click', exportEmployees);
+document.querySelector('button:has([data-feather="download"])')?.addEventListener('click', exportEmployees);
 
 // Add Employee button functionality
-document.querySelector('button:has(.fa-user-plus)')?.addEventListener('click', function() {
-    window.location.href = '/employees/create';
+document.querySelector('button:has([data-feather="user-plus"])')?.addEventListener('click', function() {
+    window.location.href = '{{ route('employees.create') }}';
 });
 
 // Function to show employee details modal

@@ -94,15 +94,8 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
-                        <select name="role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select name="role" id="roleSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Role</option>
-                            <option value="super_admin">Super Admin</option>
-                            <option value="lead_hr_admin">Lead HR Admin</option>
-                            <option value="hr_officer">HR Officer</option>
-                            <option value="finance_payroll_officer">Finance/Payroll Officer</option>
-                            <option value="line_manager">Line Manager</option>
-                            <option value="employee">Employee</option>
-                            <option value="external_auditor">External Auditor</option>
                         </select>
                     </div>
                 </div>
@@ -232,6 +225,33 @@
 // API endpoints
 const API_BASE = '/users/data';
 
+// Load roles from API
+async function loadRoles() {
+    try {
+        const response = await fetch(`${API_BASE}/roles-permissions`);
+        const data = await response.json();
+        
+        if (data.success && data.roles) {
+            const roleSelect = document.getElementById('roleSelect');
+            if (roleSelect) {
+                // Clear existing options except first
+                roleSelect.innerHTML = '<option value="">Select Role</option>';
+                
+                // Add roles from API
+                data.roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role.name;
+                    option.textContent = role.display_name || role.name;
+                    roleSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading roles:', error);
+        showNotification('Failed to load roles', 'error');
+    }
+}
+
 // Form submission
 document.getElementById('userForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -284,6 +304,9 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
+    // Load roles first
+    loadRoles();
+    
     // Initialize feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();
