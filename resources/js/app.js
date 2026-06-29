@@ -327,7 +327,7 @@ function toggleUserDropdown() {
 }
 
 // Notifications
-function showNotification(message, type = 'info', duration = 3000) {
+window.showNotification = function showNotification(message, type = 'info', duration = 3000) {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
@@ -400,13 +400,7 @@ function clearError(input) {
 
 // Date Pickers
 function initializeDatePickers() {
-    const dateInputs = document.querySelectorAll('input[type="date"]');
-    
-    dateInputs.forEach(input => {
-        // Set min date to today
-        const today = new Date().toISOString().split('T')[0];
-        input.min = today;
-    });
+    // Initialize date pickers without restrictions so we'll use backend validation
 }
 
 // Tooltips
@@ -563,7 +557,7 @@ function initializeSearch() {
 }
 
 // Modal functionality
-function showModal(modalId) {
+window.showModal = function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('hidden');
@@ -572,7 +566,7 @@ function showModal(modalId) {
     }
 }
 
-function hideModal(modalId) {
+window.hideModal = function hideModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('hidden');

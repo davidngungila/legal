@@ -61,11 +61,10 @@
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
                             <input type="date" name="date_of_birth" id="date_of_birth" 
                                 value="{{ old('date_of_birth', $employee->date_of_birth ? $employee->date_of_birth->format('Y-m-d') : '') }}" 
-                                min="{{ now()->subYears(100)->format('Y-m-d') }}" 
-                                max="{{ now()->subYears(16)->format('Y-m-d') }}" 
                                 required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('date_of_birth') border-red-500 @enderror">
                             @error('date_of_birth') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                            <p class="mt-1 text-xs text-gray-500">Employee must be at least 18 years old</p>
                         </div>
 
                         <div>
@@ -86,18 +85,18 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-1">Employee ID *</label>
-                            <input type="text" name="employee_id" id="employee_id" value="{{ old('employee_id', $employee->employee_id) }}" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('employee_id') border-red-500 @enderror">
-                            @error('employee_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                            <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                            <input type="text" name="employee_id" id="employee_id" value="{{ old('employee_id', $employee->employee_id) }}" readonly
+                                class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
+                            <p class="mt-1 text-xs text-gray-500">Employee ID cannot be modified</p>
                         </div>
 
                         <div>
                             <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
                             <select name="department" id="department" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('department') border-red-500 @enderror">
-                                @foreach($departments as $code => $name)
-                                    <option value="{{ $code }}" {{ old('department', $employee->department) == $code ? 'selected' : '' }}>{{ $name }}</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->code }}" {{ old('department', $employee->department) == $dept->code ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
                             </select>
                             @error('department') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
@@ -107,9 +106,7 @@
                             <label for="position" class="block text-sm font-medium text-gray-700 mb-1">Position *</label>
                             <select name="position" id="position" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('position') border-red-500 @enderror">
-                                @foreach($positions as $code => $name)
-                                    <option value="{{ $code }}" {{ old('position', $employee->position) == $code ? 'selected' : '' }}>{{ $name }}</option>
-                                @endforeach
+                                <option value="" disabled selected>Select Position</option>
                             </select>
                             @error('position') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
@@ -167,6 +164,17 @@
                                 <option value="GBP" {{ old('currency', $employee->currency) == 'GBP' ? 'selected' : '' }}>GBP - British Pound</option>
                             </select>
                             @error('currency') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        
+                        <div>
+                            <label for="payment_frequency" class="block text-sm font-medium text-gray-700 mb-1">Payment Frequency *</label>
+                            <select name="payment_frequency" id="payment_frequency" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('payment_frequency') border-red-500 @enderror">
+                                <option value="monthly" {{ old('payment_frequency', $employee->payment_frequency) == 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                <option value="bi-weekly" {{ old('payment_frequency', $employee->payment_frequency) == 'bi-weekly' ? 'selected' : '' }}>Bi-Weekly</option>
+                                <option value="weekly" {{ old('payment_frequency', $employee->payment_frequency) == 'weekly' ? 'selected' : '' }}>Weekly</option>
+                            </select>
+                            @error('payment_frequency') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -251,6 +259,44 @@ document.addEventListener('DOMContentLoaded', function() {
             @endif
         }
     });
+
+    // Dependent position dropdown
+    const departmentSelect = document.getElementById('department');
+    const positionSelect = document.getElementById('position');
+    const oldDepartment = "{{ old('department', $employee->department) }}";
+    const oldPosition = "{{ old('position', $employee->position) }}";
+
+    async function loadPositions(departmentCode) {
+        if (!departmentCode) {
+            positionSelect.innerHTML = '<option value="" disabled selected>Select Position</option>';
+            return;
+        }
+        try {
+            const response = await fetch(`{{ url('/employees/positions-by-department') }}/${departmentCode}`);
+            const positions = await response.json();
+            positionSelect.innerHTML = '<option value="" disabled selected>Select Position</option>';
+            positions.forEach(pos => {
+                const option = document.createElement('option');
+                option.value = pos.title;
+                option.textContent = pos.title;
+                if (pos.title === oldPosition) {
+                    option.selected = true;
+                }
+                positionSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading positions:', error);
+        }
+    }
+
+    departmentSelect.addEventListener('change', function() {
+        loadPositions(this.value);
+    });
+
+    // Load positions on page load
+    if (oldDepartment) {
+        loadPositions(oldDepartment);
+    }
 });
 </script>
 @endsection

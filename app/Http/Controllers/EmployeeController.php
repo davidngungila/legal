@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\Contract;
 use App\Models\Client;
+use App\Models\Department;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -65,11 +67,24 @@ class EmployeeController extends Controller
     public function create()
     {
         $currentClient = session('current_client');
-        $departments = $this->getDepartments();
-        $positions = $this->getPositions();
+        if (!$currentClient) {
+            return redirect()->back()->with('error', 'Please select a client first.');
+        }
+        $departments = Department::forCurrentClient()->where('is_active', true)->get();
+        $positions = Position::forCurrentClient()->where('is_active', true)->get();
         $employmentTypes = $this->getEmploymentTypes();
 
         return view('employees.create', compact('currentClient', 'departments', 'positions', 'employmentTypes'));
+    }
+
+    /**
+     * Get positions by department code.
+     */
+    public function getPositionsByDepartment($departmentCode)
+    {
+        $department = Department::forCurrentClient()->where('code', $departmentCode)->firstOrFail();
+        $positions = $department->positions()->where('is_active', true)->get();
+        return response()->json($positions);
     }
 
     /**
@@ -78,16 +93,11 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->back()->with('error', 'Please select a client first.');
+        }
         
         $validated = $request->validate([
-            'employee_id' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('employees')->where(function ($query) use ($clientId) {
-                    return $query->where('client_id', $clientId);
-                })
-            ],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => [
@@ -99,11 +109,11 @@ class EmployeeController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'date_of_birth' => [
-                'required',
-                'date',
-                'before_or_equal:' . now()->subYears(16)->format('Y-m-d'),
-                'after_or_equal:' . now()->subYears(100)->format('Y-m-d')
-            ],
+                    'required',
+                    'date',
+                    'before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
+                    'after_or_equal:' . now()->subYears(100)->format('Y-m-d')
+                ],
             'gender' => 'required|in:male,female,other',
             'national_id' => [
                 'required',
@@ -145,12 +155,18 @@ class EmployeeController extends Controller
             'languages' => 'nullable|array',
             'notes' => 'nullable|string|max:2000',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'date_of_birth.before_or_equal' => 'Employee must be at least 18 years old.',
+            'date_of_birth.after_or_equal' => 'Please enter a valid date of birth (not more than 100 years ago).',
         ]);
 
         // Force client_id from session
         $validated['client_id'] = $clientId;
         // Add created by user
         $validated['created_by'] = Auth::id();
+
+        // Generate employee ID
+        $validated['employee_id'] = $this->generateEmployeeId($clientId);
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -161,7 +177,32 @@ class EmployeeController extends Controller
         $employee = Employee::create($validated);
 
         return redirect()->route('employees.index')
-                     ->with('success', 'Employee "' . $employee->full_name . '" has been added successfully.');
+                     ->with('success', 'Employee "' . $employee->full_name . '" has been added successfully with ID: ' . $employee->employee_id . '.');
+    }
+    
+    /**
+     * Generate unique employee ID for client
+     */
+    private function generateEmployeeId($clientId)
+    {
+        $prefix = 'EMP';
+        $year = now()->year;
+        
+        // Get latest employee ID for this client
+        $latestEmployee = Employee::where('client_id', $clientId)
+            ->where('employee_id', 'like', $prefix . $year . '%')
+            ->orderBy('employee_id', 'desc')
+            ->first();
+            
+        if ($latestEmployee) {
+            // Extract the number part
+            $number = (int) substr($latestEmployee->employee_id, strlen($prefix) + 4);
+            $newNumber = str_pad($number + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+        
+        return $prefix . $year . $newNumber;
     }
 
     /**
@@ -191,8 +232,8 @@ class EmployeeController extends Controller
             abort(403, 'Unauthorized access to employee record.');
         }
 
-        $departments = $this->getDepartments();
-        $positions = $this->getPositions();
+        $departments = Department::forCurrentClient()->where('is_active', true)->get();
+        $positions = Position::forCurrentClient()->where('is_active', true)->get();
         $employmentTypes = $this->getEmploymentTypes();
 
         return view('employees.edit', compact('employee', 'currentClient', 'departments', 'positions', 'employmentTypes'));
@@ -212,14 +253,6 @@ class EmployeeController extends Controller
         $clientId = session('current_client_id');
         
         $validated = $request->validate([
-            'employee_id' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('employees')->ignore($employee->id)->where(function ($query) use ($clientId) {
-                    return $query->where('client_id', $clientId);
-                })
-            ],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => [
@@ -230,7 +263,12 @@ class EmployeeController extends Controller
                 })
             ],
             'phone' => 'nullable|string|max:20',
-            'date_of_birth' => 'required|date|before:today',
+            'date_of_birth' => [
+                    'required',
+                    'date',
+                    'before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
+                    'after_or_equal:' . now()->subYears(100)->format('Y-m-d')
+                ],
             'gender' => 'required|in:male,female,other',
             'national_id' => [
                 'required',
@@ -272,6 +310,9 @@ class EmployeeController extends Controller
             'languages' => 'nullable|array',
             'notes' => 'nullable|string|max:2000',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'date_of_birth.before_or_equal' => 'Employee must be at least 18 years old.',
+            'date_of_birth.after_or_equal' => 'Please enter a valid date of birth (not more than 100 years ago).',
         ]);
 
         // Add updated by user

@@ -3,7 +3,7 @@
 @section('title', 'Edit Job Vacancy - Orvion HRIS')
 
 @section('content')
-<div class="p-6 max-w-4xl mx-auto">
+<div class="p-6">
     <div class="mb-8 flex items-start justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">Edit Job Vacancy</h1>

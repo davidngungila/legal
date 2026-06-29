@@ -31,6 +31,9 @@ class AttendanceController extends Controller
             : now()->startOfDay();
         $monthStart = $date->copy()->startOfMonth();
         $monthEnd = $date->copy()->endOfMonth();
+        
+        // Get employee_id from request
+        $selectedEmployeeId = $request->filled('employee_id') ? (int)$request->get('employee_id') : null;
 
         $currentClient = Client::find($clientId);
         if (!$currentClient) {
@@ -39,10 +42,16 @@ class AttendanceController extends Controller
 
         $this->ensureReferenceData($clientId, $date->year);
 
-        $employees = Employee::where('client_id', $clientId)
+        // Get all employees for filter dropdown
+        $allEmployees = Employee::where('client_id', $clientId)
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
+        
+        $employees = $allEmployees;
+        if ($selectedEmployeeId) {
+            $employees = $allEmployees->where('id', $selectedEmployeeId)->values();
+        }
 
         $this->ensureEmployeeShiftAssignments($clientId, $employees);
 
@@ -86,12 +95,18 @@ class AttendanceController extends Controller
         $calendar = $this->buildCalendar($clientId, $date, $date);
         $violations = AttendanceViolation::with('employee')
             ->where('client_id', $clientId)
+            ->when($selectedEmployeeId, function($q) use ($selectedEmployeeId) {
+                return $q->where('employee_id', $selectedEmployeeId);
+            })
             ->whereBetween('violation_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->latest('violation_date')
             ->limit(12)
             ->get();
         $approvalQueue = Attendance::with(['employee', 'shiftPattern'])
             ->where('client_id', $clientId)
+            ->when($selectedEmployeeId, function($q) use ($selectedEmployeeId) {
+                return $q->where('employee_id', $selectedEmployeeId);
+            })
             ->where('workflow_status', 'pending_approval')
             ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->orderByDesc('attendance_date')
@@ -124,6 +139,8 @@ class AttendanceController extends Controller
             'calendar' => $calendar,
             'monthlySummaries' => $monthlySummaries,
             'violations' => $violations,
+            'selectedEmployeeId' => $selectedEmployeeId,
+            'allEmployees' => $allEmployees,
             'approvalQueue' => $approvalQueue,
             'shiftPatterns' => $shiftPatterns,
             'payrollMetrics' => $payrollMetrics,
@@ -380,7 +397,7 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.index')->with('success', $message);
     }
 
-    public function timesheets()
+    public function timesheets(Request $request)
     {
         $clientId = session('current_client_id');
         if (!$clientId) {
@@ -388,7 +405,83 @@ class AttendanceController extends Controller
         }
 
         $currentClient = \App\Models\Client::find($clientId);
-        return view('attendance.timesheets', ['currentClient' => $currentClient]);
+        
+        // Get selected month/year from request, default to current
+        $monthDate = $request->filled('month') 
+            ? \Carbon\Carbon::parse($request->get('month'))->startOfMonth()
+            : now()->startOfMonth();
+        
+        $monthStart = $monthDate->copy()->startOfMonth();
+        $monthEnd = $monthDate->copy()->endOfMonth();
+        
+        // Get employees with their positions/departments
+        $employees = \App\Models\Employee::where('client_id', $clientId)
+            ->with(['department', 'position'])
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+            
+        // Get departments for filter
+        $departments = \App\Models\Department::where('client_id', $clientId)
+            ->orderBy('name')
+            ->get();
+            
+        // Get monthly summaries
+        $monthlySummaries = \App\Models\AttendanceMonthlySummary::with(['employee.department', 'employee.position'])
+            ->where('client_id', $clientId)
+            ->where('month', $monthStart->month)
+            ->where('year', $monthStart->year)
+            ->get()
+            ->keyBy('employee_id');
+            
+        // Prepare final data - include all employees even if no summary
+        $timesheetData = $employees->map(function ($employee) use ($monthlySummaries, $clientId, $monthStart, $monthEnd) {
+            $summary = $monthlySummaries->get($employee->id);
+            
+            // If no summary exists, calculate basic stats
+            if (!$summary) {
+                $attendance = \App\Models\Attendance::where('client_id', $clientId)
+                    ->where('employee_id', $employee->id)
+                    ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+                    ->get();
+                    
+                $summary = (object)[
+                    'total_days' => $monthStart->daysInMonth,
+                    'worked_days' => $attendance->whereIn('status_code', ['9', '12', 'M'])->count(),
+                    'absent_days' => $attendance->where('status_code', 'A')->count(),
+                    'leave_days' => $attendance->whereIn('status_code', ['AL', 'SLF', 'SLH', 'UL'])->count(),
+                    'overtime_hours' => round((float) $attendance->sum('overtime_hours'), 2),
+                    'night_hours' => round((float) $attendance->sum('night_hours'), 2),
+                ];
+            }
+            
+            return [
+                'employee' => $employee,
+                'summary' => $summary,
+            ];
+        });
+        
+        // Calculate overall stats
+        $totalEmployees = $employees->count();
+        $totalWorkedDays = $timesheetData->sum(fn($d) => $d['summary']->worked_days);
+        $totalAbsentDays = $timesheetData->sum(fn($d) => $d['summary']->absent_days);
+        $totalLeaveDays = $timesheetData->sum(fn($d) => $d['summary']->leave_days);
+        $totalOvertimeHours = $timesheetData->sum(fn($d) => $d['summary']->overtime_hours);
+
+        return view('attendance.timesheets', [
+            'currentClient' => $currentClient,
+            'timesheetData' => $timesheetData,
+            'employees' => $employees,
+            'departments' => $departments,
+            'monthDate' => $monthDate,
+            'stats' => [
+                'total_employees' => $totalEmployees,
+                'total_worked_days' => $totalWorkedDays,
+                'total_absent_days' => $totalAbsentDays,
+                'total_leave_days' => $totalLeaveDays,
+                'total_overtime_hours' => $totalOvertimeHours,
+            ],
+        ]);
     }
 
     public function shifts()
@@ -400,7 +493,23 @@ class AttendanceController extends Controller
 
         $currentClient = \App\Models\Client::find($clientId);
         $shiftPatterns = \App\Models\ShiftPattern::where('client_id', $clientId)->get();
-        return view('attendance.shifts', ['currentClient' => $currentClient, 'shiftPatterns' => $shiftPatterns]);
+        
+        // Calculate stats
+        $totalShifts = $shiftPatterns->count();
+        $activeShifts = $shiftPatterns->where('is_active', true)->count();
+        $nightShifts = $shiftPatterns->where('is_night_shift', true)->count();
+        $inactiveShifts = $totalShifts - $activeShifts;
+
+        return view('attendance.shifts', [
+            'currentClient' => $currentClient,
+            'shiftPatterns' => $shiftPatterns,
+            'stats' => [
+                'total_shifts' => $totalShifts,
+                'active_shifts' => $activeShifts,
+                'night_shifts' => $nightShifts,
+                'inactive_shifts' => $inactiveShifts,
+            ],
+        ]);
     }
 
     public function violations()
@@ -415,7 +524,136 @@ class AttendanceController extends Controller
             ->where('client_id', $clientId)
             ->latest('violation_date')
             ->paginate(20);
-        return view('attendance.violations', ['currentClient' => $currentClient, 'violations' => $violations]);
+        
+        $employees = \App\Models\Employee::where('client_id', $clientId)->orderBy('first_name')->orderBy('last_name')->get();
+        
+        // Calculate stats
+        $totalViolations = $violations->total();
+        $openViolations = \App\Models\AttendanceViolation::where('client_id', $clientId)->where('status', 'open')->count();
+        $lateArrivals = \App\Models\AttendanceViolation::where('client_id', $clientId)->where('violation_type', 'late_arrival')->count();
+        $earlyDepartures = \App\Models\AttendanceViolation::where('client_id', $clientId)->where('violation_type', 'early_departure')->count();
+        $absenteeism = \App\Models\AttendanceViolation::where('client_id', $clientId)->where('violation_type', 'absenteeism')->count();
+
+        return view('attendance.violations', [
+            'currentClient' => $currentClient,
+            'violations' => $violations,
+            'employees' => $employees,
+            'stats' => [
+                'total_violations' => $totalViolations,
+                'open_violations' => $openViolations,
+                'late_arrivals' => $lateArrivals,
+                'early_departures' => $earlyDepartures,
+                'absenteeism' => $absenteeism,
+            ],
+        ]);
+    }
+
+    public function storeShift(\Illuminate\Http\Request $request)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $validated = $request->validate([
+            'shift_name' => 'required|string|max:255',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i',
+            'break_duration' => 'required|integer|min:0',
+            'allowance_rate' => 'nullable|numeric|min:0',
+            'is_night_shift' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $validated['client_id'] = $clientId;
+        $validated['is_night_shift'] = $request->has('is_night_shift');
+        $validated['is_active'] = $request->has('is_active');
+
+        \App\Models\ShiftPattern::create($validated);
+
+        return redirect()->route('attendance.shifts')->with('success', 'Shift created successfully.');
+    }
+
+    public function updateShift(\Illuminate\Http\Request $request, \App\Models\ShiftPattern $shift)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        if ($shift->client_id != $clientId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'shift_name' => 'required|string|max:255',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i',
+            'break_duration' => 'required|integer|min:0',
+            'allowance_rate' => 'nullable|numeric|min:0',
+            'is_night_shift' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $validated['is_night_shift'] = $request->has('is_night_shift');
+        $validated['is_active'] = $request->has('is_active');
+
+        $shift->update($validated);
+
+        return redirect()->route('attendance.shifts')->with('success', 'Shift updated successfully.');
+    }
+
+    public function destroyShift(\App\Models\ShiftPattern $shift)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        if ($shift->client_id != $clientId) {
+            abort(403);
+        }
+
+        $shift->delete();
+
+        return redirect()->route('attendance.shifts')->with('success', 'Shift deleted successfully.');
+    }
+
+    public function updateViolation(\Illuminate\Http\Request $request, \App\Models\AttendanceViolation $violation)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        if ($violation->client_id != $clientId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'details' => 'nullable|string',
+            'status' => 'required|in:open,closed',
+        ]);
+
+        $violation->update($validated);
+
+        return redirect()->route('attendance.violations')->with('success', 'Violation updated successfully.');
+    }
+
+    public function closeViolation(\App\Models\AttendanceViolation $violation)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        if ($violation->client_id != $clientId) {
+            abort(403);
+        }
+
+        $violation->update(['status' => 'closed']);
+
+        return redirect()->route('attendance.violations')->with('success', 'Violation closed successfully.');
     }
 
     private function resolveEmployee(int $clientId, array $row): ?Employee

@@ -158,7 +158,12 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/calendar', [AttendanceController::class, 'calendar'])->name('attendance.calendar');
         Route::get('/timesheets', [AttendanceController::class, 'timesheets'])->name('attendance.timesheets');
         Route::get('/shifts', [AttendanceController::class, 'shifts'])->name('attendance.shifts');
+        Route::post('/shifts', [AttendanceController::class, 'storeShift'])->name('attendance.shifts.store');
+        Route::put('/shifts/{shift}', [AttendanceController::class, 'updateShift'])->name('attendance.shifts.update');
+        Route::delete('/shifts/{shift}', [AttendanceController::class, 'destroyShift'])->name('attendance.shifts.destroy');
         Route::get('/violations', [AttendanceController::class, 'violations'])->name('attendance.violations');
+        Route::put('/violations/{violation}', [AttendanceController::class, 'updateViolation'])->name('attendance.violations.update');
+        Route::put('/violations/{violation}/close', [AttendanceController::class, 'closeViolation'])->name('attendance.violations.close');
     });
 
     // Payroll Routes
@@ -485,6 +490,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // Departments Routes
     Route::prefix('departments')->name('departments.')->group(function () {
         Route::get('/', [\App\Http\Controllers\DepartmentsController::class, 'index'])->name('index');
+        Route::get('/export', [\App\Http\Controllers\DepartmentsController::class, 'export'])->name('export');
         Route::post('/', [\App\Http\Controllers\DepartmentsController::class, 'store'])->name('store');
         Route::put('/{department}', [\App\Http\Controllers\DepartmentsController::class, 'update'])->name('update');
         Route::delete('/{department}', [\App\Http\Controllers\DepartmentsController::class, 'destroy'])->name('destroy');
@@ -493,6 +499,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // Positions Routes
     Route::prefix('positions')->name('positions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\PositionsController::class, 'index'])->name('index');
+        Route::get('/export', [\App\Http\Controllers\PositionsController::class, 'export'])->name('export');
         Route::post('/', [\App\Http\Controllers\PositionsController::class, 'store'])->name('store');
         Route::put('/{position}', [\App\Http\Controllers\PositionsController::class, 'update'])->name('update');
         Route::delete('/{position}', [\App\Http\Controllers\PositionsController::class, 'destroy'])->name('destroy');
@@ -667,6 +674,7 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::get('/employees/search', [EmployeeController::class, 'search'])->name('employees.search');
     Route::get('/employees/statistics', [EmployeeController::class, 'statistics'])->name('employees.statistics');
+    Route::get('/employees/positions-by-department/{departmentCode}', [EmployeeController::class, 'getPositionsByDepartment'])->name('employees.positions-by-department');
 
     // Contract Management Routes
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');

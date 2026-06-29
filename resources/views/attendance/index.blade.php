@@ -129,6 +129,14 @@
                 @endif
             </div>
             <form method="GET" action="{{ route('attendance.index') }}" class="flex space-x-3">
+                <select name="employee_id" class="form-input" id="employee-filter">
+                    <option value="">All Employees</option>
+                    @foreach($allEmployees ?? [] as $emp)
+                        <option value="{{ $emp->id }}" {{ ($selectedEmployeeId ?? null) == $emp->id ? 'selected' : '' }}>
+                            {{ $emp->first_name }} {{ $emp->last_name }}
+                        </option>
+                    @endforeach
+                </select>
                 <input type="date" name="date" class="form-input" value="{{ $date ?? now()->format('Y-m-d') }}">
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
                     <i data-feather="search" class="w-4 h-4 inline mr-2"></i>

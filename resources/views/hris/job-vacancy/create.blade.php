@@ -3,7 +3,7 @@
 @section('title', 'Job Vacancy Application - Orvion HRIS')
 
 @section('content')
-<div class="p-6 max-w-4xl mx-auto">
+<div class="p-6">
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 font-manrope">Job Vacancy Application</h1>

@@ -1034,6 +1034,20 @@
 
         // Initialize page transitions and client selection on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Show Laravel flash messages
+            @if(session('success'))
+                showNotification('{{ session('success') }}', 'success');
+            @endif
+            @if(session('error'))
+                showNotification('{{ session('error') }}', 'error');
+            @endif
+            @if(session('warning'))
+                showNotification('{{ session('warning') }}', 'warning');
+            @endif
+            @if(session('info'))
+                showNotification('{{ session('info') }}', 'info');
+            @endif
+            
             // Initialize Feather Icons
             if (typeof feather !== 'undefined') {
                 feather.replace();

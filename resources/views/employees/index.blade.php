@@ -17,7 +17,7 @@
             @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" onclick="exportEmployees()">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export
             </button>
