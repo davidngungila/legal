@@ -117,6 +117,11 @@ class User extends Authenticatable
             return static::query();
         }
 
-        return static::where('client_id', $clientId);
+        return static::where(function ($q) use ($clientId) {
+            $q->where('current_client_id', $clientId)
+                ->orWhereHas('clients', function ($q2) use ($clientId) {
+                    $q2->where('clients.id', $clientId);
+                });
+        });
     }
 }

@@ -52,6 +52,7 @@ class UserController
             $user->role = $user->roles->first()?->name ?? 'no_role';
         });
 
+        // Optimized stats query - single query with conditional aggregates
         $statsQuery = User::query();
         if ($clientId) {
             $statsQuery->where(function ($q) use ($clientId) {
@@ -61,18 +62,20 @@ class UserController
                     });
             });
         }
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'active' => (clone $statsQuery)->where('is_active', 1)->count(),
+            'inactive' => (clone $statsQuery)->where('is_active', 0)->count(),
+            'admin' => (clone $statsQuery)->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['super_admin', 'lead_hr_admin']);
+            })->count(),
+        ];
         
         return response()->json([
             'success' => true,
             'users' => $users,
-            'stats' => [
-                'total' => (clone $statsQuery)->count(),
-                'active' => (clone $statsQuery)->where('is_active', 1)->count(),
-                'inactive' => (clone $statsQuery)->where('is_active', 0)->count(),
-                'admin' => (clone $statsQuery)->whereHas('roles', function ($q) {
-                    $q->whereIn('name', ['super_admin', 'lead_hr_admin']);
-                })->count(),
-            ]
+            'stats' => $stats
         ]);
     }
     

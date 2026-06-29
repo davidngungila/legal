@@ -43,9 +43,9 @@
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">+3</span>
+                <span class="text-sm text-gray-500 font-medium" id="totalUsersChange">-</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" id="totalUsersCount">48</h3>
+            <h3 class="text-2xl font-bold text-gray-900" id="totalUsersCount">-</h3>
             <p class="text-gray-600 text-sm">Total Users</p>
         </div>
 
@@ -54,9 +54,9 @@
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-sm text-green-600 font-medium">Active</span>
+                <span class="text-sm text-gray-500 font-medium">Active</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" id="activeUsersCount">45</h3>
+            <h3 class="text-2xl font-bold text-gray-900" id="activeUsersCount">-</h3>
             <p class="text-gray-600 text-sm">Active Users</p>
         </div>
 
@@ -65,9 +65,9 @@
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                     <i data-feather="user-x" class="w-6 h-6 text-yellow-600"></i>
                 </div>
-                <span class="text-sm text-red-600 font-medium">-2</span>
+                <span class="text-sm text-gray-500 font-medium">-</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" id="inactiveUsersCount">3</h3>
+            <h3 class="text-2xl font-bold text-gray-900" id="inactiveUsersCount">-</h3>
             <p class="text-gray-600 text-sm">Inactive Users</p>
         </div>
 
@@ -76,9 +76,9 @@
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <i data-feather="shield" class="w-6 h-6 text-purple-600"></i>
                 </div>
-                <span class="text-sm text-purple-600 font-medium">Admin</span>
+                <span class="text-sm text-gray-500 font-medium">Admin</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900" id="adminUsersCount">8</h3>
+            <h3 class="text-2xl font-bold text-gray-900" id="adminUsersCount">-</h3>
             <p class="text-gray-600 text-sm">Admin Users</p>
         </div>
     </div>
@@ -116,13 +116,13 @@
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
             <h2 class="text-lg font-semibold text-gray-900">Users List</h2>
             <div class="flex flex-wrap gap-2">
-                <button onclick="bulkOperation('activate')" class="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <button onclick="bulkOperation('activate')" class="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" id="bulkActivateBtn">
                     Activate Selected
                 </button>
-                <button onclick="bulkOperation('deactivate')" class="px-3 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                <button onclick="bulkOperation('deactivate')" class="px-3 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" id="bulkDeactivateBtn">
                     Deactivate Selected
                 </button>
-                <button onclick="bulkOperation('delete')" class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <button onclick="bulkOperation('delete')" class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" id="bulkDeleteBtn">
                     Delete Selected
                 </button>
             </div>
@@ -143,7 +143,14 @@
                     </tr>
                 </thead>
                 <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
-                    <!-- Users will be loaded dynamically -->
+                    <tr id="loadingRow">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+                                <span>Loading users...</span>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -311,39 +318,79 @@ function updateNotificationBadge() {
         return await response.json();
     }
 
-    async function loadUsers() {
+    async function loadUsers(retryCount = 0) {
+        const maxRetries = 3;
+        
         try {
+            console.log(`Fetching users from: ${API_BASE}?${new URLSearchParams(window.location.search)}`);
             const data = await requestJson(`${API_BASE}?${new URLSearchParams(window.location.search)}`);
             if (!data) return;
             
             console.log('Users API response:', data);
             
             if (data.success) {
-                // Handle simple array structure (like permissions)
                 users = data.users || [];
                 filteredUsers = [...users];
                 
                 console.log('Users loaded:', users);
                 console.log('Filtered users:', filteredUsers);
+                console.log('Users count:', users.length);
                 
                 renderUsers();
                 updateStats(data.stats);
             } else {
+                console.error('API returned success=false:', data);
                 showNotification('Failed to load users', 'error');
+                renderError('Failed to load users');
             }
         } catch (error) {
             console.error('Error loading users:', error);
-            showNotification('Error loading users', 'error');
+            
+            if (retryCount < maxRetries) {
+                console.log(`Retrying loadUsers (${retryCount + 1}/${maxRetries})...`);
+                setTimeout(() => loadUsers(retryCount + 1), 1000 * (retryCount + 1));
+            } else {
+                showNotification('Error loading users. Please refresh the page.', 'error');
+                renderError('Failed to load users after multiple attempts');
+            }
+        }
+    }
+
+    // Render error state
+    function renderError(message) {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                    <div class="flex flex-col items-center justify-center">
+                        <i data-feather="alert-circle" class="w-12 h-12 text-red-500 mb-3"></i>
+                        <span class="text-red-600 font-medium">${message}</span>
+                        <button onclick="loadUsers()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            Retry
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        if (typeof feather !== 'undefined') {
+            feather.replace();
         }
     }
 
     // Render users table
     function renderUsers() {
         const tbody = document.getElementById('usersTableBody');
+        if (!tbody) {
+            console.error('Table body element not found');
+            return;
+        }
+        
         tbody.innerHTML = '';
         
+        console.log('Rendering users, count:', filteredUsers.length);
+        
         if (filteredUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">No users found</td></tr>';
             return;
         }
         
@@ -403,6 +450,8 @@ function updateNotificationBadge() {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+        
+        console.log('Rendered', filteredUsers.length, 'users to table');
     }
 
     // Helper functions
@@ -514,33 +563,49 @@ function updateNotificationBadge() {
         document.getElementById('editPassword').value = '';
     }
 
-    async function loadRolesAndPermissions() {
-        const data = await requestJson(ROLES_PERMISSIONS_URL);
-        if (!data || !data.success) return;
+    async function loadRolesAndPermissions(retryCount = 0) {
+        const maxRetries = 3;
+        
+        try {
+            const data = await requestJson(ROLES_PERMISSIONS_URL);
+            if (!data || !data.success) {
+                if (retryCount < maxRetries) {
+                    setTimeout(() => loadRolesAndPermissions(retryCount + 1), 1000 * (retryCount + 1));
+                }
+                return;
+            }
 
-        availableRoles = data.roles || [];
-        availablePermissions = data.permissions || [];
+            availableRoles = data.roles || [];
+            availablePermissions = data.permissions || [];
 
-        const roleFilter = document.getElementById('roleFilter');
-        const editRole = document.getElementById('editRole');
+            const roleFilter = document.getElementById('roleFilter');
+            const editRole = document.getElementById('editRole');
 
-        const preserveRole = roleFilter.value;
-        roleFilter.innerHTML = '<option value="">All Roles</option>';
-        editRole.innerHTML = '<option value="">Select Role</option>';
+            if (!roleFilter || !editRole) return;
 
-        availableRoles.forEach((role) => {
-            const opt1 = document.createElement('option');
-            opt1.value = role.name;
-            opt1.textContent = role.display_name || role.name;
-            roleFilter.appendChild(opt1);
+            const preserveRole = roleFilter.value;
+            roleFilter.innerHTML = '<option value="">All Roles</option>';
+            editRole.innerHTML = '<option value="">Select Role</option>';
 
-            const opt2 = document.createElement('option');
-            opt2.value = role.name;
-            opt2.textContent = role.display_name || role.name;
-            editRole.appendChild(opt2);
-        });
+            availableRoles.forEach((role) => {
+                const opt1 = document.createElement('option');
+                opt1.value = role.name;
+                opt1.textContent = role.display_name || role.name;
+                roleFilter.appendChild(opt1);
 
-        roleFilter.value = preserveRole;
+                const opt2 = document.createElement('option');
+                opt2.value = role.name;
+                opt2.textContent = role.display_name || role.name;
+                editRole.appendChild(opt2);
+            });
+
+            roleFilter.value = preserveRole;
+        } catch (error) {
+            console.error('Error loading roles and permissions:', error);
+            if (retryCount < maxRetries) {
+                setTimeout(() => loadRolesAndPermissions(retryCount + 1), 1000 * (retryCount + 1));
+            }
+        }
     }
 
     async function editUser(userId) {
@@ -633,18 +698,33 @@ function updateNotificationBadge() {
             return;
         }
 
-        const data = await requestJson(`${API_BASE}/bulk`, {
-            method: 'POST',
-            body: JSON.stringify({ operation, user_ids: selected })
+        // Disable buttons during operation
+        const buttons = ['bulkActivateBtn', 'bulkDeactivateBtn', 'bulkDeleteBtn'];
+        buttons.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = true;
         });
-        if (!data) return;
 
-        if (data.success) {
-            showNotification(data.message || 'Operation completed', 'success');
-            document.getElementById('selectAllUsers').checked = false;
-            await loadUsers();
-        } else {
-            showNotification(data.message || 'Operation failed', 'error');
+        try {
+            const data = await requestJson(`${API_BASE}/bulk`, {
+                method: 'POST',
+                body: JSON.stringify({ operation, user_ids: selected })
+            });
+            if (!data) return;
+
+            if (data.success) {
+                showNotification(data.message || 'Operation completed', 'success');
+                document.getElementById('selectAllUsers').checked = false;
+                await loadUsers();
+            } else {
+                showNotification(data.message || 'Operation failed', 'error');
+            }
+        } finally {
+            // Re-enable buttons
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = false;
+            });
         }
     }
 
@@ -690,8 +770,22 @@ function updateNotificationBadge() {
 
     document.addEventListener('DOMContentLoaded', async function() {
         console.log('=== USERS PAGE INITIALIZED ===');
-        await loadRolesAndPermissions();
-        await loadUsers();
+        console.log('API_BASE:', API_BASE);
+        console.log('ROLES_PERMISSIONS_URL:', ROLES_PERMISSIONS_URL);
+        
+        try {
+            await loadRolesAndPermissions();
+            console.log('Roles and permissions loaded');
+        } catch (error) {
+            console.error('Failed to load roles and permissions:', error);
+        }
+        
+        try {
+            await loadUsers();
+            console.log('Users loaded');
+        } catch (error) {
+            console.error('Failed to load users:', error);
+        }
 
         if (typeof feather !== 'undefined') {
             feather.replace();
