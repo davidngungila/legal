@@ -105,6 +105,7 @@ class UserController
             'role' => ['required', 'exists:roles,name', Rule::in($allowedRoles)],
             'is_active' => 'required|boolean',
             'employee_id' => 'required|string|max:255|unique:users',
+            'client_id' => 'nullable|exists:clients,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name'
         ]);
@@ -117,7 +118,7 @@ class UserController
         }
         
         try {
-            $clientId = $this->getCurrentClientId();
+            $clientId = $request->get('client_id', $this->getCurrentClientId());
             $roleName = $request->get('role');
 
             // Create user
@@ -160,7 +161,7 @@ class UserController
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
-                'user' => $user->load('roles', 'permissions')
+                'user' => $user->load('roles', 'permissions', 'clients')
             ], 201);
             
         } catch (\Exception $e) {
@@ -409,10 +410,14 @@ class UserController
         $roles = Role::with('permissions')->whereIn('name', $allowedRoles)->get();
         $permissions = Permission::all();
         
+        // Get all clients for selection
+        $clients = Client::active()->orderBy('name')->get();
+        
         return response()->json([
             'success' => true,
             'roles' => $roles,
-            'permissions' => $permissions
+            'permissions' => $permissions,
+            'clients' => $clients
         ]);
     }
     

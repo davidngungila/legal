@@ -71,8 +71,10 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Job Title *</label>
-                        <input type="text" name="job_title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Software Developer">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Client *</label>
+                        <select name="client_id" id="client_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Client</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -225,30 +227,44 @@
 // API endpoints
 const API_BASE = '/users/data';
 
-// Load roles from API
-async function loadRoles() {
+// Load roles and clients from API
+async function loadRolesAndClients() {
     try {
         const response = await fetch(`${API_BASE}/roles-permissions`);
         const data = await response.json();
         
-        if (data.success && data.roles) {
-            const roleSelect = document.getElementById('roleSelect');
-            if (roleSelect) {
-                // Clear existing options except first
-                roleSelect.innerHTML = '<option value="">Select Role</option>';
-                
-                // Add roles from API
-                data.roles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role.name;
-                    option.textContent = role.display_name || role.name;
-                    roleSelect.appendChild(option);
-                });
+        if (data.success) {
+            // Load roles
+            if (data.roles) {
+                const roleSelect = document.getElementById('roleSelect');
+                if (roleSelect) {
+                    roleSelect.innerHTML = '<option value="">Select Role</option>';
+                    data.roles.forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role.name;
+                        option.textContent = role.display_name || role.name;
+                        roleSelect.appendChild(option);
+                    });
+                }
+            }
+            
+            // Load clients
+            if (data.clients) {
+                const clientSelect = document.getElementById('client_id');
+                if (clientSelect) {
+                    clientSelect.innerHTML = '<option value="">Select Client</option>';
+                    data.clients.forEach(client => {
+                        const option = document.createElement('option');
+                        option.value = client.id;
+                        option.textContent = client.name;
+                        clientSelect.appendChild(option);
+                    });
+                }
             }
         }
     } catch (error) {
-        console.error('Error loading roles:', error);
-        showNotification('Failed to load roles', 'error');
+        console.error('Error loading roles/clients:', error);
+        showNotification('Failed to load roles/clients', 'error');
     }
 }
 
@@ -318,8 +334,8 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
-        // Load roles and next employee ID first
-        loadRoles();
+        // Load roles, clients, and next employee ID first
+        loadRolesAndClients();
         loadNextEmployeeId();
         
         // Initialize feather icons
