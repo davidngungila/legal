@@ -157,6 +157,10 @@
                                 <p class="mt-1 text-sm text-gray-900 font-medium">{{ $employee->employee_id }}</p>
                             </div>
                             <div>
+                                <label class="block text-sm font-medium text-gray-500">Role</label>
+                                <p class="mt-1 text-sm text-gray-900 font-medium">{{ $employee->role ?? 'N/A' }}</p>
+                            </div>
+                            <div>
                                 <label class="block text-sm font-medium text-gray-500">Department</label>
                                 <p class="mt-1 text-sm text-gray-900 font-medium">{{ $employee->department }}</p>
                             </div>
