@@ -55,10 +55,10 @@
                 <p class="text-slate-500 font-medium">Sign in to your account to continue.</p>
             </div>
             
-            @if(session('error'))
+            @if($errors->any())
                 <div class="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl flex items-center gap-3 animate-fadeIn">
                     <i data-feather="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
-                    <p class="text-sm font-medium">{{ session('error') }}</p>
+                    <p class="text-sm font-medium">{{ $errors->first() }}</p>
                 </div>
             @endif
 

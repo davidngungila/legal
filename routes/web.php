@@ -56,6 +56,15 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Test route to verify authentication
+Route::get('/test-auth', function () {
+    return response()->json([
+        'authenticated' => auth()->check(),
+        'user' => auth()->user() ? auth()->user()->email : 'none',
+        'session_client_id' => session('current_client_id'),
+    ]);
+})->middleware('web');
+
 // Authentication Routes
 Route::middleware(['guest', 'web'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

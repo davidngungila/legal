@@ -99,19 +99,23 @@ class UserController
             $allowedRoles = array_keys($roleHierarchy);
         }
         
+        $userType = $request->get('user_type', 'client');
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', 'exists:roles,name', Rule::in($allowedRoles)],
-            'is_active' => 'required|boolean',
-            'employee_id' => 'required|string|max:255|unique:users',
-            'client_id' => 'nullable|exists:clients,id',
-            'department' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'permissions' => 'nullable|array',
+            'user_type' => 'required|in:client,orvion',
+            'role' => 'required_if:user_type,client|exists:roles,name',
+            'is_active' => 'required_if:user_type,client|boolean',
+            'employee_id' => 'required_if:user_type,client|string|max:255|unique:users',
+            'client_id' => 'required_if:user_type,client|exists:clients,id',
+            'department' => 'required_if:user_type,client|string|max:255',
+            'position' => 'required_if:user_type,client|string|max:255',
+            'employment_type' => 'required_if:user_type,client|string',
+            'permissions' => 'required_if:user_type,orvion|array',
             'permissions.*' => 'exists:permissions,name'
         ]);
         
@@ -123,7 +127,8 @@ class UserController
         }
         
         try {
-            $clientId = $request->get('client_id', $this->getCurrentClientId());
+            $userType = $request->get('user_type', 'client');
+            $clientId = $request->get('client_id');
             $roleName = $request->get('role');
 
             // Create user
@@ -133,29 +138,41 @@ class UserController
                 'email' => $request->get('email'),
                 'phone' => $request->get('phone'),
                 'password' => Hash::make($request->get('password')),
-                'is_active' => $request->get('is_active', 1),
+                'is_active' => $userType === 'client' ? $request->get('is_active', 1) : 1,
                 'email_verified_at' => now(),
-                'current_client_id' => $clientId,
-                'employee_id' => $request->get('employee_id'),
-                'department' => $request->get('department'),
-                'position' => $request->get('position'),
+                'current_client_id' => $userType === 'client' ? ($clientId ?? $this->getCurrentClientId()) : null,
+                'employee_id' => $userType === 'client' ? $request->get('employee_id') : null,
+                'department' => $userType === 'client' ? $request->get('department') : null,
+                'position' => $userType === 'client' ? $request->get('position') : null,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
-            
-            // Assign role
-            $role = Role::where('name', $roleName)->first();
-            if ($role) {
-                $user->roles()->attach($role->id);
-            }
-            
-            // Assign permissions if provided
-            if ($request->has('permissions')) {
-                $permissions = Permission::whereIn('name', $request->get('permissions'))->get();
-                $user->permissions()->sync($permissions->pluck('id'));
+
+            // Handle role assignment for client users
+            if ($userType === 'client' && $roleName) {
+                $role = Role::where('name', $roleName)->first();
+                if ($role) {
+                    $user->roles()->attach($role->id);
+                }
             }
 
-            if ($clientId) {
+            // Assign admin role and permissions for orvion users
+            if ($userType === 'orvion') {
+                // Auto-assign admin role
+                $adminRole = Role::where('name', 'super_admin')->first();
+                if ($adminRole) {
+                    $user->roles()->attach($adminRole->id);
+                }
+
+                // Assign permissions if provided
+                if ($request->has('permissions')) {
+                    $permissions = Permission::whereIn('name', $request->get('permissions'))->get();
+                    $user->permissions()->sync($permissions->pluck('id'));
+                }
+            }
+
+            // Assign client for client users
+            if ($userType === 'client' && $clientId) {
                 $user->clients()->syncWithoutDetaching([
                     $clientId => [
                         'role' => $this->mapClientPivotRole($roleName),
@@ -416,9 +433,9 @@ class UserController
         // Get roles based on allowed roles
         $roles = Role::with('permissions')->whereIn('name', $allowedRoles)->get();
         $permissions = Permission::all();
-        
+
         // Get all clients for selection
-        $clients = Client::active()->orderBy('name')->get();
+        $clients = \App\Models\Client::orderBy('name')->get();
         
         return response()->json([
             'success' => true,

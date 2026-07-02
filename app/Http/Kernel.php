@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'share.user' => \App\Http\Middleware\ShareCurrentUser::class,
         'set.client' => \App\Http\Middleware\SetCurrentClient::class,
         'filter.client' => \App\Http\Middleware\FilterByCurrentClient::class,
+        'permission' => \App\Http\Middleware\CheckPermission::class,
     ];
 }

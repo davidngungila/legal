@@ -31,35 +31,65 @@ class AuthController
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // Add remember token if checkbox is checked
+        $remember = $request->has('remember');
+
+        // Bypass global scopes during authentication to prevent client filter interference
+        $user = User::withoutGlobalScopes()->where('email', $credentials['email'])->first();
+
+        \Log::info('Login attempt details', [
+            'email' => $credentials['email'],
+            'user_found' => $user ? 'yes' : 'no',
+            'password_match' => $user ? (Hash::check($credentials['password'], $user->password) ? 'yes' : 'no') : 'n/a',
+            'is_active' => $user ? ($user->is_active ? 'yes' : 'no') : 'n/a'
+        ]);
+
+        if ($user && Hash::check($credentials['password'], $user->password) && $user->is_active) {
+            // Log successful auth attempt for debugging
+            \Log::info('Authentication passed', ['email' => $user->email]);
+            Auth::login($user, $remember);
             $request->session()->regenerate();
-            
+
+            // Check if user is an Orvion user (super_admin with no clients)
+            $isOrvionUser = $user->hasRole('super_admin') && $user->clients()->count() === 0;
+
+            if (!$isOrvionUser) {
+                // Set current client for client users
+                if ($user->current_client_id) {
+                    $client = Client::find($user->current_client_id);
+                    if ($client) {
+                        $request->session()->put('current_client_id', $user->current_client_id);
+                    } else {
+                        // Client doesn't exist, get first available client
+                        $firstClient = $user->clients()->first();
+                        if ($firstClient) {
+                            $request->session()->put('current_client_id', $firstClient->id);
+                            $user->update(['current_client_id' => $firstClient->id]);
+                        }
+                    }
+                } else {
+                    $firstClient = $user->clients()->first();
+                    if ($firstClient) {
+                        $request->session()->put('current_client_id', $firstClient->id);
+                        $user->update(['current_client_id' => $firstClient->id]);
+                    }
+                }
+            }
+
             // Update last login
-            $user = Auth::user();
             $user->update([
                 'last_login_at' => now(),
                 'last_login_ip' => $request->ip(),
             ]);
-            
-            // Set current client for the user
-            if ($user->current_client_id) {
-                $request->session()->put('current_client_id', $user->current_client_id);
-            } else {
-                $firstClient = $user->clients()->first();
-                if ($firstClient) {
-                    $request->session()->put('current_client_id', $firstClient->id);
-                    $user->update(['current_client_id' => $firstClient->id]);
-                }
-            }
-            
+
             AuditLogger::log(
                 'login',
                 null,
                 'Authentication',
                 "User logged in: {$user->email}"
             );
-            
-            return redirect('/dashboard')->with('success', 'Login successful!');
+
+            return redirect()->route('dashboard')->with('success', 'Login successful!');
         }
 
         return back()->withErrors([

@@ -20,7 +20,7 @@ class AdminUserSeeder extends Seeder
             [
                 'first_name' => 'Admin',
                 'last_name' => 'User',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('admin123'),
                 'is_active' => true,
                 'last_login_at' => now(),
                 'last_login_ip' => '127.0.0.1',
@@ -82,6 +82,6 @@ class AdminUserSeeder extends Seeder
         }
 
         $this->command->info('Admin user and sample users created successfully!');
-        $this->command->info('Login credentials: admin@legalhr.com / password');
+        $this->command->info('Login credentials: admin@legalhr.com / admin123');
     }
 }

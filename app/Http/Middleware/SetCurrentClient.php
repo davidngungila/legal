@@ -66,28 +66,33 @@ class SetCurrentClient
         // If user is authenticated, try to get their first assigned client
         if (auth()->check()) {
             $user = auth()->user();
-            
+
+            // Skip setting default client for Orvion users (super_admin with no clients)
+            if ($user->hasRole('super_admin') && $user->clients()->count() === 0) {
+                return;
+            }
+
             // Use same logic as ClientSwitchController for stability
-            if ($user->hasRole('admin')) {
+            if ($user->hasRole('admin') || $user->hasRole('super_admin')) {
                 $firstClient = Client::orderBy('name')->first();
             } else {
                 $firstClient = $user->clients()->orderBy('name')->first();
             }
-            
+
             if ($firstClient) {
                 Session::put('current_client_id', $firstClient->id);
                 Session::put('current_client_name', $firstClient->name);
                 Session::put('current_client', $firstClient);
-                
+
                 // Persist to database as well
                 $user->update(['current_client_id' => $firstClient->id]);
                 return;
             }
         }
-        
+
         // Fallback to any available client, sorted alphabetically for stability
         $firstClient = Client::orderBy('name')->first();
-        
+
         if ($firstClient) {
             Session::put('current_client_id', $firstClient->id);
             Session::put('current_client_name', $firstClient->name);

@@ -21,6 +21,21 @@
     <!-- User Creation Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <form id="userForm" class="space-y-8">
+            <!-- User Type Selection -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">User Type</h2>
+                <div class="flex space-x-6">
+                    <div class="flex items-center">
+                        <input type="radio" id="user_type_client" name="user_type" value="client" class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" checked>
+                        <label for="user_type_client" class="ml-2 text-sm font-medium text-gray-700">Client's User</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="radio" id="user_type_orvion" name="user_type" value="orvion" class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <label for="user_type_orvion" class="ml-2 text-sm font-medium text-gray-700">Orvion User</label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Basic Information -->
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Basic Information</h2>
@@ -29,7 +44,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                         <input type="text" name="first_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter first name">
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
                         <input type="text" name="last_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter last name">
@@ -61,15 +76,15 @@
                 </div>
             </div>
 
-            <!-- Job Information -->
-            <div>
+            <!-- Job Information (Client User Only) -->
+            <div id="jobInformationSection">
                 <h2 class="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Job Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Employee ID *</label>
                         <input type="text" name="employee_id" id="employee_id" required readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="EMP-001">
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Client *</label>
                         <select name="client_id" id="client_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -77,7 +92,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Department *</label>
@@ -85,7 +100,7 @@
                             <option value="">Select Department</option>
                         </select>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Position *</label>
                         <select name="position" id="positionSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -101,8 +116,7 @@
                             <option value="">Select Role</option>
                         </select>
                     </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Reports To</label>
                         <select name="reports_to" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -110,7 +124,7 @@
                             <!-- Will be populated dynamically -->
                         </select>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Employment Type *</label>
                         <select name="employment_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -122,7 +136,7 @@
                             <option value="part_time">Part Time</option>
                         </select>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Account Status *</label>
                         <select name="is_active" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -131,6 +145,18 @@
                             <option value="0">Inactive</option>
                         </select>
                     </div>
+                </div>
+            </div>
+
+            <!-- Permissions (Orvion User Only) -->
+            <div id="permissionsSection" class="hidden">
+                <h2 class="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Permissions</h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Permissions *</label>
+                    <select name="permissions[]" id="permissionsSelect" multiple class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 h-48">
+                        <!-- Will be populated dynamically -->
+                    </select>
+                    <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple permissions</p>
                 </div>
             </div>
 
@@ -232,7 +258,7 @@ async function loadRolesAndClients() {
     try {
         const response = await fetch(`${API_BASE}/roles-permissions`);
         const data = await response.json();
-        
+
         if (data.success) {
             // Load roles
             if (data.roles) {
@@ -247,7 +273,7 @@ async function loadRolesAndClients() {
                     });
                 }
             }
-            
+
             // Load clients
             if (data.clients) {
                 const clientSelect = document.getElementById('client_id');
@@ -258,6 +284,20 @@ async function loadRolesAndClients() {
                         option.value = client.id;
                         option.textContent = client.name;
                         clientSelect.appendChild(option);
+                    });
+                }
+            }
+
+            // Load permissions
+            if (data.permissions) {
+                const permissionsSelect = document.getElementById('permissionsSelect');
+                if (permissionsSelect) {
+                    permissionsSelect.innerHTML = '';
+                    data.permissions.forEach(permission => {
+                        const option = document.createElement('option');
+                        option.value = permission.name;
+                        option.textContent = permission.display_name || permission.name;
+                        permissionsSelect.appendChild(option);
                     });
                 }
             }
@@ -326,18 +366,41 @@ async function loadPositionsByDepartment(departmentId) {
 // Form submission
 document.getElementById('userForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    
+
     const formData = new FormData(this);
     const formDataObj = Object.fromEntries(formData);
-    
+
     // Handle checkboxes
     formDataObj.tanzanian_citizen = formData.get('tanzanian_citizen') === 'on';
     formDataObj.background_check_required = formData.get('background_check_required') === 'on';
     formDataObj.medical_clearance_required = formData.get('medical_clearance_required') === 'on';
-    
+
+    // Handle permissions array
+    const permissionsSelect = document.getElementById('permissionsSelect');
+    if (permissionsSelect) {
+        const selectedPermissions = Array.from(permissionsSelect.selectedOptions).map(option => option.value);
+        formDataObj.permissions = selectedPermissions;
+    }
+
+    // Handle user_type
+    const userType = formData.get('user_type') || 'client';
+    formDataObj.user_type = userType;
+
+    // Remove fields that are not required for the selected user type
+    if (userType === 'orvion') {
+        delete formDataObj.employee_id;
+        delete formDataObj.client_id;
+        delete formDataObj.department;
+        delete formDataObj.position;
+        delete formDataObj.role;
+        delete formDataObj.reports_to;
+        delete formDataObj.employment_type;
+        delete formDataObj.is_active;
+    }
+
     // Show loading
     showNotification('Creating user...', 'info');
-    
+
     try {
         const response = await fetch(API_BASE, {
             method: 'POST',
@@ -348,19 +411,19 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
             },
             body: JSON.stringify(formDataObj)
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showNotification('User created successfully!', 'success');
-            
+
             // Redirect to users list after successful creation
             setTimeout(() => {
                 window.location.href = '/users';
             }, 1500);
         } else {
             showNotification(data.message || 'Failed to create user', 'error');
-            
+
             // Show specific validation errors
             if (data.errors) {
                 Object.keys(data.errors).forEach(field => {
@@ -392,7 +455,15 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
         // Load roles, clients, and next employee ID first
         loadRolesAndClients();
         loadNextEmployeeId();
-        
+
+        // User type radio button change listener
+        const userTypeRadios = document.querySelectorAll('input[name="user_type"]');
+        userTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function(e) {
+                toggleUserTypeFields(e.target.value);
+            });
+        });
+
         // Client change listener
         document.getElementById('client_id').addEventListener('change', function(e) {
             const clientId = e.target.value;
@@ -403,7 +474,7 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
                 document.getElementById('positionSelect').innerHTML = '<option value="">Select Position</option>';
             }
         });
-        
+
         // Department change listener
         document.getElementById('departmentSelect').addEventListener('change', function(e) {
             const selectedOption = e.target.options[e.target.selectedIndex];
@@ -414,12 +485,49 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
                 document.getElementById('positionSelect').innerHTML = '<option value="">Select Position</option>';
             }
         });
-        
+
         // Initialize feather icons
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
     });
+
+// Toggle fields based on user type
+function toggleUserTypeFields(userType) {
+    const jobInfoSection = document.getElementById('jobInformationSection');
+    const permissionsSection = document.getElementById('permissionsSection');
+
+    if (userType === 'orvion') {
+        // Hide job information, show permissions
+        jobInfoSection.classList.add('hidden');
+        permissionsSection.classList.remove('hidden');
+
+        // Remove required attributes from job info fields
+        const jobInfoFields = jobInfoSection.querySelectorAll('[required]');
+        jobInfoFields.forEach(field => field.removeAttribute('required'));
+    } else {
+        // Show job information, hide permissions
+        jobInfoSection.classList.remove('hidden');
+        permissionsSection.classList.add('hidden');
+
+        // Add required attributes back to job info fields
+        const employeeId = document.getElementById('employee_id');
+        const clientId = document.getElementById('client_id');
+        const departmentSelect = document.getElementById('departmentSelect');
+        const positionSelect = document.getElementById('positionSelect');
+        const roleSelect = document.getElementById('roleSelect');
+        const employmentType = document.querySelector('select[name="employment_type"]');
+        const isActive = document.querySelector('select[name="is_active"]');
+
+        if (employeeId) employeeId.setAttribute('required', 'required');
+        if (clientId) clientId.setAttribute('required', 'required');
+        if (departmentSelect) departmentSelect.setAttribute('required', 'required');
+        if (positionSelect) positionSelect.setAttribute('required', 'required');
+        if (roleSelect) roleSelect.setAttribute('required', 'required');
+        if (employmentType) employmentType.setAttribute('required', 'required');
+        if (isActive) isActive.setAttribute('required', 'required');
+    }
+}
 
 // Notification function
 function showNotification(message, type = 'info') {
