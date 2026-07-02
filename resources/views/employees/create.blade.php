@@ -15,7 +15,7 @@
             </a>
         </div>
     </div>
-    
+
     <!-- Validation Errors -->
     @if ($errors->any())
         <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -29,15 +29,16 @@
 
     <form action="{{ route('employees.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        
+
         <input type="hidden" name="client_id" value="{{ $currentClient->id }}">
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left Column: Personal Information -->
             <div class="lg:col-span-2 space-y-6">
+                <!-- Personal Info Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
@@ -69,8 +70,8 @@
 
                         <div>
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
-                            <input type="date" name="date_of_birth" id="date_of_birth" 
-                                value="{{ old('date_of_birth') }}" 
+                            <input type="date" name="date_of_birth" id="date_of_birth"
+                                value="{{ old('date_of_birth') }}"
                                 required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('date_of_birth') border-red-500 @enderror">
                             @error('date_of_birth') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
@@ -88,12 +89,90 @@
                             </select>
                             @error('gender') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
+
+                        <div>
+                            <label for="national_id" class="block text-sm font-medium text-gray-700 mb-1">National ID *</label>
+                            <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('national_id') border-red-500 @enderror">
+                            @error('national_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="passport_number" class="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
+                            <input type="text" name="passport_number" id="passport_number" value="{{ old('passport_number') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('passport_number') border-red-500 @enderror">
+                            @error('passport_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea name="address" id="address" rows="2"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('address') border-red-500 @enderror">{{ old('address') }}</textarea>
+                            @error('address') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                            <input type="text" name="city" id="city" value="{{ old('city') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('city') border-red-500 @enderror">
+                            @error('city') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="region" class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                            <input type="text" name="region" id="region" value="{{ old('region') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('region') border-red-500 @enderror">
+                            @error('region') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                            <input type="text" name="postal_code" id="postal_code" value="{{ old('postal_code') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('postal_code') border-red-500 @enderror">
+                            @error('postal_code') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                            <input type="text" name="country" id="country" value="{{ old('country', 'Tanzania') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('country') border-red-500 @enderror">
+                            @error('country') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
                     </div>
                 </div>
 
+                <!-- Emergency Contact Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Employment Details</h2>
-                    
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Emergency Contact</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
+                            <input type="text" name="emergency_contact_name" id="emergency_contact_name" value="{{ old('emergency_contact_name') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('emergency_contact_name') border-red-500 @enderror">
+                            @error('emergency_contact_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="emergency_contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+                            <input type="text" name="emergency_contact_phone" id="emergency_contact_phone" value="{{ old('emergency_contact_phone') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('emergency_contact_phone') border-red-500 @enderror">
+                            @error('emergency_contact_phone') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="emergency_contact_relationship" class="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
+                            <input type="text" name="emergency_contact_relationship" id="emergency_contact_relationship" value="{{ old('emergency_contact_relationship') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('emergency_contact_relationship') border-red-500 @enderror">
+                            @error('emergency_contact_relationship') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employment Info Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Employment Information</h2>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
@@ -120,7 +199,7 @@
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('department') border-red-500 @enderror">
                                 <option value="" disabled selected>Select Department</option>
                                 @foreach($departments as $dept)
-                                    <option value="{{ $dept->code }}" {{ old('department') == $dept->code ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                    <option value="{{ $dept->name }}" data-department-id="{{ $dept->id }}" {{ old('department') == $dept->name ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
                             </select>
                             @error('department') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
@@ -136,6 +215,25 @@
                         </div>
 
                         <div>
+                            <label for="manager_id" class="block text-sm font-medium text-gray-700 mb-1">Reports To (Manager)</label>
+                            <select name="manager_id" id="manager_id"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('manager_id') border-red-500 @enderror">
+                                <option value="" disabled selected>Select Manager</option>
+                                @foreach(\App\Models\Employee::forCurrentClient()->where('id', '!=', 0)->get() as $manager)
+                                    <option value="{{ $manager->id }}" {{ old('manager_id') == $manager->id ? 'selected' : '' }}>{{ $manager->first_name }} {{ $manager->last_name }} - {{ $manager->position }}</option>
+                                @endforeach
+                            </select>
+                            @error('manager_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="hire_date" class="block text-sm font-medium text-gray-700 mb-1">Hire Date *</label>
+                            <input type="date" name="hire_date" id="hire_date" value="{{ old('hire_date') }}" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('hire_date') border-red-500 @enderror">
+                            @error('hire_date') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
                             <label for="employment_type" class="block text-sm font-medium text-gray-700 mb-1">Employment Type *</label>
                             <select name="employment_type" id="employment_type" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('employment_type') border-red-500 @enderror">
@@ -145,13 +243,6 @@
                                 @endforeach
                             </select>
                             @error('employment_type') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="hire_date" class="block text-sm font-medium text-gray-700 mb-1">Hire Date *</label>
-                            <input type="date" name="hire_date" id="hire_date" value="{{ old('hire_date') }}" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('hire_date') border-red-500 @enderror">
-                            @error('hire_date') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -165,12 +256,64 @@
                             </select>
                             @error('status') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
+
+                        <div>
+                            <label for="work_schedule" class="block text-sm font-medium text-gray-700 mb-1">Work Schedule</label>
+                            <input type="text" name="work_schedule" id="work_schedule" value="{{ old('work_schedule', 'Monday - Friday, 9:00 AM - 5:00 PM') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('work_schedule') border-red-500 @enderror">
+                            @error('work_schedule') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="education_level" class="block text-sm font-medium text-gray-700 mb-1">Education Level</label>
+                            <select name="education_level" id="education_level"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('education_level') border-red-500 @enderror">
+                                <option value="" disabled selected>Select Education Level</option>
+                                <option value="High School" {{ old('education_level') == 'High School' ? 'selected' : '' }}>High School</option>
+                                <option value="Diploma" {{ old('education_level') == 'Diploma' ? 'selected' : '' }}>Diploma</option>
+                                <option value="Bachelor's Degree" {{ old('education_level') == "Bachelor's Degree" ? 'selected' : '' }}>Bachelor's Degree</option>
+                                <option value="Master's Degree" {{ old('education_level') == "Master's Degree" ? 'selected' : '' }}>Master's Degree</option>
+                                <option value="Doctorate" {{ old('education_level') == 'Doctorate' ? 'selected' : '' }}>Doctorate</option>
+                            </select>
+                            @error('education_level') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <label for="skills" class="block text-sm font-medium text-gray-700 mb-1">Skills (comma separated)</label>
+                            <input type="text" name="skills" id="skills" value="{{ old('skills') }}" placeholder="e.g. Communication, Teamwork, Problem Solving"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('skills') border-red-500 @enderror">
+                            @error('skills') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="languages" class="block text-sm font-medium text-gray-700 mb-1">Languages (comma separated)</label>
+                            <input type="text" name="languages" id="languages" value="{{ old('languages') }}" placeholder="e.g. English, Swahili, French"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('languages') border-red-500 @enderror">
+                            @error('languages') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="professional_qualifications" class="block text-sm font-medium text-gray-700 mb-1">Professional Qualifications (comma separated)</label>
+                            <input type="text" name="professional_qualifications" id="professional_qualifications" value="{{ old('professional_qualifications') }}" placeholder="e.g. CPA, ACCA, CFA"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('professional_qualifications') border-red-500 @enderror">
+                            @error('professional_qualifications') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="certifications" class="block text-sm font-medium text-gray-700 mb-1">Certifications (comma separated)</label>
+                            <input type="text" name="certifications" id="certifications" value="{{ old('certifications') }}" placeholder="e.g. PMP, ITIL, Six Sigma"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('certifications') border-red-500 @enderror">
+                            @error('certifications') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
                     </div>
                 </div>
 
+                <!-- Financial & Compliance Info Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Financial Information</h2>
-                    
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Financial & Compliance Information</h2>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="salary" class="block text-sm font-medium text-gray-700 mb-1">Base Salary *</label>
@@ -190,7 +333,7 @@
                             </select>
                             @error('currency') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
-                        
+
                         <div>
                             <label for="payment_frequency" class="block text-sm font-medium text-gray-700 mb-1">Payment Frequency *</label>
                             <select name="payment_frequency" id="payment_frequency" required
@@ -201,11 +344,53 @@
                             </select>
                             @error('payment_frequency') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
+
+                        <div>
+                            <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                            <input type="text" name="bank_name" id="bank_name" value="{{ old('bank_name') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('bank_name') border-red-500 @enderror">
+                            @error('bank_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="bank_branch" class="block text-sm font-medium text-gray-700 mb-1">Bank Branch</label>
+                            <input type="text" name="bank_branch" id="bank_branch" value="{{ old('bank_branch') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('bank_branch') border-red-500 @enderror">
+                            @error('bank_branch') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="bank_account" class="block text-sm font-medium text-gray-700 mb-1">Bank Account Number</label>
+                            <input type="text" name="bank_account" id="bank_account" value="{{ old('bank_account') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('bank_account') border-red-500 @enderror">
+                            @error('bank_account') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="tin_number" class="block text-sm font-medium text-gray-700 mb-1">TIN Number</label>
+                            <input type="text" name="tin_number" id="tin_number" value="{{ old('tin_number') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('tin_number') border-red-500 @enderror">
+                            @error('tin_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="nssf_number" class="block text-sm font-medium text-gray-700 mb-1">NSSF Number</label>
+                            <input type="text" name="nssf_number" id="nssf_number" value="{{ old('nssf_number') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('nssf_number') border-red-500 @enderror">
+                            @error('nssf_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="nhif_number" class="block text-sm font-medium text-gray-700 mb-1">NHIF Number</label>
+                            <input type="text" name="nhif_number" id="nhif_number" value="{{ old('nhif_number') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('nhif_number') border-red-500 @enderror">
+                            @error('nhif_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Profile Photo & Additional Info -->
+            <!-- Right Column: Profile Photo -->
             <div class="space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">Profile Photo</h2>
@@ -219,24 +404,6 @@
                             Upload Photo
                         </label>
                         <p class="mt-2 text-xs text-gray-500">PNG, JPG up to 2MB</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Legal IDs</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="national_id" class="block text-sm font-medium text-gray-700 mb-1">National ID *</label>
-                            <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('national_id') border-red-500 @enderror">
-                            @error('national_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label for="tin_number" class="block text-sm font-medium text-gray-700 mb-1">TIN Number</label>
-                            <input type="text" name="tin_number" id="tin_number" value="{{ old('tin_number') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('tin_number') border-red-500 @enderror">
-                            @error('tin_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-                        </div>
                     </div>
                 </div>
 
@@ -279,13 +446,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const oldDepartment = "{{ old('department') }}";
     const oldPosition = "{{ old('position') }}";
 
-    async function loadPositions(departmentCode) {
-        if (!departmentCode) {
+    async function loadPositions(departmentName) {
+        if (!departmentName) {
             positionSelect.innerHTML = '<option value="" disabled selected>Select Position</option>';
             return;
         }
+        // Get department id from selected option
+        const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+        const departmentId = selectedOption.getAttribute('data-department-id');
+        if (!departmentId) {
+            positionSelect.innerHTML = '<option value="" disabled selected>Select Position</option>';
+            return;
+        }
+
         try {
-            const response = await fetch(`{{ url('/employees/positions-by-department') }}/${departmentCode}`);
+            const response = await fetch(`{{ url('/employees/positions-by-department') }}/${departmentId}`);
             const positions = await response.json();
             positionSelect.innerHTML = '<option value="" disabled selected>Select Position</option>';
             positions.forEach(pos => {

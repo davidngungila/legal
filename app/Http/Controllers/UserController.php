@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Client;
+use App\Models\Department;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -106,6 +109,8 @@ class UserController
             'is_active' => 'required|boolean',
             'employee_id' => 'required|string|max:255|unique:users',
             'client_id' => 'nullable|exists:clients,id',
+            'department' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name'
         ]);
@@ -132,6 +137,8 @@ class UserController
                 'email_verified_at' => now(),
                 'current_client_id' => $clientId,
                 'employee_id' => $request->get('employee_id'),
+                'department' => $request->get('department'),
+                'position' => $request->get('position'),
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
@@ -608,6 +615,32 @@ class UserController
         return response()->json([
             'success' => true,
             'employee_id' => $nextId
+        ]);
+    }
+
+    public function getDepartmentsByClient($clientId)
+    {
+        $departments = Department::where('client_id', $clientId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'departments' => $departments
+        ]);
+    }
+
+    public function getPositionsByDepartment($departmentId)
+    {
+        $positions = Position::where('department_id', $departmentId)
+            ->where('is_active', true)
+            ->orderBy('title')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'positions' => $positions
         ]);
     }
 }

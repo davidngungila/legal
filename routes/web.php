@@ -115,6 +115,8 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             Route::post('/', [UserController::class, 'store'])->name('users.data.store');
             Route::get('/roles-permissions', [UserController::class, 'getRolesAndPermissions'])->name('users.data.roles-permissions');
             Route::get('/next-employee-id', [UserController::class, 'getNextEmployeeId'])->name('users.data.next-employee-id');
+            Route::get('/departments/{clientId}', [UserController::class, 'getDepartmentsByClient'])->name('users.data.departments-by-client');
+            Route::get('/positions/{departmentId}', [UserController::class, 'getPositionsByDepartment'])->name('users.data.positions-by-department');
             Route::post('/bulk', [UserController::class, 'bulkOperations'])->name('users.data.bulk');
             Route::get('/{id}', [UserController::class, 'show'])->name('users.data.show');
             Route::put('/{id}', [UserController::class, 'update'])->name('users.data.update');
@@ -680,7 +682,7 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::get('/employees/search', [EmployeeController::class, 'search'])->name('employees.search');
     Route::get('/employees/statistics', [EmployeeController::class, 'statistics'])->name('employees.statistics');
-    Route::get('/employees/positions-by-department/{departmentCode}', [EmployeeController::class, 'getPositionsByDepartment'])->name('employees.positions-by-department');
+    Route::get('/employees/positions-by-department/{departmentId}', [EmployeeController::class, 'getPositionsByDepartment'])->name('employees.positions-by-department');
 
     // Contract Management Routes
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');

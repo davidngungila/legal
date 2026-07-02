@@ -81,26 +81,26 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Department *</label>
-                        <select name="department" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select name="department" id="departmentSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Department</option>
-                            <option value="Human Resources">Human Resources</option>
-                            <option value="Finance & Accounting">Finance & Accounting</option>
-                            <option value="Information Technology">Information Technology</option>
-                            <option value="Operations">Operations</option>
-                            <option value="Sales & Marketing">Sales & Marketing</option>
-                            <option value="Administration">Administration</option>
-                            <option value="Legal">Legal</option>
-                            <option value="Compliance">Compliance</option>
                         </select>
                     </div>
                     
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Position *</label>
+                        <select name="position" id="positionSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Position</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                         <select name="role" id="roleSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Role</option>
                         </select>
                     </div>
-                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -268,6 +268,61 @@ async function loadRolesAndClients() {
     }
 }
 
+// Load departments by client
+async function loadDepartmentsByClient(clientId) {
+    try {
+        const response = await fetch(`${API_BASE}/departments/${clientId}`);
+        const data = await response.json();
+        
+        const departmentSelect = document.getElementById('departmentSelect');
+        const positionSelect = document.getElementById('positionSelect');
+        
+        if (departmentSelect) {
+            departmentSelect.innerHTML = '<option value="">Select Department</option>';
+            positionSelect.innerHTML = '<option value="">Select Position</option>';
+            
+            if (data.success && data.departments) {
+                data.departments.forEach(department => {
+                    const option = document.createElement('option');
+                    option.value = department.name;
+                    option.dataset.departmentId = department.id;
+                    option.textContent = department.name;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+        showNotification('Failed to load departments', 'error');
+    }
+}
+
+// Load positions by department
+async function loadPositionsByDepartment(departmentId) {
+    try {
+        const response = await fetch(`${API_BASE}/positions/${departmentId}`);
+        const data = await response.json();
+        
+        const positionSelect = document.getElementById('positionSelect');
+        
+        if (positionSelect) {
+            positionSelect.innerHTML = '<option value="">Select Position</option>';
+            
+            if (data.success && data.positions) {
+                data.positions.forEach(position => {
+                    const option = document.createElement('option');
+                    option.value = position.title;
+                    option.textContent = position.title;
+                    positionSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading positions:', error);
+        showNotification('Failed to load positions', 'error');
+    }
+}
+
 // Form submission
 document.getElementById('userForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -337,6 +392,28 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
         // Load roles, clients, and next employee ID first
         loadRolesAndClients();
         loadNextEmployeeId();
+        
+        // Client change listener
+        document.getElementById('client_id').addEventListener('change', function(e) {
+            const clientId = e.target.value;
+            if (clientId) {
+                loadDepartmentsByClient(clientId);
+            } else {
+                document.getElementById('departmentSelect').innerHTML = '<option value="">Select Department</option>';
+                document.getElementById('positionSelect').innerHTML = '<option value="">Select Position</option>';
+            }
+        });
+        
+        // Department change listener
+        document.getElementById('departmentSelect').addEventListener('change', function(e) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const departmentId = selectedOption.dataset.departmentId;
+            if (departmentId) {
+                loadPositionsByDepartment(departmentId);
+            } else {
+                document.getElementById('positionSelect').innerHTML = '<option value="">Select Position</option>';
+            }
+        });
         
         // Initialize feather icons
         if (typeof feather !== 'undefined') {

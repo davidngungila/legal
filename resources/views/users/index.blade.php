@@ -857,45 +857,7 @@ function updateNotificationBadge() {
         }
     }
 
-    document.getElementById('editUserForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
 
-        const userId = document.getElementById('editUserId').value;
-        const permissions = Array.from(document.querySelectorAll('#editPermissions input[type="checkbox"]:checked')).map(cb => cb.value);
-
-        const payload = {
-            first_name: document.getElementById('editFirstName').value.trim(),
-            last_name: document.getElementById('editLastName').value.trim(),
-            email: document.getElementById('editEmail').value.trim(),
-            phone: document.getElementById('editPhone').value.trim(),
-            role: document.getElementById('editRole').value,
-            is_active: parseInt(document.getElementById('editIsActive').value, 10),
-            permissions
-        };
-
-        const password = document.getElementById('editPassword').value;
-        if (password) {
-            payload.password = password;
-        }
-
-        const data = await requestJson(`${API_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
-        if (!data) return;
-
-        if (data.success) {
-            showNotification(data.message || 'User updated successfully', 'success');
-            closeEditUserModal();
-            await loadUsers();
-        } else {
-            if (data.errors) {
-                Object.keys(data.errors).forEach((field) => {
-                    const msg = Array.isArray(data.errors[field]) ? data.errors[field].join(', ') : data.errors[field];
-                    showNotification(`${field}: ${msg}`, 'error');
-                });
-            } else {
-                showNotification(data.message || 'Failed to update user', 'error');
-            }
-        }
-    });
 
     document.addEventListener('DOMContentLoaded', async function() {
         console.log('=== USERS PAGE INITIALIZED ===');
@@ -920,9 +882,61 @@ function updateNotificationBadge() {
             feather.replace();
         }
 
-        document.getElementById('userSearch').addEventListener('input', filterUsers);
-        document.getElementById('roleFilter').addEventListener('change', filterUsers);
-        document.getElementById('statusFilter').addEventListener('change', filterUsers);
-        document.getElementById('selectAllUsers').addEventListener('change', toggleSelectAll);
+        // Add event listeners only if elements exist
+        const userSearch = document.getElementById('userSearch');
+        if (userSearch) userSearch.addEventListener('input', filterUsers);
+        
+        const roleFilter = document.getElementById('roleFilter');
+        if (roleFilter) roleFilter.addEventListener('change', filterUsers);
+        
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) statusFilter.addEventListener('change', filterUsers);
+        
+        const selectAllUsers = document.getElementById('selectAllUsers');
+        if (selectAllUsers) selectAllUsers.addEventListener('change', toggleSelectAll);
+        
+        // Edit user form listener
+        const editUserForm = document.getElementById('editUserForm');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const userId = document.getElementById('editUserId').value;
+                const permissions = Array.from(document.querySelectorAll('#editPermissions input[type="checkbox"]:checked')).map(cb => cb.value);
+
+                const payload = {
+                    first_name: document.getElementById('editFirstName').value.trim(),
+                    last_name: document.getElementById('editLastName').value.trim(),
+                    email: document.getElementById('editEmail').value.trim(),
+                    phone: document.getElementById('editPhone').value.trim(),
+                    role: document.getElementById('editRole').value,
+                    is_active: parseInt(document.getElementById('editIsActive').value, 10),
+                    permissions
+                };
+
+                const password = document.getElementById('editPassword').value;
+                if (password) {
+                    payload.password = password;
+                }
+
+                const data = await requestJson(`${API_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
+                if (!data) return;
+
+                if (data.success) {
+                    showNotification(data.message || 'User updated successfully', 'success');
+                    closeEditUserModal();
+                    await loadUsers();
+                } else {
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach((field) => {
+                            const msg = Array.isArray(data.errors[field]) ? data.errors[field].join(', ') : data.errors[field];
+                            showNotification(`${field}: ${msg}`, 'error');
+                        });
+                    } else {
+                        showNotification(data.message || 'Failed to update user', 'error');
+                    }
+                }
+            });
+        }
     });
 </script>

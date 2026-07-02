@@ -73,7 +73,40 @@ class EmployeeController extends Controller
         $departments = Department::forCurrentClient()->where('is_active', true)->get();
         $positions = Position::forCurrentClient()->where('is_active', true)->get();
         $employmentTypes = $this->getEmploymentTypes();
-        $roles = \App\Models\Role::where('is_active', true)->get();
+        
+        // Define role hierarchy (same as UserController)
+        $roleHierarchy = [
+            'super_admin' => ['super_admin', 'lead_hr_admin', 'hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'lead_hr_admin' => ['hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'hr_officer' => ['line_manager', 'employee'],
+            'finance_payroll_officer' => ['employee'],
+            'line_manager' => ['employee'],
+            'employee' => [],
+            'external_auditor' => [],
+        ];
+        
+        // Get current user's roles
+        $currentUser = auth()->user();
+        $userRoleNames = $currentUser->roles->pluck('name')->toArray();
+        
+        // Collect all allowed roles
+        $allowedRoles = [];
+        foreach ($userRoleNames as $roleName) {
+            if (isset($roleHierarchy[$roleName])) {
+                $allowedRoles = array_merge($allowedRoles, $roleHierarchy[$roleName]);
+            }
+        }
+        $allowedRoles = array_unique($allowedRoles);
+        
+        // If no allowed roles, add all
+        if (empty($allowedRoles)) {
+            $allowedRoles = array_keys($roleHierarchy);
+        }
+        
+        // Exclude super_admin for employees as requested
+        $allowedRoles = array_diff($allowedRoles, ['super_admin']);
+        
+        $roles = \App\Models\Role::where('is_active', true)->whereIn('name', $allowedRoles)->get();
 
         return view('employees.create', compact('currentClient', 'departments', 'positions', 'employmentTypes', 'roles'));
     }
@@ -81,9 +114,9 @@ class EmployeeController extends Controller
     /**
      * Get positions by department code.
      */
-    public function getPositionsByDepartment($departmentCode)
+    public function getPositionsByDepartment($departmentId)
     {
-        $department = Department::forCurrentClient()->where('code', $departmentCode)->firstOrFail();
+        $department = Department::forCurrentClient()->where('id', $departmentId)->firstOrFail();
         $positions = $department->positions()->where('is_active', true)->get();
         return response()->json($positions);
     }
@@ -170,6 +203,17 @@ class EmployeeController extends Controller
         // Generate employee ID
         $validated['employee_id'] = $this->generateEmployeeId($clientId);
 
+        // Process comma-separated fields
+        $arrayFields = ['skills', 'languages', 'professional_qualifications', 'certifications'];
+        foreach ($arrayFields as $field) {
+            if ($request->filled($field)) {
+                $values = array_map('trim', explode(',', $request->input($field)));
+                $validated[$field] = array_filter($values);
+            } else {
+                $validated[$field] = null;
+            }
+        }
+
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
             $path = $request->file('profile_photo')->store('employees/photos', 'public');
@@ -249,7 +293,45 @@ class EmployeeController extends Controller
         $departments = Department::forCurrentClient()->where('is_active', true)->get();
         $positions = Position::forCurrentClient()->where('is_active', true)->get();
         $employmentTypes = $this->getEmploymentTypes();
-        $roles = \App\Models\Role::where('is_active', true)->get();
+        
+        // Define role hierarchy (same as UserController)
+        $roleHierarchy = [
+            'super_admin' => ['super_admin', 'lead_hr_admin', 'hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'lead_hr_admin' => ['hr_officer', 'finance_payroll_officer', 'line_manager', 'employee', 'external_auditor'],
+            'hr_officer' => ['line_manager', 'employee'],
+            'finance_payroll_officer' => ['employee'],
+            'line_manager' => ['employee'],
+            'employee' => [],
+            'external_auditor' => [],
+        ];
+        
+        // Get current user's roles
+        $currentUser = auth()->user();
+        $userRoleNames = $currentUser->roles->pluck('name')->toArray();
+        
+        // Collect all allowed roles
+        $allowedRoles = [];
+        foreach ($userRoleNames as $roleName) {
+            if (isset($roleHierarchy[$roleName])) {
+                $allowedRoles = array_merge($allowedRoles, $roleHierarchy[$roleName]);
+            }
+        }
+        $allowedRoles = array_unique($allowedRoles);
+        
+        // If no allowed roles, add all
+        if (empty($allowedRoles)) {
+            $allowedRoles = array_keys($roleHierarchy);
+        }
+        
+        // Exclude super_admin for employees as requested
+        $allowedRoles = array_diff($allowedRoles, ['super_admin']);
+        
+        // If employee already has a role not in allowedRoles, include it
+        if ($employee->role && !in_array($employee->role, $allowedRoles)) {
+            $allowedRoles[] = $employee->role;
+        }
+        
+        $roles = \App\Models\Role::where('is_active', true)->whereIn('name', $allowedRoles)->get();
 
         return view('employees.edit', compact('employee', 'currentClient', 'departments', 'positions', 'employmentTypes', 'roles'));
     }
@@ -333,6 +415,17 @@ class EmployeeController extends Controller
 
         // Add updated by user
         $validated['updated_by'] = Auth::id();
+
+        // Process comma-separated fields
+        $arrayFields = ['skills', 'languages', 'professional_qualifications', 'certifications'];
+        foreach ($arrayFields as $field) {
+            if ($request->filled($field)) {
+                $values = array_map('trim', explode(',', $request->input($field)));
+                $validated[$field] = array_filter($values);
+            } else {
+                $validated[$field] = null;
+            }
+        }
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
