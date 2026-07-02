@@ -17,7 +17,7 @@ use App\Models\Traits\BelongsToCurrentClient;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, BelongsToCurrentClient;
 
     /**
      * The roles that belong to user.

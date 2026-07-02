@@ -16,8 +16,13 @@ class PersonnelIdController extends Controller
      */
     public function index()
     {
-        $employees = Employee::where('status', 'active')
-            ->with('personnelIdApplications')
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $employees = Employee::with('personnelIdApplications')
+            ->where('client_id', $clientId)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
@@ -126,6 +131,7 @@ class PersonnelIdController extends Controller
             'after_hours_access' => 'required|boolean',
             'status' => 'required|in:pending,approved,rejected,issued,expired,lost,damaged',
             'notes' => 'nullable|string|max:1000',
+            'application_id' => 'nullable|exists:personnel_id_applications,id'
         ]);
 
         if ($validator->fails()) {
@@ -137,16 +143,18 @@ class PersonnelIdController extends Controller
         }
 
         try {
-            // In a real implementation, this would update the personnel_id_applications table
-            $idData = array_merge($request->all(), [
+            $application = $request->input('application_id') 
+                ? PersonnelIdApplication::findOrFail($request->input('application_id'))
+                : $employee->personnelIdApplications()->latest()->firstOrFail();
+
+            $application->update(array_merge($request->except(['application_id', 'photo', 'signature', 'fingerprint']), [
                 'updated_by' => auth()->id(),
-                'updated_at' => now(),
-            ]);
+            ]));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Personnel ID application updated successfully',
-                'data' => $idData
+                'data' => $application
             ]);
 
         } catch (\Exception $e) {
@@ -161,18 +169,20 @@ class PersonnelIdController extends Controller
     /**
      * Approve personnel ID application.
      */
-    public function approve(Employee $employee)
+    public function approve(Request $request, Employee $employee)
     {
+        $application = $employee->personnelIdApplications()->latest()->firstOrFail();
+        
         try {
-            // In a real implementation, this would update the status in the database
+            $application->update([
+                'status' => 'approved',
+                'updated_by' => auth()->id(),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Personnel ID application approved successfully',
-                'data' => [
-                    'status' => 'approved',
-                    'approved_by' => auth()->id(),
-                    'approved_at' => now(),
-                ]
+                'data' => $application
             ]);
 
         } catch (\Exception $e) {
@@ -199,16 +209,17 @@ class PersonnelIdController extends Controller
         }
 
         try {
-            // In a real implementation, this would update the status and add rejection reason
+            $application = $employee->personnelIdApplications()->latest()->firstOrFail();
+            $application->update([
+                'status' => 'rejected',
+                'notes' => $reason,
+                'updated_by' => auth()->id(),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Personnel ID application rejected successfully',
-                'data' => [
-                    'status' => 'rejected',
-                    'rejection_reason' => $reason,
-                    'rejected_by' => auth()->id(),
-                    'rejected_at' => now(),
-                ]
+                'data' => $application
             ]);
 
         } catch (\Exception $e) {
@@ -223,18 +234,19 @@ class PersonnelIdController extends Controller
     /**
      * Issue personnel ID.
      */
-    public function issue(Employee $employee)
+    public function issue(Request $request, Employee $employee)
     {
         try {
-            // In a real implementation, this would update the status and issue date
+            $application = $employee->personnelIdApplications()->latest()->firstOrFail();
+            $application->update([
+                'status' => 'issued',
+                'updated_by' => auth()->id(),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Personnel ID issued successfully',
-                'data' => [
-                    'status' => 'issued',
-                    'issued_by' => auth()->id(),
-                    'issued_at' => now(),
-                ]
+                'data' => $application
             ]);
 
         } catch (\Exception $e) {
@@ -268,15 +280,17 @@ class PersonnelIdController extends Controller
         }
 
         try {
-            // In a real implementation, this would update the status and add loss details
+            $application = $employee->personnelIdApplications()->latest()->firstOrFail();
+            $application->update([
+                'status' => 'lost',
+                'notes' => $request->input('circumstances') . "\nLocation: " . $request->input('lost_location') . "\nPolice Report Filed: " . ($request->input('police_report_filed') ? 'Yes' : 'No') . ($request->input('police_report_number') ? "\nReport Number: " . $request->input('police_report_number') : ''),
+                'updated_by' => auth()->id(),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Personnel ID reported as lost successfully',
-                'data' => array_merge($request->all(), [
-                    'status' => 'lost',
-                    'reported_by' => auth()->id(),
-                    'reported_at' => now(),
-                ])
+                'data' => $application
             ]);
 
         } catch (\Exception $e) {
@@ -316,23 +330,33 @@ class PersonnelIdController extends Controller
      */
     public function statistics()
     {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a client first.'
+            ], 400);
+        }
+
         try {
-            // In a real implementation, this would query the personnel_id_applications table
+            $query = PersonnelIdApplication::where('client_id', $clientId);
             $stats = [
-                'total_applications' => Employee::where('status', 'approved')->count(), // Placeholder
-                'pending_applications' => 5, // Placeholder
-                'approved_applications' => 45, // Placeholder
-                'issued_cards' => 42, // Placeholder
-                'expired_cards' => 3, // Placeholder
-                'lost_cards' => 2, // Placeholder
-                'damaged_cards' => 1, // Placeholder
+                'total_applications' => (clone $query)->count(),
+                'pending_applications' => (clone $query)->where('status', 'pending')->count(),
+                'approved_applications' => (clone $query)->where('status', 'approved')->count(),
+                'issued_cards' => (clone $query)->where('status', 'issued')->count(),
+                'expired_cards' => (clone $query)->where('status', 'expired')->count(),
+                'lost_cards' => (clone $query)->where('status', 'lost')->count(),
+                'damaged_cards' => (clone $query)->where('status', 'damaged')->count(),
                 'by_type' => [
-                    'employee_card' => 35,
-                    'access_card' => 12,
-                    'visitor_card' => 5,
-                    'contractor_card' => 3
+                    'employee_card' => (clone $query)->where('id_type', 'employee_card')->count(),
+                    'access_card' => (clone $query)->where('id_type', 'access_card')->count(),
+                    'visitor_card' => (clone $query)->where('id_type', 'visitor_card')->count(),
+                    'contractor_card' => (clone $query)->where('id_type', 'contractor_card')->count()
                 ],
-                'expiring_soon' => 8, // Placeholder
+                'expiring_soon' => (clone $query)->where('status', 'issued')
+                    ->whereBetween('valid_until', [now(), now()->addDays(30)])
+                    ->count(),
             ];
 
             return response()->json([
@@ -354,16 +378,35 @@ class PersonnelIdController extends Controller
      */
     public function requiringAttention()
     {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a client first.'
+            ], 400);
+        }
+
         try {
-            // In a real implementation, this would find applications requiring attention
-            $employees = Employee::where('status', 'approved')
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
+            $applications = PersonnelIdApplication::with('employee')
+                ->where('client_id', $clientId)
+                ->whereIn('status', ['pending', 'expired'])
+                ->orWhere(function($q) {
+                    $q->where('status', 'issued')
+                      ->whereBetween('valid_until', [now(), now()->addDays(30)]);
+                })
                 ->get();
 
             return response()->json([
                 'success' => true,
-                'employees' => $employees
+                'employees' => $applications->map(function($app) {
+                    return [
+                        'id' => $app->employee_id,
+                        'first_name' => $app->employee->first_name ?? '',
+                        'surname' => $app->employee->surname ?? '',
+                        'employee_number' => $app->employee->employee_number ?? '',
+                        'status' => $app->status
+                    ];
+                })
             ]);
 
         } catch (\Exception $e) {

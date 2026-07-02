@@ -218,9 +218,14 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::prefix('discipline')->name('discipline.')->group(function () {
         Route::get('/', [App\Http\Controllers\DisciplinaryController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\DisciplinaryController::class, 'store'])->name('store');
+        Route::put('/{case}/status', [App\Http\Controllers\DisciplinaryController::class, 'updateStatus'])->name('update-status');
+        Route::put('/{case}', [App\Http\Controllers\DisciplinaryController::class, 'update'])->name('update');
+        Route::delete('/{case}', [App\Http\Controllers\DisciplinaryController::class, 'destroy'])->name('destroy');
         Route::get('/investigations', [App\Http\Controllers\DisciplinaryController::class, 'investigations'])->name('investigations');
         Route::get('/hearings', [App\Http\Controllers\DisciplinaryController::class, 'hearings'])->name('hearings');
+        Route::post('/hearings', [App\Http\Controllers\DisciplinaryController::class, 'storeHearing'])->name('hearings.store');
         Route::get('/documents', [App\Http\Controllers\DisciplinaryController::class, 'documents'])->name('documents');
+        Route::post('/documents', [App\Http\Controllers\DisciplinaryController::class, 'storeDocument'])->name('documents.store');
     });
 
     // Exit Management Routes

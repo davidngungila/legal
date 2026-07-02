@@ -340,9 +340,15 @@ function renderClients() {
                 ${getStatusBadge(client.status)}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <a href="{{ route('clients.edit') }}?id=${client.id}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                    <button onclick="deleteClient(${client.id})" class="text-red-600 hover:text-red-900">Delete</button>
-                </td>
+                <div class="flex items-center space-x-2">
+                    <a href="{{ route('clients.edit') }}?id=${client.id}" class="text-indigo-600 hover:text-indigo-900">
+                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                    </a>
+                    <button onclick="deleteClient(${client.id})" class="text-red-600 hover:text-red-900">
+                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </td>
         `;
         tbody.appendChild(row);
     });

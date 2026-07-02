@@ -176,7 +176,11 @@ class UserRegistrationController extends Controller
      */
     public function edit(UserRegistration $user)
     {
-        return view('hris.user-registration.edit', compact('user'));
+        $roles = Role::all();
+        $clients = Client::all();
+        $isSuperAdmin = auth()->user()->hasRole('super_admin');
+        
+        return view('hris.user-registration.edit', compact('user', 'roles', 'clients', 'isSuperAdmin'));
     }
 
     /**
@@ -196,6 +200,11 @@ class UserRegistrationController extends Controller
             'section_name' => 'required|string|max:255',
             'designation' => 'required|string|max:255',
             'project_location' => 'required|string|max:255',
+            'password' => 'nullable|string|min:8',
+            'password_confirmation' => 'nullable|required_with:password|same:password',
+            'role_id' => 'required|exists:roles,id',
+            'client_id' => 'nullable|exists:clients,id',
+            'is_active' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -207,7 +216,37 @@ class UserRegistrationController extends Controller
         }
 
         try {
-            $user->update($request->all());
+            // Prepare update data
+            $updateData = $request->only([
+                'first_name',
+                'middle_name',
+                'surname',
+                'email',
+                'phone_number',
+                'date_of_birth',
+                'gender',
+                'department_name',
+                'section_name',
+                'designation',
+                'project_location',
+                'role_id',
+                'is_active'
+            ]);
+
+            // Handle client_id only if provided and not hidden
+            if ($request->filled('client_id')) {
+                $updateData['client_id'] = $request->client_id;
+            }
+
+            // Handle password update only if provided
+            if ($request->filled('password')) {
+                $updateData['password'] = Hash::make($request->password);
+            }
+
+            // Convert is_active to boolean
+            $updateData['is_active'] = $request->has('is_active');
+
+            $user->update($updateData);
 
             return response()->json([
                 'success' => true,

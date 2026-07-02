@@ -8,13 +8,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">User Management</h1>
-            <p class="text-gray-600 mt-2">Manage system users and access permissions</p>
-            @if($currentClient)
-            <div class="mt-2 flex items-center space-x-2">
-                <span class="text-sm text-gray-500">Showing users for:</span>
-                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">{{ $currentClient->name }}</span>
-            </div>
-            @endif
+            <p class="text-gray-600 mt-2">Manage all system users and access permissions</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
             <button onclick="window.location.href='/roles'" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
@@ -137,6 +131,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -144,7 +139,7 @@
                 </thead>
                 <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
                     <tr id="loadingRow">
-                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
                                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
                                 <span>Loading users...</span>
@@ -218,6 +213,66 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- View User Modal -->
+    <div id="viewUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">View User Details</h3>
+                <button onclick="closeViewUserModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
+                        <span id="viewUserInitials" class="text-indigo-600 font-bold text-2xl">--</span>
+                    </div>
+                    <div>
+                        <h4 id="viewUserName" class="text-xl font-semibold text-gray-900">--</h4>
+                        <p id="viewUserEmail" class="text-gray-500">--</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Role</p>
+                        <p id="viewUserRole" class="font-medium text-gray-900">--</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Status</p>
+                        <span id="viewUserStatus" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">--</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Phone</p>
+                        <p id="viewUserPhone" class="font-medium text-gray-900">--</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Company</p>
+                        <p id="viewUserCompany" class="font-medium text-gray-900">--</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Last Login</p>
+                        <p id="viewUserLastLogin" class="font-medium text-gray-900">--</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Created At</p>
+                        <p id="viewUserCreatedAt" class="font-medium text-gray-900">--</p>
+                    </div>
+                </div>
+                <div class="mt-6 bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-500 mb-2">Permissions</p>
+                    <div id="viewUserPermissions" class="flex flex-wrap gap-2">
+                        <!-- Permissions will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+                <button onclick="closeViewUserModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -361,7 +416,7 @@ function updateNotificationBadge() {
         const tbody = document.getElementById('usersTableBody');
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                     <div class="flex flex-col items-center justify-center">
                         <i data-feather="alert-circle" class="w-12 h-12 text-red-500 mb-3"></i>
                         <span class="text-red-600 font-medium">${message}</span>
@@ -390,7 +445,7 @@ function updateNotificationBadge() {
         console.log('Rendering users, count:', filteredUsers.length);
         
         if (filteredUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">No users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">No users found</td></tr>';
             return;
         }
         
@@ -399,6 +454,9 @@ function updateNotificationBadge() {
             row.className = 'hover:bg-gray-50';
             const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
             const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
+            const companyName = user.clients && user.clients.length > 0 
+                ? user.clients.map(c => c.name).join(', ') 
+                : 'Orvion';
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
                     <input type="checkbox" class="user-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-id="${user.id}">
@@ -422,6 +480,12 @@ function updateNotificationBadge() {
                         ${user.role_display || user.role}
                     </span>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div class="flex items-center">
+                        <i data-feather="briefcase" class="w-4 h-4 text-gray-400 mr-2"></i>
+                        ${companyName}
+                    </div>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                         ${user.is_active ? 'Active' : 'Inactive'}
@@ -431,14 +495,17 @@ function updateNotificationBadge() {
                     ${formatDate(user.last_login_at)}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-2">
-                        <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-900" title="Edit">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="viewUser(${user.id})" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="View">
+                            <i data-feather="eye" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="editUser(${user.id})" class="p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
                             <i data-feather="edit-2" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="toggleUserStatus(${user.id})" class="${user.is_active ? 'text-yellow-600 hover:text-yellow-900' : 'text-green-600 hover:text-green-900'}" title="${user.is_active ? 'Deactivate' : 'Activate'}">
+                        <button onclick="toggleUserStatus(${user.id})" class="p-2 ${user.is_active ? 'text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} rounded-lg transition-colors" title="${user.is_active ? 'Deactivate' : 'Activate'}">
                             <i data-feather="${user.is_active ? 'user-x' : 'user-check'}" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900" title="Delete">
+                        <button onclick="deleteUser(${user.id})" class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                             <i data-feather="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -561,6 +628,66 @@ function updateNotificationBadge() {
         document.getElementById('editUserForm').reset();
         document.getElementById('editPermissions').innerHTML = '';
         document.getElementById('editPassword').value = '';
+    }
+
+    function openViewUserModal() {
+        const modal = document.getElementById('viewUserModal');
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    function closeViewUserModal() {
+        const modal = document.getElementById('viewUserModal');
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    async function viewUser(userId) {
+        const data = await requestJson(`${API_BASE}/${userId}`);
+        if (!data || !data.success) {
+            showNotification(data?.message || 'Failed to load user', 'error');
+            return;
+        }
+
+        const user = data.user;
+        const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
+        const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
+        const companyName = user.clients && user.clients.length > 0 
+            ? user.clients.map(c => c.name).join(', ') 
+            : 'Orvion';
+        const roleName = (user.roles && user.roles.length > 0) ? user.roles[0].display_name || user.roles[0].name : (user.role_display || user.role || 'N/A');
+
+        document.getElementById('viewUserInitials').textContent = `${firstInitial}${lastInitial}`;
+        document.getElementById('viewUserName').textContent = `${user.first_name} ${user.last_name}`;
+        document.getElementById('viewUserEmail').textContent = user.email || 'N/A';
+        document.getElementById('viewUserRole').textContent = roleName;
+        document.getElementById('viewUserPhone').textContent = user.phone || 'N/A';
+        document.getElementById('viewUserCompany').textContent = companyName;
+        document.getElementById('viewUserLastLogin').textContent = formatDate(user.last_login_at);
+        document.getElementById('viewUserCreatedAt').textContent = formatDate(user.created_at);
+
+        const statusElement = document.getElementById('viewUserStatus');
+        statusElement.textContent = user.is_active ? 'Active' : 'Inactive';
+        statusElement.className = `inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+
+        const permissionsContainer = document.getElementById('viewUserPermissions');
+        permissionsContainer.innerHTML = '';
+        const permissions = user.permissions || [];
+        if (permissions.length > 0) {
+            permissions.forEach(perm => {
+                const badge = document.createElement('span');
+                badge.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full';
+                badge.textContent = perm.display_name || perm.name;
+                permissionsContainer.appendChild(badge);
+            });
+        } else {
+            permissionsContainer.innerHTML = '<span class="text-gray-500 text-sm">No permissions assigned</span>';
+        }
+
+        openViewUserModal();
     }
 
     async function loadRolesAndPermissions(retryCount = 0) {
@@ -728,46 +855,6 @@ function updateNotificationBadge() {
         }
     }
 
-    document.getElementById('editUserForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        const userId = document.getElementById('editUserId').value;
-        const permissions = Array.from(document.querySelectorAll('#editPermissions input[type="checkbox"]:checked')).map(cb => cb.value);
-
-        const payload = {
-            first_name: document.getElementById('editFirstName').value.trim(),
-            last_name: document.getElementById('editLastName').value.trim(),
-            email: document.getElementById('editEmail').value.trim(),
-            phone: document.getElementById('editPhone').value.trim(),
-            role: document.getElementById('editRole').value,
-            is_active: parseInt(document.getElementById('editIsActive').value, 10),
-            permissions
-        };
-
-        const password = document.getElementById('editPassword').value;
-        if (password) {
-            payload.password = password;
-        }
-
-        const data = await requestJson(`${API_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
-        if (!data) return;
-
-        if (data.success) {
-            showNotification(data.message || 'User updated successfully', 'success');
-            closeEditUserModal();
-            await loadUsers();
-        } else {
-            if (data.errors) {
-                Object.keys(data.errors).forEach((field) => {
-                    const msg = Array.isArray(data.errors[field]) ? data.errors[field].join(', ') : data.errors[field];
-                    showNotification(`${field}: ${msg}`, 'error');
-                });
-            } else {
-                showNotification(data.message || 'Failed to update user', 'error');
-            }
-        }
-    });
-
     document.addEventListener('DOMContentLoaded', async function() {
         console.log('=== USERS PAGE INITIALIZED ===');
         console.log('API_BASE:', API_BASE);
@@ -791,9 +878,59 @@ function updateNotificationBadge() {
             feather.replace();
         }
 
-        document.getElementById('userSearch').addEventListener('input', filterUsers);
-        document.getElementById('roleFilter').addEventListener('change', filterUsers);
-        document.getElementById('statusFilter').addEventListener('change', filterUsers);
-        document.getElementById('selectAllUsers').addEventListener('change', toggleSelectAll);
+        const editUserForm = document.getElementById('editUserForm');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const userId = document.getElementById('editUserId').value;
+                const permissions = Array.from(document.querySelectorAll('#editPermissions input[type="checkbox"]:checked')).map(cb => cb.value);
+
+                const payload = {
+                    first_name: document.getElementById('editFirstName').value.trim(),
+                    last_name: document.getElementById('editLastName').value.trim(),
+                    email: document.getElementById('editEmail').value.trim(),
+                    phone: document.getElementById('editPhone').value.trim(),
+                    role: document.getElementById('editRole').value,
+                    is_active: parseInt(document.getElementById('editIsActive').value, 10),
+                    permissions
+                };
+
+                const password = document.getElementById('editPassword').value;
+                if (password) {
+                    payload.password = password;
+                }
+
+                const data = await requestJson(`${API_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
+                if (!data) return;
+
+                if (data.success) {
+                    showNotification(data.message || 'User updated successfully', 'success');
+                    closeEditUserModal();
+                    await loadUsers();
+                } else {
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach((field) => {
+                            const msg = Array.isArray(data.errors[field]) ? data.errors[field].join(', ') : data.errors[field];
+                            showNotification(`${field}: ${msg}`, 'error');
+                        });
+                    } else {
+                        showNotification(data.message || 'Failed to update user', 'error');
+                    }
+                }
+            });
+        }
+
+        const userSearch = document.getElementById('userSearch');
+        if (userSearch) userSearch.addEventListener('input', filterUsers);
+        
+        const roleFilter = document.getElementById('roleFilter');
+        if (roleFilter) roleFilter.addEventListener('change', filterUsers);
+        
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) statusFilter.addEventListener('change', filterUsers);
+        
+        const selectAllUsers = document.getElementById('selectAllUsers');
+        if (selectAllUsers) selectAllUsers.addEventListener('change', toggleSelectAll);
     });
 </script>

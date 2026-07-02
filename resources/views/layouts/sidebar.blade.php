@@ -688,13 +688,7 @@
                     <li>
                         <a href="{{ route('users.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('users.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="users" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Users</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('user-registration.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('user-registration.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="user-plus" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">User Registration</span>
+                            <span class="text-xs">User Management</span>
                         </a>
                     </li>
                     <li>

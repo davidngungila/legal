@@ -32,17 +32,7 @@ class UserController
      */
     public function index(Request $request)
     {
-        $clientId = $this->getCurrentClientId();
-
-        $query = User::with('roles')->orderBy('created_at', 'desc');
-        if ($clientId) {
-            $query->where(function ($q) use ($clientId) {
-                $q->where('current_client_id', $clientId)
-                    ->orWhereHas('clients', function ($q2) use ($clientId) {
-                        $q2->where('clients.id', $clientId);
-                    });
-            });
-        }
+        $query = User::withoutClientFilter()->with(['roles', 'clients'])->orderBy('created_at', 'desc');
 
         $users = $query->get();
         
@@ -50,19 +40,11 @@ class UserController
         $users->each(function ($user) {
             $user->role_display = $user->roles->first()?->display_name ?? 'No Role';
             $user->role = $user->roles->first()?->name ?? 'no_role';
+            $user->current_client_name = $user->clients->first()?->name ?? 'N/A';
         });
 
         // Optimized stats query - single query with conditional aggregates
-        $statsQuery = User::query();
-        if ($clientId) {
-            $statsQuery->where(function ($q) use ($clientId) {
-                $q->where('current_client_id', $clientId)
-                    ->orWhereHas('clients', function ($q2) use ($clientId) {
-                        $q2->where('clients.id', $clientId);
-                    });
-            });
-        }
-
+        $statsQuery = User::withoutClientFilter();
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'active' => (clone $statsQuery)->where('is_active', 1)->count(),
@@ -540,35 +522,25 @@ class UserController
      */
     public function export(Request $request)
     {
-        $clientId = $this->getCurrentClientId();
-
-        $query = User::with('roles');
-        if ($clientId) {
-            $query->where(function ($q) use ($clientId) {
-                $q->where('current_client_id', $clientId)
-                    ->orWhereHas('clients', function ($q2) use ($clientId) {
-                        $q2->where('clients.id', $clientId);
-                    });
-            });
-        }
+        $query = User::withoutClientFilter()->with('roles');
         
         // Apply same filters as index
         if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-            $query->where(function($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+            $searchTerm = $request->string('search')->toString();
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('first_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('last_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $searchTerm . '%');
             });
         }
-        
+
         if ($request->filled('role')) {
             $roleName = $request->string('role')->toString();
             $query->whereHas('roles', function($q) use ($roleName) {
                 $q->where('name', $roleName);
             });
         }
-        
+
         if ($request->filled('status')) {
             $query->where('is_active', (int) $request->get('status'));
         }
@@ -581,10 +553,14 @@ class UserController
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
-                'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status', 'Created At', 'Last Login'
+                'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Client(s)', 'Status', 'Created At', 'Last Login'
             ]);
 
             foreach ($users as $user) {
+                $clientNames = $user->clients->isNotEmpty() 
+                    ? $user->clients->pluck('name')->join(', ') 
+                    : 'Orvion';
+                
                 fputcsv($handle, [
                     $user->id,
                     $user->first_name,
@@ -592,6 +568,7 @@ class UserController
                     $user->email,
                     $user->phone ?? '',
                     $user->roles->first()->display_name ?? '',
+                    $clientNames,
                     $user->is_active ? 'Active' : 'Inactive',
                     optional($user->created_at)->toDateTimeString(),
                     optional($user->last_login_at)->toDateTimeString() ?? 'Never',

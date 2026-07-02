@@ -18,29 +18,29 @@ class SelfServiceController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         
         // Get employee data for current user and client
         $employee = null;
         $recentRequests = collect(); // Initialize as empty collection
         $recentPayslips = collect(); // Initialize as empty collection
         
-        if ($currentClient) {
+        if ($clientId) {
             // Find employee for current user in this client
-            $employee = Employee::where('client_id', $currentClient['id'])
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->first();
             
             if ($employee) {
                 // Get recent self-service requests
-                $recentRequests = SelfService::where('client_id', $currentClient['id'])
+                $recentRequests = SelfService::where('client_id', $clientId)
                     ->where('employee_id', $employee->id)
                     ->orderBy('created_at', 'desc')
                     ->take(5)
                     ->get();
                 
                 // Get recent payslips
-                $recentPayslips = Payroll::where('client_id', $currentClient['id'])
+                $recentPayslips = Payroll::where('client_id', $clientId)
                     ->where('employee_id', $employee->id)
                     ->orderBy('pay_date', 'desc')
                     ->take(3)
@@ -56,12 +56,12 @@ class SelfServiceController extends Controller
      */
     public function leave()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $employee = null;
         
-        if ($currentClient) {
+        if ($clientId) {
             $user = Auth::user();
-            $employee = Employee::where('client_id', $currentClient['id'])
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->with(['selfServiceRequests' => function($query) {
                     $query->where('request_type', 'leave')->orderBy('created_at', 'desc');
@@ -84,14 +84,14 @@ class SelfServiceController extends Controller
             'end_date' => 'required|date|after:start_date',
         ]);
         
-        $currentClient = session('current_client');
-        if (!$currentClient) {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
             return back()->with('error', 'Please select a client first.');
         }
 
         $user = Auth::user();
         
-        $employee = Employee::where('client_id', $currentClient['id'])
+        $employee = Employee::where('client_id', $clientId)
             ->where('email', $user->email)
             ->first();
         
@@ -102,7 +102,7 @@ class SelfServiceController extends Controller
         $daysRequested = Carbon::parse($request->start_date)->diffInDays(Carbon::parse($request->end_date)) + 1;
         
         SelfService::create([
-            'client_id' => $currentClient['id'],
+            'client_id' => $clientId,
             'employee_id' => $employee->id,
             'request_type' => 'leave',
             'title' => $request->title,
@@ -122,18 +122,18 @@ class SelfServiceController extends Controller
      */
     public function payslip()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $employee = null;
         $payslips = collect(); // Initialize as empty collection
         
-        if ($currentClient) {
+        if ($clientId) {
             $user = Auth::user();
-            $employee = Employee::where('client_id', $currentClient['id'])
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->first();
             
             if ($employee) {
-                $payslips = Payroll::where('client_id', $currentClient['id'])
+                $payslips = Payroll::where('client_id', $clientId)
                     ->where('employee_id', $employee->id)
                     ->orderBy('pay_date', 'desc')
                     ->get();
@@ -152,14 +152,14 @@ class SelfServiceController extends Controller
             'payroll_period' => 'required|string',
         ]);
         
-        $currentClient = session('current_client');
-        if (!$currentClient) {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
             return back()->with('error', 'Please select a client first.');
         }
 
         $user = Auth::user();
         
-        $employee = Employee::where('client_id', $currentClient['id'])
+        $employee = Employee::where('client_id', $clientId)
             ->where('email', $user->email)
             ->first();
         
@@ -168,7 +168,7 @@ class SelfServiceController extends Controller
         }
         
         SelfService::create([
-            'client_id' => $currentClient['id'],
+            'client_id' => $clientId,
             'employee_id' => $employee->id,
             'request_type' => 'payslip',
             'title' => 'Payslip Request - ' . $request->payroll_period,
@@ -185,12 +185,12 @@ class SelfServiceController extends Controller
      */
     public function contract()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $employee = null;
         
-        if ($currentClient) {
+        if ($clientId) {
             $user = Auth::user();
-            $employee = Employee::where('client_id', $currentClient['id'])
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->first();
         }
@@ -207,14 +207,14 @@ class SelfServiceController extends Controller
             'reason' => 'required|string|max:255',
         ]);
         
-        $currentClient = session('current_client');
-        if (!$currentClient) {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
             return back()->with('error', 'Please select a client first.');
         }
 
         $user = Auth::user();
         
-        $employee = Employee::where('client_id', $currentClient['id'])
+        $employee = Employee::where('client_id', $clientId)
             ->where('email', $user->email)
             ->first();
         
@@ -223,7 +223,7 @@ class SelfServiceController extends Controller
         }
         
         SelfService::create([
-            'client_id' => $currentClient['id'],
+            'client_id' => $clientId,
             'employee_id' => $employee->id,
             'request_type' => 'contract',
             'title' => 'Employment Contract Copy',
@@ -240,12 +240,12 @@ class SelfServiceController extends Controller
      */
     public function complaint()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $employee = null;
         
-        if ($currentClient) {
+        if ($clientId) {
             $user = Auth::user();
-            $employee = Employee::where('client_id', $currentClient['id'])
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->with(['selfServiceRequests' => function($query) {
                     $query->where('request_type', 'complaint')->orderBy('created_at', 'desc');
@@ -266,14 +266,14 @@ class SelfServiceController extends Controller
             'description' => 'required|string',
         ]);
         
-        $currentClient = session('current_client');
-        if (!$currentClient) {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
             return back()->with('error', 'Please select a client first.');
         }
 
         $user = Auth::user();
         
-        $employee = Employee::where('client_id', $currentClient['id'])
+        $employee = Employee::where('client_id', $clientId)
             ->where('email', $user->email)
             ->first();
         
@@ -282,7 +282,7 @@ class SelfServiceController extends Controller
         }
         
         SelfService::create([
-            'client_id' => $currentClient['id'],
+            'client_id' => $clientId,
             'employee_id' => $employee->id,
             'request_type' => 'complaint',
             'title' => $request->title,
@@ -300,11 +300,11 @@ class SelfServiceController extends Controller
     public function profile()
     {
         $user = Auth::user();
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $employee = null;
         
-        if ($currentClient) {
-            $employee = Employee::where('client_id', $currentClient['id'])
+        if ($clientId) {
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->first();
         }
@@ -328,9 +328,9 @@ class SelfServiceController extends Controller
         ]);
         
         // Update employee record if exists
-        $currentClient = session('current_client');
-        if ($currentClient) {
-            $employee = Employee::where('client_id', $currentClient['id'])
+        $clientId = session('current_client_id');
+        if ($clientId) {
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->first();
             
@@ -358,12 +358,12 @@ class SelfServiceController extends Controller
      */
     public function expense()
     {
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $employee = null;
         
-        if ($currentClient) {
+        if ($clientId) {
             $user = Auth::user();
-            $employee = Employee::where('client_id', $currentClient['id'])
+            $employee = Employee::where('client_id', $clientId)
                 ->where('email', $user->email)
                 ->first();
         }
@@ -382,10 +382,10 @@ class SelfServiceController extends Controller
             'amount' => 'required|numeric|min:0',
         ]);
         
-        $currentClient = session('current_client');
+        $clientId = session('current_client_id');
         $user = Auth::user();
         
-        $employee = Employee::where('client_id', $currentClient['id'])
+        $employee = Employee::where('client_id', $clientId)
             ->where('email', $user->email)
             ->first();
         
@@ -394,7 +394,7 @@ class SelfServiceController extends Controller
         }
         
         SelfService::create([
-            'client_id' => $currentClient['id'],
+            'client_id' => $clientId,
             'employee_id' => $employee->id,
             'request_type' => 'expense_claim',
             'title' => $request->title,
