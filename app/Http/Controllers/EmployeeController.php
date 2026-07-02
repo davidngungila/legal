@@ -73,8 +73,9 @@ class EmployeeController extends Controller
         $departments = Department::forCurrentClient()->where('is_active', true)->get();
         $positions = Position::forCurrentClient()->where('is_active', true)->get();
         $employmentTypes = $this->getEmploymentTypes();
+        $roles = \App\Models\Role::where('is_active', true)->get();
 
-        return view('employees.create', compact('currentClient', 'departments', 'positions', 'employmentTypes'));
+        return view('employees.create', compact('currentClient', 'departments', 'positions', 'employmentTypes', 'roles'));
     }
 
     /**
@@ -133,6 +134,7 @@ class EmployeeController extends Controller
             'hire_date' => 'required|date',
             'employment_type' => 'required|in:full_time,part_time,contract,intern',
             'status' => 'required|in:active,inactive,terminated,on_leave',
+            'role' => 'nullable|string|max:255|exists:roles,name',
             'salary' => 'required|numeric|min:0',
             'currency' => 'required|in:TZS,USD,EUR,GBP',
             'payment_frequency' => 'required|in:monthly,bi-weekly,weekly',
@@ -247,8 +249,9 @@ class EmployeeController extends Controller
         $departments = Department::forCurrentClient()->where('is_active', true)->get();
         $positions = Position::forCurrentClient()->where('is_active', true)->get();
         $employmentTypes = $this->getEmploymentTypes();
+        $roles = \App\Models\Role::where('is_active', true)->get();
 
-        return view('employees.edit', compact('employee', 'currentClient', 'departments', 'positions', 'employmentTypes'));
+        return view('employees.edit', compact('employee', 'currentClient', 'departments', 'positions', 'employmentTypes', 'roles'));
     }
 
     /**
@@ -300,6 +303,7 @@ class EmployeeController extends Controller
             'hire_date' => 'required|date',
             'employment_type' => 'required|in:full_time,part_time,contract,intern',
             'status' => 'required|in:active,inactive,terminated,on_leave',
+            'role' => 'nullable|string|max:255|exists:roles,name',
             'salary' => 'required|numeric|min:0',
             'currency' => 'required|in:TZS,USD,EUR,GBP',
             'payment_frequency' => 'required|in:monthly,bi-weekly,weekly',

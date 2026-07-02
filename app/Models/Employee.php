@@ -36,6 +36,7 @@ class Employee extends Model
         'probation_end_date',
         'employment_type',
         'status',
+        'role',
         'salary',
         'currency',
         'payment_frequency',
