@@ -67,7 +67,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Employee ID *</label>
-                        <input type="text" name="employee_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="EMP-001">
+                        <input type="text" name="employee_id" id="employee_id" required readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="EMP-001">
                     </div>
                     
                     <div>
@@ -302,16 +302,31 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
     }
 });
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-    // Load roles first
-    loadRoles();
-    
-    // Initialize feather icons
-    if (typeof feather !== 'undefined') {
-        feather.replace();
+// Load next employee ID
+    async function loadNextEmployeeId() {
+        try {
+            const response = await fetch(`${API_BASE}/next-employee-id`);
+            const data = await response.json();
+            
+            if (data.success && data.employee_id) {
+                document.getElementById('employee_id').value = data.employee_id;
+            }
+        } catch (error) {
+            console.error('Error loading next employee ID:', error);
+        }
     }
-});
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load roles and next employee ID first
+        loadRoles();
+        loadNextEmployeeId();
+        
+        // Initialize feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
 
 // Notification function
 function showNotification(message, type = 'info') {

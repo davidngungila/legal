@@ -114,6 +114,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             Route::get('/', [UserController::class, 'index'])->name('users.data.index');
             Route::post('/', [UserController::class, 'store'])->name('users.data.store');
             Route::get('/roles-permissions', [UserController::class, 'getRolesAndPermissions'])->name('users.data.roles-permissions');
+            Route::get('/next-employee-id', [UserController::class, 'getNextEmployeeId'])->name('users.data.next-employee-id');
             Route::post('/bulk', [UserController::class, 'bulkOperations'])->name('users.data.bulk');
             Route::get('/{id}', [UserController::class, 'show'])->name('users.data.show');
             Route::put('/{id}', [UserController::class, 'update'])->name('users.data.update');

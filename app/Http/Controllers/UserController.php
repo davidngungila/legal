@@ -104,6 +104,7 @@ class UserController
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', 'exists:roles,name', Rule::in($allowedRoles)],
             'is_active' => 'required|boolean',
+            'employee_id' => 'required|string|max:255|unique:users',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name'
         ]);
@@ -129,6 +130,7 @@ class UserController
                 'is_active' => $request->get('is_active', 1),
                 'email_verified_at' => now(),
                 'current_client_id' => $clientId,
+                'employee_id' => $request->get('employee_id'),
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
@@ -578,6 +580,29 @@ class UserController
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /**
+     * Get next available employee ID
+     */
+    public function getNextEmployeeId()
+    {
+        $lastUser = User::whereNotNull('employee_id')
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        if (!$lastUser || !$lastUser->employee_id) {
+            $nextId = 'EMP-001';
+        } else {
+            $numPart = (int) preg_replace('/[^0-9]/', '', $lastUser->employee_id);
+            $nextNum = $numPart + 1;
+            $nextId = 'EMP-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'employee_id' => $nextId
         ]);
     }
 }

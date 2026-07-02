@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Traits\BelongsToCurrentClient;
 
-#[Fillable(['first_name', 'last_name', 'email', 'phone', 'password', 'is_active', 'last_login_at', 'last_login_ip', 'current_client_id'])]
+#[Fillable(['first_name', 'last_name', 'email', 'phone', 'password', 'is_active', 'last_login_at', 'last_login_ip', 'current_client_id', 'employee_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

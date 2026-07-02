@@ -8,7 +8,13 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">User Management</h1>
-            <p class="text-gray-600 mt-2">Manage all system users and access permissions</p>
+            <p class="text-gray-600 mt-2">Manage system users and access permissions</p>
+            @if($currentClient)
+            <div class="mt-2 flex items-center space-x-2">
+                <span class="text-sm text-gray-500">Showing users for:</span>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">{{ $currentClient->name }}</span>
+            </div>
+            @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
             <button onclick="window.location.href='/roles'" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
@@ -454,9 +460,7 @@ function updateNotificationBadge() {
             row.className = 'hover:bg-gray-50';
             const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
             const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
-            const companyName = user.clients && user.clients.length > 0 
-                ? user.clients.map(c => c.name).join(', ') 
-                : 'Orvion';
+            const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : (user.current_client_name || 'N/A');
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
                     <input type="checkbox" class="user-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-id="${user.id}">
@@ -482,7 +486,7 @@ function updateNotificationBadge() {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div class="flex items-center">
-                        <i data-feather="briefcase" class="w-4 h-4 text-gray-400 mr-2"></i>
+                        <i data-feather="building" class="w-4 h-4 text-gray-400 mr-2"></i>
                         ${companyName}
                     </div>
                 </td>
@@ -655,9 +659,7 @@ function updateNotificationBadge() {
         const user = data.user;
         const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
         const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
-        const companyName = user.clients && user.clients.length > 0 
-            ? user.clients.map(c => c.name).join(', ') 
-            : 'Orvion';
+        const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : (user.current_client_name || 'N/A');
         const roleName = (user.roles && user.roles.length > 0) ? user.roles[0].display_name || user.roles[0].name : (user.role_display || user.role || 'N/A');
 
         document.getElementById('viewUserInitials').textContent = `${firstInitial}${lastInitial}`;
@@ -855,6 +857,46 @@ function updateNotificationBadge() {
         }
     }
 
+    document.getElementById('editUserForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const userId = document.getElementById('editUserId').value;
+        const permissions = Array.from(document.querySelectorAll('#editPermissions input[type="checkbox"]:checked')).map(cb => cb.value);
+
+        const payload = {
+            first_name: document.getElementById('editFirstName').value.trim(),
+            last_name: document.getElementById('editLastName').value.trim(),
+            email: document.getElementById('editEmail').value.trim(),
+            phone: document.getElementById('editPhone').value.trim(),
+            role: document.getElementById('editRole').value,
+            is_active: parseInt(document.getElementById('editIsActive').value, 10),
+            permissions
+        };
+
+        const password = document.getElementById('editPassword').value;
+        if (password) {
+            payload.password = password;
+        }
+
+        const data = await requestJson(`${API_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        if (!data) return;
+
+        if (data.success) {
+            showNotification(data.message || 'User updated successfully', 'success');
+            closeEditUserModal();
+            await loadUsers();
+        } else {
+            if (data.errors) {
+                Object.keys(data.errors).forEach((field) => {
+                    const msg = Array.isArray(data.errors[field]) ? data.errors[field].join(', ') : data.errors[field];
+                    showNotification(`${field}: ${msg}`, 'error');
+                });
+            } else {
+                showNotification(data.message || 'Failed to update user', 'error');
+            }
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', async function() {
         console.log('=== USERS PAGE INITIALIZED ===');
         console.log('API_BASE:', API_BASE);
@@ -878,59 +920,9 @@ function updateNotificationBadge() {
             feather.replace();
         }
 
-        const editUserForm = document.getElementById('editUserForm');
-        if (editUserForm) {
-            editUserForm.addEventListener('submit', async function (e) {
-                e.preventDefault();
-
-                const userId = document.getElementById('editUserId').value;
-                const permissions = Array.from(document.querySelectorAll('#editPermissions input[type="checkbox"]:checked')).map(cb => cb.value);
-
-                const payload = {
-                    first_name: document.getElementById('editFirstName').value.trim(),
-                    last_name: document.getElementById('editLastName').value.trim(),
-                    email: document.getElementById('editEmail').value.trim(),
-                    phone: document.getElementById('editPhone').value.trim(),
-                    role: document.getElementById('editRole').value,
-                    is_active: parseInt(document.getElementById('editIsActive').value, 10),
-                    permissions
-                };
-
-                const password = document.getElementById('editPassword').value;
-                if (password) {
-                    payload.password = password;
-                }
-
-                const data = await requestJson(`${API_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
-                if (!data) return;
-
-                if (data.success) {
-                    showNotification(data.message || 'User updated successfully', 'success');
-                    closeEditUserModal();
-                    await loadUsers();
-                } else {
-                    if (data.errors) {
-                        Object.keys(data.errors).forEach((field) => {
-                            const msg = Array.isArray(data.errors[field]) ? data.errors[field].join(', ') : data.errors[field];
-                            showNotification(`${field}: ${msg}`, 'error');
-                        });
-                    } else {
-                        showNotification(data.message || 'Failed to update user', 'error');
-                    }
-                }
-            });
-        }
-
-        const userSearch = document.getElementById('userSearch');
-        if (userSearch) userSearch.addEventListener('input', filterUsers);
-        
-        const roleFilter = document.getElementById('roleFilter');
-        if (roleFilter) roleFilter.addEventListener('change', filterUsers);
-        
-        const statusFilter = document.getElementById('statusFilter');
-        if (statusFilter) statusFilter.addEventListener('change', filterUsers);
-        
-        const selectAllUsers = document.getElementById('selectAllUsers');
-        if (selectAllUsers) selectAllUsers.addEventListener('change', toggleSelectAll);
+        document.getElementById('userSearch').addEventListener('input', filterUsers);
+        document.getElementById('roleFilter').addEventListener('change', filterUsers);
+        document.getElementById('statusFilter').addEventListener('change', filterUsers);
+        document.getElementById('selectAllUsers').addEventListener('change', toggleSelectAll);
     });
 </script>
