@@ -188,21 +188,36 @@ class EmployeeController extends Controller
         $prefix = 'EMP';
         $year = now()->year;
         
-        // Get latest employee ID for this client
-        $latestEmployee = Employee::where('client_id', $clientId)
+        // Get all employees for this client with prefix + year
+        $employees = Employee::where('client_id', $clientId)
             ->where('employee_id', 'like', $prefix . $year . '%')
             ->orderBy('employee_id', 'desc')
-            ->first();
-            
-        if ($latestEmployee) {
-            // Extract the number part
-            $number = (int) substr($latestEmployee->employee_id, strlen($prefix) + 4);
-            $newNumber = str_pad($number + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
+            ->get();
+        
+        // Find the highest number
+        $maxNumber = 0;
+        foreach ($employees as $emp) {
+            $numPart = (int) substr($emp->employee_id, strlen($prefix) + 4);
+            if ($numPart > $maxNumber) {
+                $maxNumber = $numPart;
+            }
         }
         
-        return $prefix . $year . $newNumber;
+        // Generate next number
+        $nextNumber = $maxNumber + 1;
+        $newNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        $proposedId = $prefix . $year . $newNumber;
+        
+        // Ensure uniqueness (in case of race conditions)
+        $attempts = 0;
+        while (Employee::where('employee_id', $proposedId)->exists() && $attempts < 100) {
+            $nextNumber++;
+            $newNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $proposedId = $prefix . $year . $newNumber;
+            $attempts++;
+        }
+        
+        return $proposedId;
     }
 
     /**
