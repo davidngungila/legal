@@ -460,7 +460,7 @@ function updateNotificationBadge() {
             row.className = 'hover:bg-gray-50';
             const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
             const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
-            const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : (user.current_client_name || 'N/A');
+            const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : 'Orvion';
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
                     <input type="checkbox" class="user-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-id="${user.id}">
@@ -659,7 +659,7 @@ function updateNotificationBadge() {
         const user = data.user;
         const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
         const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
-        const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : (user.current_client_name || 'N/A');
+        const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : 'Orvion';
         const roleName = (user.roles && user.roles.length > 0) ? user.roles[0].display_name || user.roles[0].name : (user.role_display || user.role || 'N/A');
 
         document.getElementById('viewUserInitials').textContent = `${firstInitial}${lastInitial}`;
