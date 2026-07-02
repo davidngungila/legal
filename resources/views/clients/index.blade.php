@@ -179,6 +179,10 @@
 // API endpoints
 const API_BASE = '/api/clients';
 
+// Debug: Log API base
+console.log('API_BASE:', API_BASE);
+console.log('Current URL:', window.location.href);
+
 // Global variables
 let clients = [];
 let filteredClients = [];
@@ -189,6 +193,8 @@ let selectedClients = [];
 // Load clients from API
 async function loadClients() {
     console.log('Loading clients...');
+    console.log('API_BASE:', API_BASE);
+    
     try {
         const search = document.getElementById('searchInput').value;
         const status = document.getElementById('statusFilter').value;
@@ -205,8 +211,10 @@ async function loadClients() {
             sort_order: sortOrder
         });
         
-        console.log('Fetching:', `${API_BASE}?${params}`);
-        const response = await fetch(`${API_BASE}?${params}`, {
+        const url = `${API_BASE}?${params}`;
+        console.log('Fetching URL:', url);
+        
+        const response = await fetch(url, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 'Content-Type': 'application/json',
@@ -214,8 +222,10 @@ async function loadClients() {
             }
         });
         
-        const data = await response.json();
         console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        const data = await response.json();
         console.log('Response data:', data);
         console.log('Data structure:', JSON.stringify(data, null, 2));
         
@@ -230,16 +240,18 @@ async function loadClients() {
             console.log('Clients array:', clients);
             console.log('Filtered clients:', filteredClients);
             console.log('Total pages:', totalPages);
+            console.log('Clients count:', clients.length);
             
             renderClients();
             updateStats();
-            updatePagination(data.clients);
+            updatePagination(clients);
         } else {
             console.log('API returned success=false');
             showNotification('Failed to load clients', 'error');
         }
     } catch (error) {
         console.error('Error loading clients:', error);
+        console.error('Error details:', error.message);
         showNotification('Error loading clients: ' + error.message, 'error');
     }
 }
@@ -545,10 +557,14 @@ function resetFilters() {
 }
 
 // Pagination
-function updatePagination(paginationData) {
-    document.getElementById('showingFrom').textContent = paginationData.from || 0;
-    document.getElementById('showingTo').textContent = paginationData.to || 0;
-    document.getElementById('totalResults').textContent = paginationData.total || 0;
+function updatePagination(clientsArray) {
+    const total = clientsArray.length;
+    const from = total > 0 ? 1 : 0;
+    const to = total;
+    
+    document.getElementById('showingFrom').textContent = from;
+    document.getElementById('showingTo').textContent = to;
+    document.getElementById('totalResults').textContent = total;
     
     // Update pagination numbers
     const paginationNumbers = document.getElementById('paginationNumbers');

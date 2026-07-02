@@ -585,15 +585,15 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::prefix('clients')->group(function () {
         Route::get('/', function () {
             return view('clients.index');
-        })->name('clients.index');
+        })->name('clients.index')->middleware('permission:clients.view');
         
         Route::get('/create', function () {
             return view('clients.create');
-        })->name('clients.create');
+        })->name('clients.create')->middleware('permission:clients.create');
         
         Route::get('/edit', function () {
             return view('clients.edit');
-        })->name('clients.edit');
+        })->name('clients.edit')->middleware('permission:clients.edit');
     });
 
     // API Routes without middleware for testing

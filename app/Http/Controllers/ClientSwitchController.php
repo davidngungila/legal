@@ -29,6 +29,20 @@ class ClientSwitchController extends Controller
         if (auth()->check()) {
             $user = auth()->user();
             $user->update(['current_client_id' => $clientId]);
+            
+            // For super_admin users, ensure they can access any client
+            // by adding the client to their relationship if not already present
+            if ($user->hasRole('super_admin')) {
+                if (!$user->clients()->where('clients.id', $clientId)->exists()) {
+                    $user->clients()->syncWithoutDetaching([
+                        $clientId => [
+                            'role' => 'admin',
+                            'is_active' => true,
+                            'joined_at' => now(),
+                        ],
+                    ]);
+                }
+            }
         }
         
         // Also share with views immediately for this request
@@ -109,8 +123,8 @@ class ClientSwitchController extends Controller
         if (auth()->check()) {
             $user = auth()->user();
             
-            // If user is super admin (assuming role name 'admin'), they can see all clients
-            if ($user->hasRole('admin')) {
+            // If user is super admin or admin, they can see all clients
+            if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
                 return Client::orderBy('name')->first();
             }
             

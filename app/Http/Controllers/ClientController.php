@@ -14,12 +14,43 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
-        $clients = Client::orderBy('created_at', 'desc')->get();
+        $query = Client::query();
+        
+        // Apply filters only if they have values
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('contact_person', 'like', "%{$search}%")
+                  ->orWhere('industry', 'like', "%{$search}%");
+            });
+        }
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+        
+        if ($request->filled('industry')) {
+            $query->where('industry', $request->get('industry'));
+        }
+        
+        // Apply sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (in_array($sortBy, ['name', 'industry', 'employee_count', 'created_at'])) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+        
+        $clients = $query->get();
         
         return response()->json([
             'success' => true,
             'clients' => $clients,
-            'industries' => Client::distinct()->pluck('industry'),
+            'industries' => Client::distinct()->pluck('industry')->filter()->values(),
             'stats' => [
                 'total' => Client::count(),
                 'active' => Client::where('status', 'active')->count(),

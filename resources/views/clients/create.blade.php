@@ -252,6 +252,11 @@ document.getElementById('clientForm').addEventListener('submit', async function(
         if (data.success) {
             showNotification(`Client ${isEdit ? 'updated' : 'created'} successfully!`, 'success');
             
+            // Clear form if creating new client
+            if (!isEdit) {
+                this.reset();
+            }
+            
             // Redirect to clients list after successful creation
             setTimeout(() => {
                 window.location.href = '/clients';

@@ -105,17 +105,44 @@ function confirmClientSwitch(clientId, clientName) {
     // Show splash screen
     showClientSwitchSplash(clientName);
     
-    // Simulate switching process
-    setTimeout(() => {
-        // Store selected client
-        localStorage.setItem('selectedClient', clientId);
-        
-        // Update all client-specific data displays
-        updateClientData(clientId);
-        
-        // Hide splash and show success
+    // Call backend API to switch client
+    fetch('/client-switch/switch', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        },
+        body: JSON.stringify({
+            client_id: clientId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Store selected client
+            localStorage.setItem('selectedClient', clientId);
+            
+            // Update all client-specific data displays
+            updateClientData(clientId);
+            
+            // Hide splash and show success
+            hideClientSwitchSplash(clientName);
+            
+            // Reload the page to ensure all data is refreshed with new session
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            // Handle error
+            hideClientSwitchSplash(clientName);
+            showNotification('Failed to switch client: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error switching client:', error);
         hideClientSwitchSplash(clientName);
-    }, 2000);
+        showNotification('Failed to switch client. Please try again.', 'error');
+    });
 }
 
 function showClientSwitchSplash(clientName) {

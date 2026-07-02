@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClientRegistration;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
@@ -37,14 +38,13 @@ class ClientRegistrationController extends Controller
             'nssf_registration' => 'required|string|max:50|unique:client_registrations',
             'phone' => 'required|string|max:20',
             'mobile' => 'required|string|max:20',
-            'email' => 'required|email|max:255|unique:client_registrations',
+            'email' => 'required|email|max:255',
             'region' => 'required|string|max:255',
             'district' => 'required|string|max:255',
             'location' => 'required|string|max:255',
         ], [
             'employer_name.required' => 'Employer name is required',
             'tin_number.unique' => 'Client created already exists - This TIN number is already registered',
-            'email.unique' => 'Client created already exists - This email is already registered',
         ]);
 
         if ($validator->fails()) {
@@ -59,17 +59,55 @@ class ClientRegistrationController extends Controller
             // Generate unique employer number
             $employerNumber = ClientRegistration::generateEmployerNumber();
 
-            $client = ClientRegistration::create(array_merge($request->all(), [
+            $clientRegistration = ClientRegistration::create(array_merge($request->all(), [
                 'employer_number' => $employerNumber,
                 'is_active' => true,
             ]));
 
             // Handle file uploads
-            $this->handleFileUploads($request, $client);
+            $this->handleFileUploads($request, $clientRegistration);
+
+            // Also create a record in the clients table so it appears in the clients list
+            $existingClient = Client::where('email', $request->contact_email)->first();
+            
+            if ($existingClient) {
+                // Update existing client instead of creating new one
+                $existingClient->update([
+                    'name' => $request->employer_name,
+                    'phone' => $request->contact_phone,
+                    'address' => $request->location . ', ' . $request->district . ', ' . $request->region,
+                    'city' => $request->district,
+                    'contact_person' => $request->contact_person,
+                    'contact_email' => $request->contact_email,
+                    'contact_phone' => $request->contact_phone,
+                    'notes' => $existingClient->notes . "\nUpdated via client registration. Employer Number: " . $employerNumber,
+                ]);
+                $client = $existingClient;
+            } else {
+                // Create new client record
+                $client = Client::create([
+                    'name' => $request->employer_name,
+                    'email' => $request->contact_email,
+                    'phone' => $request->contact_phone,
+                    'industry' => 'General',
+                    'address' => $request->location . ', ' . $request->district . ', ' . $request->region,
+                    'city' => $request->district,
+                    'country' => 'Tanzania',
+                    'postal_code' => $request->postal_address,
+                    'contact_person' => $request->contact_person,
+                    'contact_title' => 'Contact Person',
+                    'contact_email' => $request->contact_email,
+                    'contact_phone' => $request->contact_phone,
+                    'status' => 'active',
+                    'subscription_plan' => 'basic',
+                    'employee_count' => 1,
+                    'notes' => 'Registered via client registration form. Employer Number: ' . $employerNumber,
+                ]);
+            }
 
             // Send confirmation email
             try {
-                Mail::to($client->contact_email)->send(new ClientRegistrationConfirmation($client));
+                Mail::to($clientRegistration->contact_email)->send(new ClientRegistrationConfirmation($clientRegistration));
             } catch (\Exception $e) {
                 \Log::error('Failed to send client registration email: ' . $e->getMessage());
             }
@@ -77,7 +115,7 @@ class ClientRegistrationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Client registered successfully',
-                'client' => $client,
+                'client' => $clientRegistration,
                 'employer_number' => $employerNumber
             ]);
 

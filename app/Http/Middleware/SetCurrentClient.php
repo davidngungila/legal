@@ -44,6 +44,19 @@ class SetCurrentClient
                 $currentClient = $clientId ? Client::find($clientId) : null;
             }
             
+            // For super_admin users, ensure they have access to the current client
+            if ($currentClient && auth()->check() && auth()->user()->hasRole('super_admin')) {
+                if (!auth()->user()->clients()->where('clients.id', $clientId)->exists()) {
+                    auth()->user()->clients()->syncWithoutDetaching([
+                        $clientId => [
+                            'role' => 'admin',
+                            'is_active' => true,
+                            'joined_at' => now(),
+                        ],
+                    ]);
+                }
+            }
+            
             // Share current client with all views and session
             if ($currentClient) {
                 view()->share('currentClient', $currentClient);

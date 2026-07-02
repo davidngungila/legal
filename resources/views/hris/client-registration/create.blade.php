@@ -3,20 +3,20 @@
 @section('title', 'Client Registration - Orvion HRIS')
 
 @section('content')
-<div class="p-6 max-w-6xl mx-auto">
+<div class="p-4 md:p-6 lg:p-8">
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 font-manrope">Client Registration</h1>
-        <p class="text-gray-600 mt-2">Register a new client/employer in the Orvion HRIS system</p>
+    <div class="mb-6 md:mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 font-manrope">Client Registration</h1>
+        <p class="text-gray-600 mt-2 text-sm md:text-base">Register a new client/employer in the Orvion HRIS system</p>
     </div>
 
     <!-- Registration Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <form id="clientRegistrationForm" class="p-6 space-y-8">
+        <form id="clientRegistrationForm" class="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8">
             <!-- Basic Information Section -->
-            <div class="border-b border-gray-200 pb-8">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border-b border-gray-200 pb-6 md:pb-8">
+                <h2 class="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Basic Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Employer Name <span class="text-red-500">*</span>
@@ -61,10 +61,10 @@
             </div>
 
             <!-- Registration Numbers Section -->
-            <div class="border-b border-gray-200 pb-8">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Registration Numbers & Certificates</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
+            <div class="border-b border-gray-200 pb-6 md:pb-8">
+                <h2 class="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Registration Numbers & Certificates</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="space-y-3 md:space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 TIN Number <span class="text-red-500">*</span>
@@ -96,7 +96,7 @@
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                     </div>
-                    <div class="space-y-4">
+                    <div class="space-y-3 md:space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 NHIF Registration <span class="text-red-500">*</span>
@@ -129,8 +129,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-6">
+                    <div class="space-y-3 md:space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 VAT Registration Number <span class="text-red-500">*</span>
@@ -147,7 +147,7 @@
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                     </div>
-                    <div class="space-y-4">
+                    <div class="space-y-3 md:space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 NSSF Registration <span class="text-red-500">*</span>
@@ -168,9 +168,9 @@
             </div>
 
             <!-- Contact Information Section -->
-            <div class="border-b border-gray-200 pb-8">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Contact Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border-b border-gray-200 pb-6 md:pb-8">
+                <h2 class="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Contact Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Phone <span class="text-red-500">*</span>
@@ -214,8 +214,8 @@
 
             <!-- Location Information Section -->
             <div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Location Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <h2 class="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Location Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Region <span class="text-red-500">*</span>
@@ -272,13 +272,13 @@
             </div>
 
             <!-- Form Actions -->
-            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 md:pt-6 border-t border-gray-200">
                 <button type="button" onclick="window.history.back()"
-                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        class="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
                 <button type="submit" id="submitBtn"
-                        class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                        class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
                     <span id="btnText">Register Client</span>
                     <div id="btnLoader" class="hidden ml-2">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -449,19 +449,25 @@ class ClientRegistrationManager {
 
         try {
             const formData = new FormData(this.form);
-            const data = Object.fromEntries(formData.entries());
+
+            console.log('Submitting registration with FormData');
 
             const response = await fetch('/client-registration', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
+                    // Don't set Content-Type when sending FormData - browser will set it with boundary
                 },
-                body: JSON.stringify(data)
+                body: formData
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
             const result = await response.json();
+            console.log('Response data:', result);
+            console.log('Validation errors:', result.errors);
 
             if (result.success) {
                 this.showNotification(`Client registered successfully! Employer Number: ${result.employer_number}`, 'success');
@@ -470,6 +476,7 @@ class ClientRegistrationManager {
                 }, 2000);
             } else {
                 if (result.errors) {
+                    console.log('Displaying server errors:', result.errors);
                     this.displayServerErrors(result.errors);
                 } else {
                     this.showNotification(result.message || 'Registration failed', 'error');
@@ -477,7 +484,8 @@ class ClientRegistrationManager {
             }
         } catch (error) {
             console.error('Registration error:', error);
-            this.showNotification('An error occurred during registration', 'error');
+            console.error('Error details:', error.message);
+            this.showNotification('An error occurred during registration: ' + error.message, 'error');
         } finally {
             this.setLoadingState(false);
         }
@@ -485,7 +493,9 @@ class ClientRegistrationManager {
 
     displayServerErrors(errors) {
         Object.keys(errors).forEach(fieldName => {
-            this.showFieldError(fieldName, errors[fieldName][0]);
+            const errorMessage = Array.isArray(errors[fieldName]) ? errors[fieldName][0] : errors[fieldName];
+            this.showFieldError(fieldName, errorMessage);
+            console.log(`${fieldName}: ${errorMessage}`);
         });
     }
 
