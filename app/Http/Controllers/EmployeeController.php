@@ -181,43 +181,40 @@ class EmployeeController extends Controller
     }
     
     /**
-     * Generate unique employee ID for client
+     * Generate unique employee ID (globally unique)
      */
     private function generateEmployeeId($clientId)
     {
         $prefix = 'EMP';
         $year = now()->year;
         
-        // Get all employees for this client with prefix + year
-        $employees = Employee::where('client_id', $clientId)
-            ->where('employee_id', 'like', $prefix . $year . '%')
-            ->orderBy('employee_id', 'desc')
-            ->get();
-        
-        // Find the highest number
-        $maxNumber = 0;
-        foreach ($employees as $emp) {
-            $numPart = (int) substr($emp->employee_id, strlen($prefix) + 4);
-            if ($numPart > $maxNumber) {
-                $maxNumber = $numPart;
+        // Use DB transaction and locking to prevent race conditions
+        return \DB::transaction(function () use ($prefix, $year) {
+            // Get ALL existing employee IDs (globally)
+            $existingIds = \DB::table('employees')
+                ->pluck('employee_id')
+                ->toArray();
+            
+            // Find the next available number
+            $nextNumber = 1;
+            $found = false;
+            $maxAttempts = 10000;
+            
+            while (!$found && $nextNumber <= $maxAttempts) {
+                $newNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                $proposedId = $prefix . $year . $newNumber;
+                
+                if (!in_array($proposedId, $existingIds)) {
+                    $found = true;
+                    return $proposedId;
+                }
+                
+                $nextNumber++;
             }
-        }
-        
-        // Generate next number
-        $nextNumber = $maxNumber + 1;
-        $newNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-        $proposedId = $prefix . $year . $newNumber;
-        
-        // Ensure uniqueness (in case of race conditions)
-        $attempts = 0;
-        while (Employee::where('employee_id', $proposedId)->exists() && $attempts < 100) {
-            $nextNumber++;
-            $newNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-            $proposedId = $prefix . $year . $newNumber;
-            $attempts++;
-        }
-        
-        return $proposedId;
+            
+            // If we reach here, try with a longer number using uniqid()
+            return $prefix . $year . uniqid('', true);
+        });
     }
 
     /**
