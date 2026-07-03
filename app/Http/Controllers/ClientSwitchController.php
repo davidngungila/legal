@@ -13,6 +13,13 @@ class ClientSwitchController extends Controller
      */
     public function switch(Request $request)
     {
+        if (!auth()->user()->hasRole('super_admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
         $request->validate([
             'client_id' => 'required|exists:clients,id'
         ]);
@@ -123,8 +130,8 @@ class ClientSwitchController extends Controller
         if (auth()->check()) {
             $user = auth()->user();
             
-            // If user is super admin or admin, they can see all clients
-            if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
+            // If user is super admin, they can see all clients
+            if ($user->hasRole('super_admin')) {
                 return Client::orderBy('name')->first();
             }
             
@@ -144,6 +151,13 @@ class ClientSwitchController extends Controller
      */
     public function available()
     {
+        if (!auth()->user()->hasRole('super_admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
         $clients = Client::orderBy('name')->get();
         $currentClientId = Session::get('current_client_id');
 

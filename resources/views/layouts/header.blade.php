@@ -17,8 +17,8 @@
         
         <!-- Right Section -->
         <div class="flex items-center space-x-4">
-            <!-- Client Switcher Dropdown (for admins) -->
-            @if($currentUser && ($currentUser->hasRole('super_admin') || $currentUser->hasRole('admin') || $currentUser->hasRole('lead_hr_admin')))
+            <!-- Client Switcher Dropdown (only for super admins) -->
+            @if($currentUser && $currentUser->hasRole('super_admin'))
             <div class="relative">
                 <button id="clientSwitcherButton" onclick="toggleClientSwitcher()" class="flex items-center space-x-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
                     <i data-feather="briefcase" class="w-4 h-4 text-green-600"></i>
