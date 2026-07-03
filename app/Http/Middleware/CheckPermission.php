@@ -17,8 +17,8 @@ class CheckPermission
     {
         $user = auth()->user();
         
-        // Super Admin has all permissions
-        if ($user && $user->hasRole('super_admin')) {
+        // Super Admin, Admin, Lead HR Admin have all permissions
+        if ($user && ($user->hasRole('super_admin') || $user->hasRole('admin') || $user->hasRole('lead_hr_admin'))) {
             return $next($request);
         }
         
