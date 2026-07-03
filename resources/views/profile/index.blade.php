@@ -556,6 +556,285 @@ class ProfileManager {
         }
     }
 
+    showLoading(text = 'Loading...') {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-overlay';
+        loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        loadingDiv.innerHTML = `
+            <div class="bg-white rounded-lg p-6 flex items-center space-x-4">
+                <i data-feather="loader" class="w-6 h-6 animate-spin text-indigo-600"></i>
+                <span class="text-gray-800 font-medium">${text}</span>
+            </div>
+        `;
+        document.body.appendChild(loadingDiv);
+        feather.replace();
+    }
+
+    hideLoading() {
+        const loadingDiv = document.getElementById('loading-overlay');
+        if (loadingDiv) loadingDiv.remove();
+    }
+
+    showNotification(message, type = 'success') {
+        const notificationDiv = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-100 text-green-800 border-green-400' : 
+                        type === 'error' ? 'bg-red-100 text-red-800 border-red-400' : 'bg-yellow-100 text-yellow-800 border-yellow-400';
+        notificationDiv.className = `fixed top-4 right-4 px-6 py-4 rounded-lg border ${bgColor} shadow-lg z-50 animate-fade-in`;
+        notificationDiv.textContent = message;
+        document.body.appendChild(notificationDiv);
+        
+        setTimeout(() => {
+            notificationDiv.remove();
+        }, 5000);
+    }
+
+    markAsChanged(field) {
+        field.classList.add('border-yellow-400');
+    }
+
+    clearChangedFields() {
+        document.querySelectorAll('[data-profile-field]').forEach(field => {
+            field.classList.remove('border-yellow-400');
+        });
+    }
+
+    checkPasswordStrength() {
+        const newPasswordInput = document.getElementById('new_password');
+        const strengthText = document.getElementById('strength-text');
+        const strengthBar = document.getElementById('strength-bar');
+        const strengthDiv = document.getElementById('password-strength');
+        
+        if (!newPasswordInput || !strengthText || !strengthBar || !strengthDiv) return;
+        
+        const password = newPasswordInput.value;
+        let strength = 0;
+        
+        if (password.length >= 8) strength += 25;
+        if (/[A-Z]/.test(password)) strength += 25;
+        if (/[a-z]/.test(password)) strength += 25;
+        if (/[0-9]/.test(password)) strength += 25;
+        
+        strengthDiv.classList.remove('hidden');
+        
+        let color, label;
+        if (strength <= 25) { color = 'bg-red-500'; label = 'Weak'; }
+        else if (strength <= 50) { color = 'bg-orange-500'; label = 'Fair'; }
+        else if (strength <= 75) { color = 'bg-yellow-500'; label = 'Good'; }
+        else { color = 'bg-green-500'; label = 'Strong'; }
+        
+        strengthText.textContent = label;
+        strengthBar.className = `h-2 rounded-full transition-all duration-300 ${color}`;
+        strengthBar.style.width = `${strength}%`;
+    }
+
+    validatePasswordRequirements() {
+        const newPasswordInput = document.getElementById('new_password');
+        if (!newPasswordInput) return;
+        
+        const password = newPasswordInput.value;
+        
+        const reqLength = document.getElementById('req-length');
+        const reqUppercase = document.getElementById('req-uppercase');
+        const reqLowercase = document.getElementById('req-lowercase');
+        const reqNumber = document.getElementById('req-number');
+        
+        if (reqLength) {
+            const icon = reqLength.querySelector('i');
+            if (icon) icon.setAttribute('data-feather', password.length >= 8 ? 'check-circle' : 'x-circle');
+        }
+        if (reqUppercase) {
+            const icon = reqUppercase.querySelector('i');
+            if (icon) icon.setAttribute('data-feather', /[A-Z]/.test(password) ? 'check-circle' : 'x-circle');
+        }
+        if (reqLowercase) {
+            const icon = reqLowercase.querySelector('i');
+            if (icon) icon.setAttribute('data-feather', /[a-z]/.test(password) ? 'check-circle' : 'x-circle');
+        }
+        if (reqNumber) {
+            const icon = reqNumber.querySelector('i');
+            if (icon) icon.setAttribute('data-feather', /[0-9]/.test(password) ? 'check-circle' : 'x-circle');
+        }
+        
+        feather.replace();
+    }
+
+    validatePasswordConfirmation() {
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmInput = document.getElementById('password_confirmation');
+        const errorSpan = document.getElementById('password_confirmation_error');
+        
+        if (!newPasswordInput || !confirmInput || !errorSpan) return;
+        
+        if (confirmInput.value && newPasswordInput.value !== confirmInput.value) {
+            errorSpan.textContent = 'Passwords do not match';
+            errorSpan.classList.remove('hidden');
+        } else {
+            errorSpan.textContent = '';
+            errorSpan.classList.add('hidden');
+        }
+    }
+
+    clearFieldError(fieldId) {
+        const errorSpan = document.getElementById(`${fieldId}_error`);
+        if (errorSpan) {
+            errorSpan.textContent = '';
+            errorSpan.classList.add('hidden');
+        }
+    }
+
+    displayPasswordErrors(errors) {
+        Object.keys(errors).forEach(key => {
+            const errorSpan = document.getElementById(`${key}_error`);
+            if (errorSpan) {
+                errorSpan.textContent = errors[key];
+                errorSpan.classList.remove('hidden');
+            }
+        });
+    }
+
+    clearPasswordForm() {
+        const form = document.getElementById('password-change-form');
+        if (form) form.reset();
+        
+        const strengthDiv = document.getElementById('password-strength');
+        if (strengthDiv) strengthDiv.classList.add('hidden');
+        
+        ['current_password', 'new_password', 'password_confirmation'].forEach(fieldId => {
+            this.clearFieldError(fieldId);
+        });
+    }
+
+    initializeFeather() {
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    async changePassword() {
+        const form = document.getElementById('password-change-form');
+        const formData = new FormData(form);
+        
+        if (!this.validatePasswordForm()) {
+            return;
+        }
+
+        const data = {
+            current_password: formData.get('current_password'),
+            password: formData.get('password'),
+            password_confirmation: formData.get('password_confirmation')
+        };
+
+        try {
+            const submitBtn = document.getElementById('change-password-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> Changing Password...';
+            feather.replace();
+            
+            const response = await fetch('/profile/password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification('Password changed successfully! Please login again.', 'success');
+                this.clearPasswordForm();
+                
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } else {
+                this.showNotification(result.message || 'Failed to change password', 'error');
+                if (result.errors) {
+                    this.displayPasswordErrors(result.errors);
+                }
+            }
+        } catch (error) {
+            console.error('Password change error:', error);
+            this.showNotification('An error occurred while changing password', 'error');
+        } finally {
+            const submitBtn = document.getElementById('change-password-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-feather="lock" class="w-4 h-4 mr-2"></i> Change Password';
+                feather.replace();
+            }
+        }
+    }
+
+    validatePasswordForm() {
+        let isValid = true;
+        const currentPassword = document.getElementById('current_password');
+        const newPassword = document.getElementById('new_password');
+        const passwordConfirmation = document.getElementById('password_confirmation');
+        
+        if (!currentPassword.value) {
+            this.clearFieldError('current_password');
+            const errorSpan = document.getElementById('current_password_error');
+            if (errorSpan) {
+                errorSpan.textContent = 'Please enter your current password';
+                errorSpan.classList.remove('hidden');
+            }
+            isValid = false;
+        }
+        
+        if (!newPassword.value) {
+            this.clearFieldError('new_password');
+            const errorSpan = document.getElementById('new_password_error');
+            if (errorSpan) {
+                errorSpan.textContent = 'Please enter a new password';
+                errorSpan.classList.remove('hidden');
+            }
+            isValid = false;
+        }
+        
+        if (!passwordConfirmation.value) {
+            this.clearFieldError('password_confirmation');
+            const errorSpan = document.getElementById('password_confirmation_error');
+            if (errorSpan) {
+                errorSpan.textContent = 'Please confirm your new password';
+                errorSpan.classList.remove('hidden');
+            }
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
+    async autoSave() {
+        const changedFields = document.querySelectorAll('[data-profile-field].border-yellow-400');
+        if (changedFields.length === 0) return;
+
+        try {
+            const formData = new FormData();
+            changedFields.forEach(field => {
+                formData.append(field.name, field.value);
+            });
+
+            const response = await fetch('/profile/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                this.clearChangedFields();
+                this.showNotification('Changes auto-saved', 'info');
+            }
+        } catch (error) {
+            console.error('Auto-save error:', error);
+        }
+    }
+
     async saveProfile() {
         const formData = new FormData();
         const fields = document.querySelectorAll('[data-profile-field]');
@@ -571,7 +850,7 @@ class ProfileManager {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 },
                 body: JSON.stringify(Object.fromEntries(formData))
             });
@@ -609,7 +888,7 @@ class ProfileManager {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 },
                 body: JSON.stringify(Object.fromEntries(formData))
             });
@@ -638,10 +917,16 @@ class ProfileManager {
 
         const file = input.files[0];
         
-        // Validate file
-        const validation = this.validatePhotoFile(file);
-        if (!validation.valid) {
-            this.showNotification(validation.error, 'error');
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            this.showNotification('Invalid file type. Please upload a JPG, PNG, or GIF image.', 'error');
+            input.value = '';
+            return;
+        }
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            this.showNotification('File size too large. Please upload an image smaller than 5MB.', 'error');
             input.value = '';
             return;
         }
@@ -654,49 +939,6 @@ class ProfileManager {
         reader.readAsDataURL(file);
     }
 
-    validatePhotoFile(file) {
-        // Check file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
-            return {
-                valid: false,
-                error: 'Invalid file type. Please upload a JPG, PNG, or GIF image.'
-            };
-        }
-
-        // Check file size (max 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (file.size > maxSize) {
-            return {
-                valid: false,
-                error: 'File size too large. Please upload an image smaller than 5MB.'
-            };
-        }
-
-        // Check image dimensions
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                // Minimum dimensions check
-                if (img.width < 100 || img.height < 100) {
-                    resolve({
-                        valid: false,
-                        error: 'Image too small. Please upload an image at least 100x100 pixels.'
-                    });
-                    return;
-                }
-                resolve({ valid: true });
-            };
-            img.onerror = () => {
-                resolve({
-                    valid: false,
-                    error: 'Invalid image file. Please upload a valid image.'
-                });
-            };
-            img.src = URL.createObjectURL(file);
-        });
-    }
-
     showPhotoPreview(imageSrc, file) {
         const modal = document.getElementById('photo-preview-modal');
         const previewImg = document.getElementById('preview-img');
@@ -704,35 +946,26 @@ class ProfileManager {
         const fileSize = document.getElementById('preview-file-size');
         const fileType = document.getElementById('preview-file-type');
 
-        previewImg.src = imageSrc;
-        fileName.textContent = file.name;
-        fileSize.textContent = this.formatFileSize(file.size);
-        fileType.textContent = file.type;
+        if (previewImg) previewImg.src = imageSrc;
+        if (fileName) fileName.textContent = file.name;
+        if (fileSize) fileSize.textContent = this.formatFileSize(file.size);
+        if (fileType) fileType.textContent = file.type;
 
-        // Show modal with blur backdrop
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        
-        // Add body blur for enhanced effect
-        if (window.modalBlurSystem) {
-            window.modalBlurSystem.addBlurBackdrop();
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
-        // Store the file for upload
         this.currentPhotoFile = file;
     }
 
     cancelPhotoUpload() {
         const modal = document.getElementById('photo-preview-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        
-        // Remove blur backdrop
-        if (window.modalBlurSystem) {
-            window.modalBlurSystem.removeBlurBackdrop();
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
         
-        // Clear file input
         document.getElementById('photo-upload').value = '';
         this.currentPhotoFile = null;
     }
@@ -743,26 +976,21 @@ class ProfileManager {
             return;
         }
 
-        // Validate file again (including dimensions)
-        const validation = await this.validatePhotoFile(this.currentPhotoFile);
-        if (!validation.valid) {
-            this.showNotification(validation.error, 'error');
-            return;
-        }
-
         const formData = new FormData();
         formData.append('photo', this.currentPhotoFile);
 
         try {
             const uploadBtn = document.getElementById('upload-photo-btn');
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> Uploading...';
-            feather.replace();
+            if (uploadBtn) {
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> Uploading...';
+                feather.replace();
+            }
             
             const response = await fetch('/profile/photo', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 },
                 body: formData
             });
@@ -772,19 +1000,14 @@ class ProfileManager {
             if (result.success) {
                 this.showNotification('Profile photo updated successfully!', 'success');
                 this.updatePhotoDisplay(result.photo_url);
-                
-                // Close modal and remove blur
-                const modal = document.getElementById('photo-preview-modal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                if (window.modalBlurSystem) {
-                    window.modalBlurSystem.removeBlurBackdrop();
-                }
-                
-                // Update the user's photo in the UI immediately
                 this.updateUserPhotoInUI(result.photo_url);
                 
-                // Clear file input
+                const modal = document.getElementById('photo-preview-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                
                 document.getElementById('photo-upload').value = '';
                 this.currentPhotoFile = null;
             } else {
@@ -795,9 +1018,11 @@ class ProfileManager {
             this.showNotification('An error occurred while updating photo', 'error');
         } finally {
             const uploadBtn = document.getElementById('upload-photo-btn');
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = 'Upload Photo';
-            feather.replace();
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = 'Upload Photo';
+                feather.replace();
+            }
         }
     }
 
@@ -806,27 +1031,13 @@ class ProfileManager {
         const initials = document.getElementById('profile-photo-initials');
         const img = document.getElementById('profile-photo-img');
         
-        if (photoUrl) {
-            // Show image
-            if (img) {
-                img.src = photoUrl;
-                img.style.display = 'block';
-                img.classList.remove('hidden');
-            }
-            if (initials) {
-                initials.style.display = 'none';
-                initials.classList.add('hidden');
-            }
-        } else {
-            // Show initials
-            if (img) {
-                img.style.display = 'none';
-                img.classList.add('hidden');
-            }
-            if (initials) {
-                initials.style.display = 'block';
-                initials.classList.remove('hidden');
-            }
+        if (photoUrl && img) {
+            img.src = photoUrl;
+            img.style.display = 'block';
+            if (initials) initials.style.display = 'none';
+        } else if (initials) {
+            initials.style.display = 'block';
+            if (img) img.style.display = 'none';
         }
     }
 
@@ -838,37 +1049,16 @@ class ProfileManager {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    async updateProfilePhoto(input) {
-        // Legacy method - redirect to new preview method
+    updateProfilePhoto(input) {
         this.previewPhoto(input);
     }
 
     updateUserPhotoInUI(photoUrl) {
-        // Update all photo instances in the UI
         const photoElements = document.querySelectorAll('img[alt*="Profile Photo"], img[alt*="profile photo"]');
         photoElements.forEach(img => {
             if (photoUrl) {
                 img.src = photoUrl;
                 img.style.display = 'block';
-                img.classList.remove('hidden');
-            }
-        });
-
-        // Update initials elements
-        const initialsElements = document.querySelectorAll('[id*="profile-photo-initials"]');
-        initialsElements.forEach(element => {
-            if (photoUrl) {
-                element.style.display = 'none';
-                element.classList.add('hidden');
-            }
-        });
-
-        // Update photo containers to show hover overlay properly
-        const containers = document.querySelectorAll('[id*="profile-photo-container"]');
-        containers.forEach(container => {
-            const hoverOverlay = container.querySelector('.absolute.inset-0');
-            if (hoverOverlay && photoUrl) {
-                hoverOverlay.style.display = 'flex';
             }
         });
     }
@@ -882,7 +1072,7 @@ class ProfileManager {
             const response = await fetch('/profile/photo', {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 }
             });
 
@@ -890,7 +1080,6 @@ class ProfileManager {
 
             if (result.success) {
                 this.showNotification('Profile photo deleted successfully!', 'success');
-                // Update photo display to show initials
                 this.updatePhotoDisplay(null);
                 this.updateUserPhotoInUI(null);
             } else {
@@ -911,17 +1100,15 @@ class ProfileManager {
             const response = await fetch('/profile/export', {
                 method: 'GET',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 }
             });
 
             const result = await response.json();
 
             if (result.success) {
-                // Create and download JSON file
                 const dataStr = JSON.stringify(result, null, 2);
                 const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                
                 const exportFileDefaultName = `profile-export-${new Date().toISOString().split('T')[0]}.json`;
                 
                 const linkElement = document.createElement('a');
@@ -949,7 +1136,7 @@ class ProfileManager {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     two_factor_enabled: true
@@ -977,416 +1164,21 @@ class ProfileManager {
             this.hideLoading();
         }
     }
-
-    showPasswordChangeModal() {
-        // Create password change modal
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
-        modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-md w-full p-6">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Change Password</h3>
-                <form id="password-change-form">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                            <input type="password" name="current_password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                            <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                            <input type="password" name="password_confirmation" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                            Change Password
-                        </button>
-                    </div>
-                </form>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Handle form submission
-        modal.querySelector('#password-change-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.changePassword(new FormData(e.target));
-        });
-    }
-
-    async changePassword() {
-        const form = document.getElementById('password-change-form');
-        const formData = new FormData(form);
-        
-        // Validate form
-        if (!this.validatePasswordForm()) {
-            return;
-        }
-
-        const data = {
-            current_password: formData.get('current_password'),
-            password: formData.get('password'),
-            password_confirmation: formData.get('password_confirmation')
-        };
-
-        try {
-            const submitBtn = document.getElementById('change-password-btn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> Changing Password...';
-            feather.replace();
-            
-            const response = await fetch('/profile/password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.showNotification('Password changed successfully! Please login again.', 'success');
-                this.clearPasswordForm();
-                
-                // Redirect to login after successful password change
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
-            } else {
-                this.showNotification(result.message || 'Failed to change password', 'error');
-                if (result.errors) {
-                    this.displayPasswordErrors(result.errors);
-                }
-            }
-        } catch (error) {
-            console.error('Password change error:', error);
-            this.showNotification('An error occurred while changing password', 'error');
-        } finally {
-            const submitBtn = document.getElementById('change-password-btn');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i data-feather="lock" class="w-4 h-4 mr-2"></i> Change Password';
-            feather.replace();
-        }
-    }
-
-    validatePasswordForm() {
-        let isValid = true;
-        
-        // Clear all errors first
-        this.clearAllPasswordErrors();
-
-        // Validate current password
-        const currentPassword = document.getElementById('current_password').value;
-        if (!currentPassword) {
-            this.showFieldError('current_password', 'Current password is required');
-            isValid = false;
-        }
-
-        // Validate new password
-        const newPassword = document.getElementById('new_password').value;
-        if (!newPassword) {
-            this.showFieldError('new_password', 'New password is required');
-            isValid = false;
-        } else if (newPassword.length < 8) {
-            this.showFieldError('new_password', 'Password must be at least 8 characters');
-            isValid = false;
-        }
-
-        // Validate password confirmation
-        const confirmPassword = document.getElementById('password_confirmation').value;
-        if (!confirmPassword) {
-            this.showFieldError('password_confirmation', 'Please confirm your password');
-            isValid = false;
-        } else if (newPassword !== confirmPassword) {
-            this.showFieldError('password_confirmation', 'Passwords do not match');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    checkPasswordStrength() {
-        const password = document.getElementById('new_password').value;
-        const strengthContainer = document.getElementById('password-strength');
-        const strengthBar = document.getElementById('strength-bar');
-        const strengthText = document.getElementById('strength-text');
-
-        if (!password) {
-            strengthContainer.classList.add('hidden');
-            return;
-        }
-
-        strengthContainer.classList.remove('hidden');
-
-        let strength = 0;
-        let strengthLabel = 'Weak';
-        let strengthColor = 'bg-red-500';
-
-        // Check various criteria
-        if (password.length >= 8) strength++;
-        if (password.length >= 12) strength++;
-        if (/[a-z]/.test(password)) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^a-zA-Z0-9]/.test(password)) strength++;
-
-        // Determine strength level
-        if (strength <= 2) {
-            strengthLabel = 'Weak';
-            strengthColor = 'bg-red-500';
-        } else if (strength <= 4) {
-            strengthLabel = 'Medium';
-            strengthColor = 'bg-yellow-500';
-        } else {
-            strengthLabel = 'Strong';
-            strengthColor = 'bg-green-500';
-        }
-
-        // Update UI
-        strengthBar.className = `h-2 rounded-full transition-all duration-300 ${strengthColor}`;
-        strengthBar.style.width = `${(strength / 6) * 100}%`;
-        strengthText.textContent = strengthLabel;
-        strengthText.className = `text-sm font-medium ${strengthColor.replace('bg-', 'text-')}`;
-    }
-
-    validatePasswordRequirements() {
-        const password = document.getElementById('new_password').value;
-        
-        // Length requirement
-        this.updateRequirement('req-length', password.length >= 8);
-        
-        // Uppercase requirement
-        this.updateRequirement('req-uppercase', /[A-Z]/.test(password));
-        
-        // Lowercase requirement
-        this.updateRequirement('req-lowercase', /[a-z]/.test(password));
-        
-        // Number requirement
-        this.updateRequirement('req-number', /[0-9]/.test(password));
-    }
-
-    validatePasswordConfirmation() {
-        const password = document.getElementById('new_password').value;
-        const confirmPassword = document.getElementById('password_confirmation').value;
-        
-        if (confirmPassword && password !== confirmPassword) {
-            this.showFieldError('password_confirmation', 'Passwords do not match');
-        } else {
-            this.clearFieldError('password_confirmation');
-        }
-    }
-
-    updateRequirement(elementId, isValid) {
-        const element = document.getElementById(elementId);
-        if (isValid) {
-            element.classList.remove('text-gray-400');
-            element.classList.add('text-green-500');
-        } else {
-            element.classList.remove('text-green-500');
-            element.classList.add('text-gray-400');
-        }
-    }
-
-    showFieldError(fieldId, message) {
-        const errorElement = document.getElementById(`${fieldId}_error`);
-        const inputElement = document.getElementById(fieldId);
-        
-        if (errorElement) {
-            errorElement.textContent = message;
-            errorElement.classList.remove('hidden');
-        }
-        
-        if (inputElement) {
-            inputElement.classList.add('border-red-500');
-            inputElement.classList.add('ring-2', 'ring-red-200');
-        }
-    }
-
-    clearFieldError(fieldId) {
-        const errorElement = document.getElementById(`${fieldId}_error`);
-        const inputElement = document.getElementById(fieldId);
-        
-        if (errorElement) {
-            errorElement.classList.add('hidden');
-        }
-        
-        if (inputElement) {
-            inputElement.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
-        }
-    }
-
-    clearAllPasswordErrors() {
-        ['current_password', 'new_password', 'password_confirmation'].forEach(fieldId => {
-            this.clearFieldError(fieldId);
-        });
-    }
-
-    displayPasswordErrors(errors) {
-        if (errors.current_password) {
-            this.showFieldError('current_password', errors.current_password[0]);
-        }
-        if (errors.password) {
-            this.showFieldError('new_password', errors.password[0]);
-        }
-    }
-
-    clearPasswordForm() {
-        const form = document.getElementById('password-change-form');
-        if (form) {
-            form.reset();
-        }
-        this.clearAllPasswordErrors();
-        
-        // Hide password strength indicator
-        document.getElementById('password-strength').classList.add('hidden');
-        
-        // Reset requirements
-        ['req-length', 'req-uppercase', 'req-lowercase', 'req-number'].forEach(reqId => {
-            this.updateRequirement(reqId, false);
-        });
-    }
-
-    markAsChanged(field) {
-        field.classList.add('border-yellow-400');
-        field.classList.add('ring-2', 'ring-yellow-200');
-    }
-
-    clearChangedFields() {
-        document.querySelectorAll('[data-profile-field]').forEach(field => {
-            field.classList.remove('border-yellow-400', 'ring-2', 'ring-yellow-200');
-        });
-    }
-
-    async autoSave() {
-        const changedFields = document.querySelectorAll('[data-profile-field].border-yellow-400');
-        if (changedFields.length === 0) return;
-
-        try {
-            const formData = new FormData();
-            changedFields.forEach(field => {
-                formData.append(field.name, field.value);
-            });
-
-            const response = await fetch('/profile/update', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(Object.fromEntries(formData))
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                this.clearChangedFields();
-                this.showNotification('Changes auto-saved', 'info');
-            }
-        } catch (error) {
-            console.error('Auto-save error:', error);
-        }
-    }
-
-    showLoading(message) {
-        const btn = document.querySelector('button:has(.feather-save)');
-        if (btn) {
-            btn.innerHTML = `<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> ${message}`;
-            btn.disabled = true;
-            feather.replace();
-        }
-    }
-
-    hideLoading() {
-        const btn = document.querySelector('button:has(.feather-loader)');
-        if (btn) {
-            btn.innerHTML = '<i data-feather="save" class="w-4 h-4 mr-2"></i> Save Changes';
-            btn.disabled = false;
-            feather.replace();
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        // Remove existing notifications
-        document.querySelectorAll('.notification-toast').forEach(n => n.remove());
-        
-        const notification = document.createElement('div');
-        notification.className = `notification-toast fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transform transition-all duration-500 translate-x-full`;
-        
-        const styles = {
-            success: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white',
-            error: 'bg-gradient-to-r from-red-500 to-pink-600 text-white',
-            warning: 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white',
-            info: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-        };
-        
-        const icons = {
-            success: 'check-circle',
-            error: 'x-circle',
-            warning: 'alert-triangle',
-            info: 'info'
-        };
-        
-        notification.className += ' ' + styles[type] || styles.info;
-        notification.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <i data-feather="${icons[type] || 'info'}" class="w-6 h-6"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="font-semibold">${message}</p>
-                    <p class="text-xs opacity-75 mt-1">${new Date().toLocaleTimeString()}</p>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-        
-        // Animate in
-        setTimeout(() => {
-            notification.classList.remove('translate-x-full');
-            notification.classList.add('translate-x-0');
-        }, 100);
-        
-        // Auto remove
-        setTimeout(() => {
-            notification.classList.add('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 500);
-        }, 4000);
-    }
-
-    initializeFeather() {
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-    }
 }
 
-// Global functions for onclick handlers
+// Initialize ProfileManager
 let profileManager;
-
-function updateProfilePhoto(input) {
-    profileManager.updateProfilePhoto(input);
-}
-
-// Initialize on DOM load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     profileManager = new ProfileManager();
 });
+
+// Helper functions for onclick attributes
+function previewPhoto(input) { profileManager.previewPhoto(input); }
+function cancelPhotoUpload() { profileManager.cancelPhotoUpload(); }
+function uploadPhoto() { profileManager.uploadPhoto(); }
+function updateProfilePhoto(input) { profileManager.updateProfilePhoto(input); }
+function deleteProfilePhoto() { profileManager.deleteProfilePhoto(); }
+function exportProfile() { profileManager.exportProfile(); }
+function saveAll() { profileManager.saveAll(); }
 </script>
 @endpush
