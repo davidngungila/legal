@@ -35,15 +35,21 @@ class UserController
      */
     public function index(Request $request)
     {
-        $query = User::withoutClientFilter()->with(['roles', 'clients'])->orderBy('created_at', 'desc');
+        $query = User::withoutClientFilter()->with(['roles', 'permissions', 'client', 'clients'])->orderBy('created_at', 'desc');
 
         $users = $query->get();
         
         // Add role information to each user
         $users->each(function ($user) {
+            // Ensure super admin is attached to Orvion
+            \App\Models\User::ensureSuperAdminBelongsToOrvion($user);
+            // Refresh user to get updated client info
+            $user->refresh();
+            
             $user->role_display = $user->roles->first()?->display_name ?? 'No Role';
             $user->role = $user->roles->first()?->name ?? 'no_role';
-            $user->current_client_name = $user->clients->first()?->name ?? 'N/A';
+            $user->company_name = $user->client?->name ?? ($user->clients->first()?->name ?? 'Orvion');
+            $user->profile_photo_url = $user->profile_photo ? asset('storage/' . $user->profile_photo) : null;
         });
 
         // Optimized stats query - single query with conditional aggregates
@@ -181,6 +187,10 @@ class UserController
                     ]
                 ]);
             }
+
+            // Ensure super admin belongs to Orvion
+            $user->refresh();
+            \App\Models\User::ensureSuperAdminBelongsToOrvion($user);
             
             return response()->json([
                 'success' => true,
@@ -201,7 +211,7 @@ class UserController
      */
     public function show($id)
     {
-        $user = User::with('roles', 'permissions')->find($id);
+        $user = User::with('roles', 'permissions', 'client', 'clients')->find($id);
         
         if (!$user) {
             return response()->json([
@@ -209,6 +219,9 @@ class UserController
                 'message' => 'User not found'
             ], 404);
         }
+        
+        $user->profile_photo_url = $user->profile_photo ? asset('storage/' . $user->profile_photo) : null;
+        $user->company_name = $user->client?->name ?? ($user->clients->first()?->name ?? 'Orvion');
         
         return response()->json([
             'success' => true,
@@ -305,7 +318,7 @@ class UserController
             if ($role) {
                 $user->roles()->sync([$role->id]);
             }
-            
+
             // Update permissions if provided
             if ($request->has('permissions')) {
                 $permissions = Permission::whereIn('name', $request->get('permissions'))->get();
@@ -321,6 +334,10 @@ class UserController
                     ]
                 ]);
             }
+
+            // Ensure super admin belongs to Orvion
+            $user->refresh();
+            \App\Models\User::ensureSuperAdminBelongsToOrvion($user);
             
             return response()->json([
                 'success' => true,

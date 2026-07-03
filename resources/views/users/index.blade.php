@@ -128,19 +128,19 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full divide-y divide-gray-200">
+            <table class="w-full divide-y divide-gray-200 table-fixed">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-12 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             <input type="checkbox" id="selectAllUsers" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="w-64 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="w-64 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="w-48 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                        <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
+                        <th class="w-52 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
@@ -269,7 +269,7 @@
                 </div>
                 <div class="mt-6 bg-gray-50 rounded-lg p-4">
                     <p class="text-sm text-gray-500 mb-2">Permissions</p>
-                    <div id="viewUserPermissions" class="flex flex-wrap gap-2">
+                    <div id="viewUserPermissions" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                         <!-- Permissions will be populated here -->
                     </div>
                 </div>
@@ -451,55 +451,75 @@ function updateNotificationBadge() {
         console.log('Rendering users, count:', filteredUsers.length);
         
         if (filteredUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">No users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-gray-500">No users found</td></tr>';
             return;
         }
         
         filteredUsers.forEach((user) => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50';
-            const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
-            const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
-            const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : 'Orvion';
+            
+            // Safely get user details
+            const firstName = (user.first_name || '').toString();
+            const lastName = (user.last_name || '').toString();
+            const fullName = `${firstName} ${lastName}`.trim() || 'Unknown User';
+            const firstInitial = (firstName.charAt(0) || '?').toUpperCase();
+            const lastInitial = (lastName.charAt(0) || '?').toUpperCase();
+            const email = user.email || 'No Email';
+            
+            // Get single company
+        const companyName = user.company_name || 'Orvion';
+            
+            // Get role
+            const userRoles = user.roles || [];
+            const roleName = userRoles.length > 0 
+                ? (userRoles[0].display_name || userRoles[0].name) 
+                : (user.role_display || user.role || 'No Role');
+            const roleValue = userRoles.length > 0 
+                ? userRoles[0].name 
+                : (user.role || 'no_role');
+            
             row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="w-12 px-4 py-4 whitespace-nowrap">
                     <input type="checkbox" class="user-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-id="${user.id}">
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="w-64 px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                            <span class="text-indigo-600 font-medium text-sm">${firstInitial}${lastInitial}</span>
-                        </div>
+                        ${user.profile_photo_url 
+                            ? `<img src="${user.profile_photo_url}" alt="Profile" class="w-10 h-10 rounded-full object-cover mr-3">` 
+                            : `<div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                <span class="text-indigo-600 font-medium text-sm">${firstInitial}${lastInitial}</span>
+                            </div>`}
                         <div>
-                            <div class="text-sm font-medium text-gray-900">${user.first_name} ${user.last_name}</div>
-                            <div class="text-sm text-gray-500">${user.email}</div>
+                            <div class="text-sm font-medium text-gray-900">${fullName}</div>
+                            <div class="text-sm text-gray-500 truncate">${email}</div>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${user.email}
+                <td class="w-64 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
+                    ${email}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(user.role)}">
-                        ${user.role_display || user.role}
+                <td class="w-40 px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(roleValue)}">
+                        ${roleName}
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
                     <div class="flex items-center">
-                        <i data-feather="building" class="w-4 h-4 text-gray-400 mr-2"></i>
-                        ${companyName}
+                        <i data-feather="building" class="w-4 h-4 text-gray-400 mr-2 flex-shrink-0"></i>
+                        <span class="truncate">${companyName}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="w-32 px-6 py-4 whitespace-nowrap">
                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                         ${user.is_active ? 'Active' : 'Inactive'}
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="w-40 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     ${formatDate(user.last_login_at)}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex items-center space-x-3">
+                <td class="w-52 px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex items-center space-x-1">
                         <button onclick="viewUser(${user.id})" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                             <i data-feather="eye" class="w-4 h-4"></i>
                         </button>
@@ -541,14 +561,23 @@ function updateNotificationBadge() {
 
     function formatDate(dateString) {
         if (!dateString) return 'Never';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        
+        try {
+            const date = new Date(dateString);
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                return 'Invalid Date';
+            }
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            return 'Never';
+        }
     }
 
     // Filter functions
@@ -558,13 +587,25 @@ function updateNotificationBadge() {
         const statusFilter = document.getElementById('statusFilter').value;
         
         filteredUsers = users.filter(user => {
-            const matchesSearch = !searchTerm || 
-                user.first_name.toLowerCase().includes(searchTerm) ||
-                user.last_name.toLowerCase().includes(searchTerm) ||
-                user.email.toLowerCase().includes(searchTerm);
+            // Safe search checks
+            const firstName = (user.first_name || '').toString().toLowerCase();
+            const lastName = (user.last_name || '').toString().toLowerCase();
+            const email = (user.email || '').toString().toLowerCase();
             
-            const matchesRole = !roleFilter || user.role === roleFilter;
-            const matchesStatus = !statusFilter || user.is_active.toString() === statusFilter;
+            const matchesSearch = !searchTerm || 
+                firstName.includes(searchTerm) ||
+                lastName.includes(searchTerm) ||
+                email.includes(searchTerm);
+            
+            // Safe role check
+            const userRoles = user.roles || [];
+            const userRole = userRoles.length > 0 
+                ? userRoles[0].name 
+                : (user.role || '');
+            const matchesRole = !roleFilter || userRole === roleFilter;
+            
+            // Safe status check
+            const matchesStatus = !statusFilter || (user.is_active ? '1' : '0') === statusFilter;
             
             return matchesSearch && matchesRole && matchesStatus;
         });
@@ -585,12 +626,25 @@ function updateNotificationBadge() {
         const totalUsers = stats?.total ?? users.length;
         const activeUsers = stats?.active ?? users.filter(user => user.is_active).length;
         const inactiveUsers = stats?.inactive ?? (totalUsers - activeUsers);
-        const adminUsers = stats?.admin ?? users.filter(user => (user.role || '').includes('admin')).length;
+        
+        // Safe admin count using roles array
+        const adminUsers = stats?.admin ?? users.filter(user => {
+            const userRoles = user.roles || [];
+            if (userRoles.length > 0) {
+                return userRoles.some(r => (r.name || '').includes('admin'));
+            }
+            return (user.role || '').includes('admin');
+        }).length;
 
-        document.getElementById('totalUsersCount').textContent = totalUsers;
-        document.getElementById('activeUsersCount').textContent = activeUsers;
-        document.getElementById('inactiveUsersCount').textContent = inactiveUsers;
-        document.getElementById('adminUsersCount').textContent = adminUsers;
+        const totalEl = document.getElementById('totalUsersCount');
+        const activeEl = document.getElementById('activeUsersCount');
+        const inactiveEl = document.getElementById('inactiveUsersCount');
+        const adminEl = document.getElementById('adminUsersCount');
+        
+        if (totalEl) totalEl.textContent = totalUsers;
+        if (activeEl) activeEl.textContent = activeUsers;
+        if (inactiveEl) inactiveEl.textContent = inactiveUsers;
+        if (adminEl) adminEl.textContent = adminUsers;
     }
 
     function resetFilters() {
@@ -657,36 +711,77 @@ function updateNotificationBadge() {
         }
 
         const user = data.user;
-        const firstInitial = ((user.first_name || '?').toString().charAt(0) || '?').toUpperCase();
-        const lastInitial = ((user.last_name || '?').toString().charAt(0) || '?').toUpperCase();
-        const companyName = user.clients && user.clients.length > 0 ? user.clients[0].name : 'Orvion';
-        const roleName = (user.roles && user.roles.length > 0) ? user.roles[0].display_name || user.roles[0].name : (user.role_display || user.role || 'N/A');
+        
+        // Safely get user details with fallbacks
+        const firstName = (user.first_name || '').toString();
+        const lastName = (user.last_name || '').toString();
+        const fullName = `${firstName} ${lastName}`.trim() || 'Unknown User';
+        const firstInitial = (firstName.charAt(0) || '?').toUpperCase();
+        const lastInitial = (lastName.charAt(0) || '?').toUpperCase();
+        
+        // Get single company
+        const companyName = user.company_name || 'Orvion';
+        
+        // Get role with fallback
+        const userRoles = user.roles || [];
+        const roleName = userRoles.length > 0 
+            ? (userRoles[0].display_name || userRoles[0].name) 
+            : (user.role_display || user.role || 'N/A');
 
-        document.getElementById('viewUserInitials').textContent = `${firstInitial}${lastInitial}`;
-        document.getElementById('viewUserName').textContent = `${user.first_name} ${user.last_name}`;
-        document.getElementById('viewUserEmail').textContent = user.email || 'N/A';
-        document.getElementById('viewUserRole').textContent = roleName;
-        document.getElementById('viewUserPhone').textContent = user.phone || 'N/A';
-        document.getElementById('viewUserCompany').textContent = companyName;
-        document.getElementById('viewUserLastLogin').textContent = formatDate(user.last_login_at);
-        document.getElementById('viewUserCreatedAt').textContent = formatDate(user.created_at);
+        // Update avatar
+        const avatarContainer = document.querySelector('#viewUserModal .w-20.h-20');
+        if (avatarContainer) {
+            if (user.profile_photo_url) {
+                avatarContainer.innerHTML = `<img src="${user.profile_photo_url}" alt="Profile" class="w-20 h-20 rounded-full object-cover">`;
+            } else {
+                avatarContainer.innerHTML = `<span id="viewUserInitials" class="text-indigo-600 font-bold text-2xl">${firstInitial}${lastInitial}</span>`;
+            }
+        }
+        
+        // Update user details with null checks
+        const userNameEl = document.getElementById('viewUserName');
+        if (userNameEl) userNameEl.textContent = fullName;
+        
+        const userEmailEl = document.getElementById('viewUserEmail');
+        if (userEmailEl) userEmailEl.textContent = user.email || 'N/A';
+        
+        const userRoleEl = document.getElementById('viewUserRole');
+        if (userRoleEl) userRoleEl.textContent = roleName;
+        
+        const userPhoneEl = document.getElementById('viewUserPhone');
+        if (userPhoneEl) userPhoneEl.textContent = user.phone || 'N/A';
+        
+        const userCompanyEl = document.getElementById('viewUserCompany');
+        if (userCompanyEl) userCompanyEl.textContent = companyName;
+        
+        const userLastLoginEl = document.getElementById('viewUserLastLogin');
+        if (userLastLoginEl) userLastLoginEl.textContent = formatDate(user.last_login_at);
+        
+        const userCreatedAtEl = document.getElementById('viewUserCreatedAt');
+        if (userCreatedAtEl) userCreatedAtEl.textContent = formatDate(user.created_at);
 
+        // Update status
         const statusElement = document.getElementById('viewUserStatus');
-        statusElement.textContent = user.is_active ? 'Active' : 'Inactive';
-        statusElement.className = `inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+        if (statusElement) {
+            statusElement.textContent = user.is_active ? 'Active' : 'Inactive';
+            statusElement.className = `inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+        }
 
+        // Update permissions
         const permissionsContainer = document.getElementById('viewUserPermissions');
-        permissionsContainer.innerHTML = '';
-        const permissions = user.permissions || [];
-        if (permissions.length > 0) {
-            permissions.forEach(perm => {
-                const badge = document.createElement('span');
-                badge.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full';
-                badge.textContent = perm.display_name || perm.name;
-                permissionsContainer.appendChild(badge);
-            });
-        } else {
-            permissionsContainer.innerHTML = '<span class="text-gray-500 text-sm">No permissions assigned</span>';
+        if (permissionsContainer) {
+            permissionsContainer.innerHTML = '';
+            const permissions = user.permissions || [];
+            if (permissions.length > 0) {
+                permissions.forEach(perm => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full';
+                    badge.textContent = perm.display_name || perm.name;
+                    permissionsContainer.appendChild(badge);
+                });
+            } else {
+                permissionsContainer.innerHTML = '<span class="text-gray-500 text-sm">No permissions assigned</span>';
+            }
         }
 
         openViewUserModal();

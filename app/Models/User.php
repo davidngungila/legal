@@ -20,6 +20,59 @@ class User extends Authenticatable
     use HasFactory, Notifiable, BelongsToCurrentClient;
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Listen for when user is saved
+        static::saved(function ($user) {
+            static::ensureSuperAdminBelongsToOrvion($user);
+        });
+    }
+
+    /**
+     * Ensure the user is attached to Orvion if they are a super admin.
+     */
+    public static function ensureSuperAdminBelongsToOrvion($user)
+    {
+        if ($user->hasRole('super_admin')) {
+            $orvion = \App\Models\Client::firstOrCreate(
+                ['name' => 'Orvion'],
+                [
+                    'email' => 'info@orvion.com',
+                    'phone' => '+1234567890',
+                    'industry' => 'Technology',
+                    'address' => '123 Tech Street',
+                    'city' => 'San Francisco',
+                    'country' => 'USA',
+                    'contact_person' => 'Orvion Admin',
+                    'contact_title' => 'Administrator',
+                    'contact_email' => 'admin@orvion.com',
+                    'contact_phone' => '+1234567890',
+                    'status' => 'active',
+                    'subscription_plan' => 'enterprise',
+                ]
+            );
+
+            $user->clients()->syncWithoutDetaching([
+                $orvion->id => [
+                    'role' => 'admin',
+                    'is_active' => true,
+                    'joined_at' => now(),
+                ]
+            ]);
+            
+            // Set current_client_id to Orvion for super admin
+            if ($user->current_client_id !== $orvion->id) {
+                $user->current_client_id = $orvion->id;
+                $user->save();
+            }
+        }
+    }
+
+    /**
      * The roles that belong to user.
      */
     public function roles(): BelongsToMany
@@ -33,6 +86,14 @@ class User extends Authenticatable
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class);
+    }
+
+    /**
+     * The client that belongs to the user.
+     */
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'current_client_id');
     }
 
     /**

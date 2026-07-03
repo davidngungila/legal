@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             ClientSeeder::class,
+            OrvionClientSeeder::class,
             UserSeeder::class,
             CreateTestUsers::class,
             AssignUsersToClients::class,

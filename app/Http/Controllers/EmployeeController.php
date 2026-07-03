@@ -222,6 +222,43 @@ class EmployeeController extends Controller
 
         $employee = Employee::create($validated);
 
+        // Create a corresponding User record
+        $user = \App\Models\User::create([
+            'first_name' => $employee->first_name,
+            'last_name' => $employee->last_name,
+            'email' => $employee->email,
+            'password' => \Illuminate\Support\Facades\Hash::make('password'), // Default password
+            'is_active' => $employee->status === 'active',
+            'current_client_id' => $clientId,
+        ]);
+
+        // Attach the user to the client
+        $user->clients()->attach($clientId, [
+            'role' => 'employee',
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
+
+        // Attach the selected role if provided
+        if ($request->filled('role')) {
+            $role = \App\Models\Role::where('name', $request->input('role'))->first();
+            if ($role) {
+                $user->roles()->attach($role);
+            }
+        } else {
+            // Default to employee role
+            $employeeRole = \App\Models\Role::where('name', 'employee')->first();
+            if ($employeeRole) {
+                $user->roles()->attach($employeeRole);
+            }
+        }
+
+        // Copy profile photo to user if exists
+        if ($employee->profile_photo) {
+            $user->profile_photo = $employee->profile_photo;
+            $user->save();
+        }
+
         return redirect()->route('employees.index')
                      ->with('success', 'Employee "' . $employee->full_name . '" has been added successfully with ID: ' . $employee->employee_id . '.');
     }
@@ -439,6 +476,31 @@ class EmployeeController extends Controller
 
         $employee->update($validated);
 
+        // Update corresponding User record if exists
+        $user = \App\Models\User::where('email', $employee->email)->first();
+        if ($user) {
+            $user->update([
+                'first_name' => $employee->first_name,
+                'last_name' => $employee->last_name,
+                'is_active' => $employee->status === 'active',
+                'current_client_id' => $clientId,
+            ]);
+
+            // Update role if provided
+            if ($request->filled('role')) {
+                $role = \App\Models\Role::where('name', $request->input('role'))->first();
+                if ($role) {
+                    $user->roles()->sync([$role->id]);
+                }
+            }
+
+            // Copy profile photo to user if exists
+            if ($employee->profile_photo) {
+                $user->profile_photo = $employee->profile_photo;
+                $user->save();
+            }
+        }
+
         return redirect()->route('employees.index')
                      ->with('success', 'Employee "' . $employee->full_name . '" has been updated successfully.');
     }
@@ -452,6 +514,16 @@ class EmployeeController extends Controller
         $currentClient = session('current_client');
         if (!$currentClient || $employee->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to employee record.');
+        }
+
+        // Delete or inactivate corresponding User record if exists
+        $user = \App\Models\User::where('email', $employee->email)->first();
+        if ($user) {
+            // Option 1: Soft delete the user
+            // $user->delete();
+            // Option 2: Inactivate the user
+            $user->is_active = false;
+            $user->save();
         }
 
         $employee->delete();

@@ -15,6 +15,13 @@ trait BelongsToCurrentClient
         static::addGlobalScope('current_client', function (Builder $builder) {
             try {
                 $clientId = session('current_client_id');
+                $modelClass = static::class;
+
+                // Never apply filter to User model for any authenticated user's own profile/operations
+                if ($modelClass === \App\Models\User::class && auth()->check()) {
+                    // Don't apply filter
+                    return;
+                }
 
                 if ($clientId && method_exists(static::class, 'filterByClient')) {
                     static::filterByClient($builder, $clientId);
