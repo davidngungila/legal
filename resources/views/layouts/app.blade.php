@@ -1537,14 +1537,28 @@
             dropdown.classList.toggle('hidden');
         }
         
+        // Toggle Client Switcher Dropdown
+        function toggleClientSwitcher() {
+            const dropdown = document.getElementById('clientSwitcherDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
+            const userDropdown = document.getElementById('userDropdown');
             const userButton = document.getElementById('userButton');
+            const clientDropdown = document.getElementById('clientSwitcherDropdown');
+            const clientButton = document.getElementById('clientSwitcherButton');
             
-            if (dropdown && userButton) {
-                if (!userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                    dropdown.classList.add('hidden');
+            if (userDropdown && userButton) {
+                if (!userButton.contains(event.target) && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            }
+            
+            if (clientDropdown && clientButton) {
+                if (!clientButton.contains(event.target) && !clientDropdown.contains(event.target)) {
+                    clientDropdown.classList.add('hidden');
                 }
             }
         });

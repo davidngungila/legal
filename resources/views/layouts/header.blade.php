@@ -17,14 +17,46 @@
         
         <!-- Right Section -->
         <div class="flex items-center space-x-4">
-            <!-- Current Client Display -->
-            @if($currentClient)
+            <!-- Client Switcher Dropdown (for admins) -->
+            @if($currentUser && ($currentUser->hasRole('super_admin') || $currentUser->hasRole('admin') || $currentUser->hasRole('lead_hr_admin')))
+            <div class="relative">
+                <button id="clientSwitcherButton" onclick="toggleClientSwitcher()" class="flex items-center space-x-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                    <i data-feather="briefcase" class="w-4 h-4 text-green-600"></i>
+                    <div class="text-sm">
+                        <span class="text-xs text-gray-500">Client:</span>
+                        <span class="font-medium text-green-800">{{ $currentClient ? $currentClient->name : 'Select Client' }}</span>
+                    </div>
+                    <i data-feather="chevron-down" class="w-4 h-4 text-green-600"></i>
+                </button>
+                
+                <!-- Client Dropdown -->
+                <div id="clientSwitcherDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                    <div class="p-3 border-b border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900">Select Client</h3>
+                    </div>
+                    <div class="py-1">
+                        @foreach(\App\Models\Client::orderBy('name')->get() as $client)
+                        <button onclick="switchClient({{ $client->id }})" class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3 {{ $currentClient && $currentClient->id == $client->id ? 'bg-green-50 text-green-800' : '' }}">
+                            <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-feather="building" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ $client->name }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ $client->email }}</p>
+                            </div>
+                            @if($currentClient && $currentClient->id == $client->id)
+                            <i data-feather="check" class="w-4 h-4 text-green-600 flex-shrink-0"></i>
+                            @endif
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            @elseif($currentClient)
+            <!-- Current Client Display (non-admins) -->
             <div class="hidden md:flex items-center space-x-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
                 <i data-feather="briefcase" class="w-4 h-4 text-green-600"></i>
                 <div class="text-sm">
-                    @if($currentUser && $currentUser->hasRole('super_admin'))
-                        <span class="text-xs text-gray-500">Current:</span>
-                    @endif
                     <span class="font-medium text-green-800">{{ $currentClient->name }}</span>
                 </div>
             </div>

@@ -218,10 +218,6 @@ class AuthController
      */
     private function ensureClientContext(User $user, Request $request): void
     {
-        if ($user->hasRole('super_admin') && $user->clients()->count() === 0) {
-            return;
-        }
-
         $client = null;
 
         if ($user->current_client_id) {
@@ -241,12 +237,16 @@ class AuthController
         }
 
         $request->session()->put('current_client_id', $client->id);
+        $request->session()->put('current_client', $client);
+        $request->session()->put('current_client_name', $client->name);
 
         if ($user->current_client_id !== $client->id) {
             $user->update(['current_client_id' => $client->id]);
         }
 
-        if (!$user->clients()->where('clients.id', $client->id)->exists()) {
+        // For admin users, ensure they have access to the client
+        if (($user->hasRole('super_admin') || $user->hasRole('admin') || $user->hasRole('lead_hr_admin')) && 
+            !$user->clients()->where('clients.id', $client->id)->exists()) {
             $user->clients()->syncWithoutDetaching([
                 $client->id => [
                     'role' => $this->resolveClientPivotRole($user),
