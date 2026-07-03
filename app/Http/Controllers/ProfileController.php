@@ -17,7 +17,7 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('roles');
         $currentClient = session('current_client');
         $currentUser = $user; // Add currentUser for layout
         

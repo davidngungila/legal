@@ -299,7 +299,7 @@ class SelfServiceController extends Controller
      */
     public function profile()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('roles');
         $clientId = session('current_client_id');
         $employee = null;
         

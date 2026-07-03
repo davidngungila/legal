@@ -64,7 +64,14 @@
                         </div>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $user->first_name }} {{ $user->last_name }}</h3>
-                    <p class="text-gray-600 mb-4">{{ $user->job_title ?? 'Employee' }}</p>
+                    <p class="text-gray-600 mb-2">{{ $user->job_title ?? 'Employee' }}</p>
+                    @if($user->roles->count() > 0)
+                        <div class="flex items-center justify-center space-x-1 mb-3">
+                            @foreach($user->roles as $role)
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-semibold rounded-full">{{ $role->display_name ?? $role->name }}</span>
+                            @endforeach
+                        </div>
+                    @endif
                     <div class="flex items-center justify-center space-x-2 mb-4">
                         <span class="px-3 py-1 {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }} text-sm font-semibold rounded-full">
                             {{ $user->is_active ? 'Active' : 'Inactive' }}

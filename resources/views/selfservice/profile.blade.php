@@ -140,43 +140,51 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Profile</h3>
                 
-                @if($employee)
-                <div class="space-y-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <span class="text-xl font-bold text-indigo-600">{{ substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1) }}</span>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ $employee->first_name }} {{ $employee->last_name }}</p>
-                            <p class="text-sm text-gray-500">{{ $employee->position }}</p>
-                            <p class="text-sm text-gray-500">{{ $employee->employee_id }}</p>
+                <div class="text-center mb-6">
+                    <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 relative group" id="profile-photo-container">
+                        @if($user->profile_photo)
+                            <img src="{{ Storage::url($user->profile_photo) }}" alt="{{ $user->first_name }} {{ $user->last_name }}" class="w-full h-full rounded-full object-cover" id="profile-photo-img">
+                        @else
+                            <span class="text-white text-3xl font-bold" id="profile-photo-initials">{{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}</span>
+                        @endif
+                        <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="document.getElementById('photo-upload').click()">
+                            <i data-feather="camera" class="w-6 h-6 text-white"></i>
                         </div>
                     </div>
+                    <input type="file" id="photo-upload" class="hidden" accept="image/jpeg,image/jpg,image/png,image/gif" onchange="previewPhoto(this)">
                     
-                    <div class="border-t pt-4 space-y-2">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">Department:</span>
-                            <span class="text-gray-900">{{ $employee->department }}</span>
+                    <p class="font-semibold text-gray-900 text-xl">{{ $user->first_name }} {{ $user->last_name }}</p>
+                    @if($user->roles->count() > 0)
+                        <div class="flex items-center justify-center space-x-1 mt-2 mb-2">
+                            @foreach($user->roles as $role)
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">{{ $role->display_name ?? $role->name }}</span>
+                            @endforeach
                         </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">Email:</span>
-                            <span class="text-gray-900">{{ $employee->email }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">Phone:</span>
-                            <span class="text-gray-900">{{ $employee->phone ?? 'Not set' }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">Status:</span>
-                            <span>{!! $employee->status_badge !!}</span>
-                        </div>
-                    </div>
+                    @endif
+                    @if($employee)
+                        <p class="text-sm text-gray-500">{{ $employee->position }}</p>
+                        <p class="text-sm text-gray-500">{{ $employee->employee_id }}</p>
+                    @endif
                 </div>
-                @else
-                <div class="text-center py-8 text-gray-500">
-                    <i data-feather="user" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                    <p>No employee record found</p>
-                    <p class="text-sm mt-2">Contact HR to update your profile.</p>
+                
+                @if($employee)
+                <div class="border-t pt-4 space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Department:</span>
+                        <span class="text-gray-900">{{ $employee->department }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Email:</span>
+                        <span class="text-gray-900">{{ $employee->email }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Phone:</span>
+                        <span class="text-gray-900">{{ $employee->phone ?? 'Not set' }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Status:</span>
+                        <span>{!! $employee->status_badge !!}</span>
+                    </div>
                 </div>
                 @endif
             </div>
@@ -184,3 +192,77 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+let currentPhotoFile = null;
+
+function previewPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Invalid file type. Please upload a JPG, PNG, or GIF image.');
+        input.value = '';
+        return;
+    }
+    
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        alert('File size too large. Please upload an image smaller than 5MB.');
+        input.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const container = document.getElementById('profile-photo-container');
+        let img = container.querySelector('img');
+        let initials = container.querySelector('#profile-photo-initials');
+        
+        if (!img) {
+            img = document.createElement('img');
+            img.id = 'profile-photo-img';
+            img.className = 'w-full h-full rounded-full object-cover';
+            container.appendChild(img);
+        }
+        
+        img.src = e.target.result;
+        img.style.display = 'block';
+        if (initials) initials.style.display = 'none';
+        
+        currentPhotoFile = file;
+        uploadPhoto();
+    };
+    reader.readAsDataURL(file);
+}
+
+async function uploadPhoto() {
+    if (!currentPhotoFile) return;
+    
+    const formData = new FormData();
+    formData.append('photo', currentPhotoFile);
+    
+    try {
+        const response = await fetch('/profile/photo', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Profile photo updated successfully!');
+        } else {
+            alert(result.message || 'Failed to update photo');
+        }
+    } catch (error) {
+        console.error('Photo update error:', error);
+        alert('An error occurred while updating photo');
+    }
+}
+</script>
+@endpush
