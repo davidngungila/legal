@@ -34,6 +34,8 @@ class SetCurrentClient
             $clientId = Session::get('current_client_id');
         }
         
+        $currentClient = null;
+        
         // Validate that the client still exists
         if ($clientId) {
             $currentClient = Client::find($clientId);
@@ -59,7 +61,6 @@ class SetCurrentClient
             
             // Share current client with all views and session
             if ($currentClient) {
-                view()->share('currentClient', $currentClient);
                 Session::put('current_client', $currentClient);
             } else {
                 Session::forget('current_client');
@@ -67,6 +68,9 @@ class SetCurrentClient
         } else {
             Session::forget('current_client');
         }
+        
+        // Always share currentClient with views (even as null)
+        view()->share('currentClient', $currentClient);
 
         return $next($request);
     }
