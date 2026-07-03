@@ -28,8 +28,8 @@ class SetCurrentClient
             }
         }
         
-        // If no client is set in session or user record, try to set a default
-        if (!$clientId) {
+        // Only set a default client for authenticated users (never for guests on login page)
+        if (!$clientId && auth()->check()) {
             $this->setDefaultClient();
             $clientId = Session::get('current_client_id');
         }

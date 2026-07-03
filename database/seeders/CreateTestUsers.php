@@ -15,8 +15,8 @@ class CreateTestUsers extends Seeder
     public function run(): void
     {
         // Get or create roles
-        $adminRole = Role::where('name', 'admin')->first();
-        $managerRole = Role::where('name', 'manager')->first();
+        $adminRole = Role::where('name', 'lead_hr_admin')->first();
+        $managerRole = Role::where('name', 'line_manager')->first();
         $employeeRole = Role::where('name', 'employee')->first();
 
         // Create HR Admin

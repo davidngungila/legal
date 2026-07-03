@@ -50,72 +50,7 @@ class AuthController
             Auth::login($user, $remember);
             $request->session()->regenerate();
 
-            // Check if user is an Orvion user (super_admin with no clients)
-            $isOrvionUser = $user->hasRole('super_admin') && $user->clients()->count() === 0;
-
-            if (!$isOrvionUser) {
-                // Set current client for client users
-                if ($user->current_client_id) {
-                    $client = Client::find($user->current_client_id);
-                    if ($client) {
-                        $request->session()->put('current_client_id', $user->current_client_id);
-                        
-                        // For super_admin, ensure they have access to this client
-                        if ($user->hasRole('super_admin') && !$user->clients()->where('clients.id', $user->current_client_id)->exists()) {
-                            $user->clients()->syncWithoutDetaching([
-                                $user->current_client_id => [
-                                    'role' => 'admin',
-                                    'is_active' => true,
-                                    'joined_at' => now(),
-                                ],
-                            ]);
-                        }
-                    } else {
-                        // Client doesn't exist, get first available client
-                        if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
-                            $firstClient = Client::orderBy('name')->first();
-                        } else {
-                            $firstClient = $user->clients()->first();
-                        }
-                        if ($firstClient) {
-                            $request->session()->put('current_client_id', $firstClient->id);
-                            $user->update(['current_client_id' => $firstClient->id]);
-                            
-                            // For super_admin, ensure they have access to this client
-                            if ($user->hasRole('super_admin') && !$user->clients()->where('clients.id', $firstClient->id)->exists()) {
-                                $user->clients()->syncWithoutDetaching([
-                                    $firstClient->id => [
-                                        'role' => 'admin',
-                                        'is_active' => true,
-                                        'joined_at' => now(),
-                                    ],
-                                ]);
-                            }
-                        }
-                    }
-                } else {
-                    if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
-                        $firstClient = Client::orderBy('name')->first();
-                    } else {
-                        $firstClient = $user->clients()->first();
-                    }
-                    if ($firstClient) {
-                        $request->session()->put('current_client_id', $firstClient->id);
-                        $user->update(['current_client_id' => $firstClient->id]);
-                        
-                        // For super_admin, ensure they have access to this client
-                        if ($user->hasRole('super_admin') && !$user->clients()->where('clients.id', $firstClient->id)->exists()) {
-                            $user->clients()->syncWithoutDetaching([
-                                $firstClient->id => [
-                                    'role' => 'admin',
-                                    'is_active' => true,
-                                    'joined_at' => now(),
-                                ],
-                            ]);
-                        }
-                    }
-                }
-            }
+            $this->ensureClientContext($user, $request);
 
             // Update last login
             $user->update([
@@ -276,6 +211,66 @@ class AuthController
 
             return redirect('/dashboard')->with('success', 'Account created successfully!');
         });
+    }
+
+    /**
+     * Resolve and persist the active client for the authenticated user.
+     */
+    private function ensureClientContext(User $user, Request $request): void
+    {
+        if ($user->hasRole('super_admin') && $user->clients()->count() === 0) {
+            return;
+        }
+
+        $client = null;
+
+        if ($user->current_client_id) {
+            $client = Client::find($user->current_client_id);
+        }
+
+        if (!$client) {
+            if ($user->hasRole('super_admin') || $user->hasRole('admin') || $user->hasRole('lead_hr_admin')) {
+                $client = Client::orderBy('name')->first();
+            } else {
+                $client = $user->clients()->orderBy('name')->first();
+            }
+        }
+
+        if (!$client) {
+            return;
+        }
+
+        $request->session()->put('current_client_id', $client->id);
+
+        if ($user->current_client_id !== $client->id) {
+            $user->update(['current_client_id' => $client->id]);
+        }
+
+        if (!$user->clients()->where('clients.id', $client->id)->exists()) {
+            $user->clients()->syncWithoutDetaching([
+                $client->id => [
+                    'role' => $this->resolveClientPivotRole($user),
+                    'is_active' => true,
+                    'joined_at' => now(),
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Map application roles to client pivot roles.
+     */
+    private function resolveClientPivotRole(User $user): string
+    {
+        if ($user->hasRole('super_admin') || $user->hasRole('admin') || $user->hasRole('lead_hr_admin') || $user->hasRole('hr_officer')) {
+            return 'admin';
+        }
+
+        if ($user->hasRole('line_manager') || $user->hasRole('manager')) {
+            return 'manager';
+        }
+
+        return 'employee';
     }
 
     /**
