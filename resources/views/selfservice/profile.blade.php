@@ -248,13 +248,31 @@ async function uploadPhoto() {
         const response = await fetch('/profile/photo', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
             },
             body: formData
         });
         
         const result = await response.json();
         if (result.success) {
+            // Update UI if we have the photo URL
+            if (result.photo_url) {
+                const container = document.getElementById('profile-photo-container');
+                let img = container.querySelector('img');
+                let initials = container.querySelector('#profile-photo-initials');
+                
+                if (!img) {
+                    img = document.createElement('img');
+                    img.id = 'profile-photo-img';
+                    img.className = 'w-full h-full rounded-full object-cover';
+                    container.appendChild(img);
+                }
+                
+                img.src = result.photo_url;
+                img.style.display = 'block';
+                if (initials) initials.style.display = 'none';
+            }
+            
             alert('Profile photo updated successfully!');
         } else {
             alert(result.message || 'Failed to update photo');
