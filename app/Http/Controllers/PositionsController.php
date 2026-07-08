@@ -184,4 +184,150 @@ class PositionsController extends Controller
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ]);
     }
+
+    public function importTemplate()
+    {
+        $filename = 'positions_import_template.csv';
+        
+        $headers = [
+            'title',
+            'department_id',
+            'job_code',
+            'description',
+            'requirements',
+            'grade_level',
+            'min_salary',
+            'max_salary',
+            'is_active'
+        ];
+
+        $callback = function() use ($headers) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $headers);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ]);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt'
+        ]);
+
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No client selected'
+            ], 400);
+        }
+
+        try {
+            $file = $request->file('csv_file');
+            $path = $file->getRealPath();
+            $data = array_map('str_getcsv', file($path));
+            
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'CSV file is empty'
+                ], 400);
+            }
+
+            $headers = array_map('strtolower', $data[0]);
+            $rows = array_slice($data, 1);
+            
+            $imported = 0;
+            $skipped = 0;
+            $errors = [];
+
+            foreach ($rows as $row) {
+                // Skip empty rows
+                if (empty($row) || (count($row) === 1 && empty($row[0]))) {
+                    continue;
+                }
+                
+                $rowData = array_combine($headers, $row);
+                
+                // Check if array_combine failed (headers and row count mismatch)
+                if ($rowData === false) {
+                    $errors[] = "Row " . ($imported + $skipped + 1) . ": Column count mismatch";
+                    continue;
+                }
+                
+                // Check if position title is provided
+                if (empty($rowData['title'])) {
+                    $errors[] = "Row " . ($imported + $skipped + 1) . ": Position title is required";
+                    continue;
+                }
+                
+                // Check if position with same title exists for current client
+                $existingPosition = Position::where('client_id', $clientId)
+                    ->where('title', $rowData['title'])
+                    ->first();
+                
+                if ($existingPosition) {
+                    $skipped++;
+                    $errors[] = "Row " . ($imported + $skipped) . ": Position '{$rowData['title']}' already exists";
+                    continue;
+                }
+                
+                try {
+                    Position::create([
+                        'client_id' => $clientId,
+                        'title' => $rowData['title'],
+                        'department_id' => !empty($rowData['department_id']) ? $rowData['department_id'] : null,
+                        'job_code' => $rowData['job_code'] ?? null,
+                        'description' => $rowData['description'] ?? null,
+                        'requirements' => $rowData['requirements'] ?? null,
+                        'grade_level' => !empty($rowData['grade_level']) ? $rowData['grade_level'] : null,
+                        'min_salary' => !empty($rowData['min_salary']) ? $rowData['min_salary'] : null,
+                        'max_salary' => !empty($rowData['max_salary']) ? $rowData['max_salary'] : null,
+                        'is_active' => isset($rowData['is_active']) ? filter_var($rowData['is_active'], FILTER_VALIDATE_BOOLEAN) : true,
+                    ]);
+                    $imported++;
+                } catch (\Exception $e) {
+                    $errors[] = "Row " . ($imported + $skipped + 1) . ": " . $e->getMessage();
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'imported' => $imported,
+                'skipped' => $skipped,
+                'errors' => implode(', ', $errors)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Import failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function toggleStatus(Request $request, $id)
+    {
+        try {
+            $position = Position::findOrFail($id);
+            $position->update([
+                'is_active' => $request->is_active
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $position->is_active ? 'Position activated successfully!' : 'Position deactivated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update position status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

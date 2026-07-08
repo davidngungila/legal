@@ -127,7 +127,7 @@ class SupportTicket extends Model
     {
         $clientId = session('current_client_id');
         if (!$clientId) {
-            return static::query();
+            return static::where('client_id', 0); // Return empty query when no client is set
         }
 
         return static::where('client_id', $clientId);

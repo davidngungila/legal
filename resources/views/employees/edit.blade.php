@@ -152,6 +152,70 @@
                             </select>
                             @error('status') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
+
+                        <div>
+                            <label for="manager_id" class="block text-sm font-medium text-gray-700 mb-1">Reporting To</label>
+                            <select name="manager_id" id="manager_id"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('manager_id') border-red-500 @enderror">
+                                <option value="" disabled selected>Select Manager</option>
+                                @foreach(\App\Models\Employee::forCurrentClient()->where('id', '!=', $employee->id)->get() as $manager)
+                                    <option value="{{ $manager->id }}" {{ old('manager_id', $employee->manager_id) == $manager->id ? 'selected' : '' }}>{{ $manager->first_name }} {{ $manager->last_name }} - {{ $manager->position }}</option>
+                                @endforeach
+                            </select>
+                            @error('manager_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="work_schedule" class="block text-sm font-medium text-gray-700 mb-1">Work Schedule</label>
+                            <input type="text" name="work_schedule" id="work_schedule" value="{{ old('work_schedule', $employee->work_schedule) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('work_schedule') border-red-500 @enderror">
+                            @error('work_schedule') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="education_level" class="block text-sm font-medium text-gray-700 mb-1">Education Level</label>
+                            <input type="text" name="education_level" id="education_level" value="{{ old('education_level', $employee->education_level) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('education_level') border-red-500 @enderror">
+                            @error('education_level') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Skills & Qualifications</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="skills" class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+                            <input type="text" name="skills" id="skills" value="{{ old('skills', $employee->skills ? implode(', ', $employee->skills) : '') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('skills') border-red-500 @enderror"
+                                placeholder="Enter skills separated by commas">
+                            @error('skills') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="languages" class="block text-sm font-medium text-gray-700 mb-1">Languages</label>
+                            <input type="text" name="languages" id="languages" value="{{ old('languages', $employee->languages ? implode(', ', $employee->languages) : '') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('languages') border-red-500 @enderror"
+                                placeholder="Enter languages separated by commas">
+                            @error('languages') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="professional_qualifications" class="block text-sm font-medium text-gray-700 mb-1">Professional Qualifications</label>
+                            <input type="text" name="professional_qualifications" id="professional_qualifications" value="{{ old('professional_qualifications', $employee->professional_qualifications ? implode(', ', $employee->professional_qualifications) : '') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('professional_qualifications') border-red-500 @enderror"
+                                placeholder="Enter qualifications separated by commas">
+                            @error('professional_qualifications') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="certifications" class="block text-sm font-medium text-gray-700 mb-1">Certifications</label>
+                            <input type="text" name="certifications" id="certifications" value="{{ old('certifications', $employee->certifications ? implode(', ', $employee->certifications) : '') }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('certifications') border-red-500 @enderror"
+                                placeholder="Enter certifications separated by commas">
+                            @error('certifications') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
                     </div>
                 </div>
 
@@ -221,10 +285,112 @@
                             @error('national_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
                         <div>
+                            <label for="passport_number" class="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
+                            <input type="text" name="passport_number" id="passport_number" value="{{ old('passport_number', $employee->passport_number) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('passport_number') border-red-500 @enderror">
+                            @error('passport_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
                             <label for="tin_number" class="block text-sm font-medium text-gray-700 mb-1">TIN Number</label>
                             <input type="text" name="tin_number" id="tin_number" value="{{ old('tin_number', $employee->tin_number) }}"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('tin_number') border-red-500 @enderror">
                             @error('tin_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="nssf_number" class="block text-sm font-medium text-gray-700 mb-1">NSSF Number</label>
+                            <input type="text" name="nssf_number" id="nssf_number" value="{{ old('nssf_number', $employee->nssf_number) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('nssf_number') border-red-500 @enderror">
+                            @error('nssf_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="nhif_number" class="block text-sm font-medium text-gray-700 mb-1">NHIF Number</label>
+                            <input type="text" name="nhif_number" id="nhif_number" value="{{ old('nhif_number', $employee->nhif_number) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('nhif_number') border-red-500 @enderror">
+                            @error('nhif_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Address Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <input type="text" name="address" id="address" value="{{ old('address', $employee->address) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('address') border-red-500 @enderror">
+                            @error('address') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                            <input type="text" name="city" id="city" value="{{ old('city', $employee->city) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('city') border-red-500 @enderror">
+                            @error('city') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="region" class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                            <input type="text" name="region" id="region" value="{{ old('region', $employee->region) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('region') border-red-500 @enderror">
+                            @error('region') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                            <input type="text" name="postal_code" id="postal_code" value="{{ old('postal_code', $employee->postal_code) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('postal_code') border-red-500 @enderror">
+                            @error('postal_code') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                            <input type="text" name="country" id="country" value="{{ old('country', $employee->country) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('country') border-red-500 @enderror">
+                            @error('country') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Emergency Contact</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
+                            <input type="text" name="emergency_contact_name" id="emergency_contact_name" value="{{ old('emergency_contact_name', $employee->emergency_contact_name) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('emergency_contact_name') border-red-500 @enderror">
+                            @error('emergency_contact_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="emergency_contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
+                            <input type="text" name="emergency_contact_phone" id="emergency_contact_phone" value="{{ old('emergency_contact_phone', $employee->emergency_contact_phone) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('emergency_contact_phone') border-red-500 @enderror">
+                            @error('emergency_contact_phone') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="emergency_contact_relationship" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Relationship</label>
+                            <input type="text" name="emergency_contact_relationship" id="emergency_contact_relationship" value="{{ old('emergency_contact_relationship', $employee->emergency_contact_relationship) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('emergency_contact_relationship') border-red-500 @enderror">
+                            @error('emergency_contact_relationship') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Bank Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                            <input type="text" name="bank_name" id="bank_name" value="{{ old('bank_name', $employee->bank_name) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('bank_name') border-red-500 @enderror">
+                            @error('bank_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="bank_branch" class="block text-sm font-medium text-gray-700 mb-1">Bank Branch</label>
+                            <input type="text" name="bank_branch" id="bank_branch" value="{{ old('bank_branch', $employee->bank_branch) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('bank_branch') border-red-500 @enderror">
+                            @error('bank_branch') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="bank_account" class="block text-sm font-medium text-gray-700 mb-1">Bank Account</label>
+                            <input type="text" name="bank_account" id="bank_account" value="{{ old('bank_account', $employee->bank_account) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('bank_account') border-red-500 @enderror">
+                            @error('bank_account') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>

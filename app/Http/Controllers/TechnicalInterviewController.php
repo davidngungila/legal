@@ -7,6 +7,7 @@ use App\Models\HrCompetencyInterview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TechnicalInterviewController extends Controller
 {
@@ -27,7 +28,7 @@ class TechnicalInterviewController extends Controller
      */
     public function create()
     {
-        $hrInterviews = HrCompetencyInterview::where('status', 'hr_approved')->get();
+        $hrInterviews = HrCompetencyInterview::whereIn('status', ['submitted', 'hr_approved'])->get();
         return view('hris.technical-interview.create', compact('hrInterviews'));
     }
 
@@ -93,6 +94,40 @@ class TechnicalInterviewController extends Controller
     {
         $technicalInterview->load(['hrInterview', 'interviewer', 'departmentManager']);
         return view('hris.technical-interview.show', compact('technicalInterview'));
+    }
+
+    /**
+     * Generate PDF for technical interview.
+     */
+    public function generatePdf(TechnicalInterview $technicalInterview)
+    {
+        $technicalInterview->load(['hrInterview', 'interviewer', 'departmentManager']);
+        
+        $pdf = Pdf::loadView('hris.technical-interview.pdf', compact('technicalInterview'))
+            ->setPaper('a4')
+            ->setOption('margin-top', '20mm')
+            ->setOption('margin-bottom', '20mm')
+            ->setOption('margin-left', '15mm')
+            ->setOption('margin-right', '15mm');
+        
+        return $pdf->stream('technical-interview-' . $technicalInterview->interview_number . '.pdf');
+    }
+
+    /**
+     * Download PDF for technical interview.
+     */
+    public function downloadPdf(TechnicalInterview $technicalInterview)
+    {
+        $technicalInterview->load(['hrInterview', 'interviewer', 'departmentManager']);
+        
+        $pdf = Pdf::loadView('hris.technical-interview.pdf', compact('technicalInterview'))
+            ->setPaper('a4')
+            ->setOption('margin-top', '20mm')
+            ->setOption('margin-bottom', '20mm')
+            ->setOption('margin-left', '15mm')
+            ->setOption('margin-right', '15mm');
+        
+        return $pdf->download('technical-interview-' . $technicalInterview->interview_number . '.pdf');
     }
 
     /**
@@ -348,29 +383,6 @@ class TechnicalInterviewController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('File upload failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Generate PDF report.
-     */
-    public function generatePdf(TechnicalInterview $technicalInterview)
-    {
-        try {
-            // This would generate a PDF report using a library like DomPDF
-            // For now, return a success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Technical assessment PDF generated successfully',
-                'download_url' => '/technical-interviews/' . $technicalInterview->id . '/pdf'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('PDF generation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Sorry! Operation failed - ' . $e->getMessage()

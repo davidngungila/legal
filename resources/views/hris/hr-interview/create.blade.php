@@ -75,8 +75,41 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Place of Recruitment <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="place_of_recruitment" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" name="place_of_recruitment" required list="tanzaniaRegions"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="Type to filter regions...">
+                        <datalist id="tanzaniaRegions">
+                            <option value="Dar es Salaam">
+                            <option value="Arusha">
+                            <option value="Kilimanjaro">
+                            <option value="Tanga">
+                            <option value="Morogoro">
+                            <option value="Pwani (Coast)">
+                            <option value="Dodoma">
+                            <option value="Singida">
+                            <option value="Tabora">
+                            <option value="Kigoma">
+                            <option value="Shinyanga">
+                            <option value="Mwanza">
+                            <option value="Mara">
+                            <option value="Manyara">
+                            <option value="Lindi">
+                            <option value="Mtwara">
+                            <option value="Ruvuma">
+                            <option value="Iringa">
+                            <option value="Mbeya">
+                            <option value="Songwe">
+                            <option value="Katavi">
+                            <option value="Njombe">
+                            <option value="Geita">
+                            <option value="Simiyu">
+                            <option value="Kagera">
+                            <option value="Zanzibar Urban/West">
+                            <option value="Zanzibar North">
+                            <option value="Zanzibar Central/South">
+                            <option value="Pemba North">
+                            <option value="Pemba South">
+                        </datalist>
                         <span class="text-red-500 text-sm hidden" id="place_of_recruitment_error"></span>
                     </div>
                     <div>
@@ -423,16 +456,18 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Birthplace <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="birthplace" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" name="birthplace" required list="tanzaniaRegions"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="Type to filter regions...">
                         <span class="text-red-500 text-sm hidden" id="birthplace_error"></span>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Residence <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="residence" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" name="residence" required list="tanzaniaRegions"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="Type to filter regions...">
                         <span class="text-red-500 text-sm hidden" id="residence_error"></span>
                     </div>
                     <div>

@@ -174,6 +174,16 @@
                                             <i data-feather="edit-2" class="w-4 h-4"></i>
                                         </a>
                                     @endif
+                                    <a href="{{ route('technical-interview.generate-pdf', $interview) }}" 
+                                       class="text-purple-600 hover:text-purple-900"
+                                       title="Preview PDF">
+                                        <i data-feather="file-text" class="w-4 h-4"></i>
+                                    </a>
+                                    <a href="{{ route('technical-interview.download-pdf', $interview) }}" 
+                                       class="text-green-600 hover:text-green-900"
+                                       title="Download PDF">
+                                        <i data-feather="download" class="w-4 h-4"></i>
+                                    </a>
                                     @if($interview->status === 'submitted')
                                         <button onclick="approveInterview({{ $interview->id }})" 
                                                 class="text-green-600 hover:text-green-900"
@@ -184,13 +194,6 @@
                                                 class="text-red-600 hover:text-red-900"
                                                 title="Reject">
                                             <i data-feather="x-circle" class="w-4 h-4"></i>
-                                        </button>
-                                    @endif
-                                    @if($interview->status === 'manager_approved')
-                                        <button onclick="generatePdf({{ $interview->id }})" 
-                                                class="text-purple-600 hover:text-purple-900"
-                                                title="Generate PDF">
-                                            <i data-feather="file-text" class="w-4 h-4"></i>
                                         </button>
                                     @endif
                                 </div>
@@ -366,32 +369,8 @@ async function rejectInterview(interviewId) {
 }
 
 // Generate PDF function
-async function generatePdf(interviewId) {
-    try {
-        const response = await fetch(`/technical-interview/${interviewId}/generate-pdf`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showNotification('Technical assessment PDF generated successfully', 'success');
-            // You could trigger a download here if needed
-            if (result.download_url) {
-                window.open(result.download_url, '_blank');
-            }
-        } else {
-            showNotification(result.message || 'Operation failed', 'error');
-        }
-    } catch (error) {
-        console.error('PDF generation error:', error);
-        showNotification('An error occurred during the operation', 'error');
-    }
+function generatePdf(interviewId) {
+    window.location.href = `/technical-interview/${interviewId}/generate-pdf`;
 }
 
 function showNotification(message, type = 'info') {

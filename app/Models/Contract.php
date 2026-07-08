@@ -245,7 +245,7 @@ class Contract extends Model
             return $query->where('client_id', $clientId);
         }
         
-        return $query;
+        return $query->where('client_id', 0); // Return empty query when no client is set
     }
 
     /**

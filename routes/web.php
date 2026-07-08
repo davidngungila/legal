@@ -323,7 +323,8 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::post('/{technicalInterview}/reject', [TechnicalInterviewController::class, 'reject'])->name('reject');
         Route::post('/{technicalInterview}/upload-assessment', [TechnicalInterviewController::class, 'uploadAssessmentReport'])->name('upload-assessment');
         Route::post('/{technicalInterview}/upload-signed', [TechnicalInterviewController::class, 'uploadSignedFile'])->name('upload-signed');
-        Route::post('/{technicalInterview}/generate-pdf', [TechnicalInterviewController::class, 'generatePdf'])->name('generate-pdf');
+        Route::get('/{technicalInterview}/generate-pdf', [TechnicalInterviewController::class, 'generatePdf'])->name('generate-pdf');
+        Route::get('/{technicalInterview}/download-pdf', [TechnicalInterviewController::class, 'downloadPdf'])->name('download-pdf');
     });
 
     // HRIS - Employee Registration Routes
@@ -508,8 +509,11 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::prefix('departments')->name('departments.')->group(function () {
         Route::get('/', [\App\Http\Controllers\DepartmentsController::class, 'index'])->name('index');
         Route::get('/export', [\App\Http\Controllers\DepartmentsController::class, 'export'])->name('export');
+        Route::get('/import-template', [\App\Http\Controllers\DepartmentsController::class, 'importTemplate'])->name('import-template');
+        Route::post('/import', [\App\Http\Controllers\DepartmentsController::class, 'import'])->name('import');
         Route::post('/', [\App\Http\Controllers\DepartmentsController::class, 'store'])->name('store');
         Route::put('/{department}', [\App\Http\Controllers\DepartmentsController::class, 'update'])->name('update');
+        Route::post('/{department}/toggle-status', [\App\Http\Controllers\DepartmentsController::class, 'toggleStatus'])->name('toggle-status');
         Route::delete('/{department}', [\App\Http\Controllers\DepartmentsController::class, 'destroy'])->name('destroy');
     });
 
@@ -517,8 +521,11 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::prefix('positions')->name('positions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\PositionsController::class, 'index'])->name('index');
         Route::get('/export', [\App\Http\Controllers\PositionsController::class, 'export'])->name('export');
+        Route::get('/import-template', [\App\Http\Controllers\PositionsController::class, 'importTemplate'])->name('import-template');
+        Route::post('/import', [\App\Http\Controllers\PositionsController::class, 'import'])->name('import');
         Route::post('/', [\App\Http\Controllers\PositionsController::class, 'store'])->name('store');
         Route::put('/{position}', [\App\Http\Controllers\PositionsController::class, 'update'])->name('update');
+        Route::post('/{position}/toggle-status', [\App\Http\Controllers\PositionsController::class, 'toggleStatus'])->name('toggle-status');
         Route::delete('/{position}', [\App\Http\Controllers\PositionsController::class, 'destroy'])->name('destroy');
     });
 
