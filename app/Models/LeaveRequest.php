@@ -15,6 +15,7 @@ class LeaveRequest extends Model
     protected $fillable = [
         'client_id',
         'employee_id',
+        'leave_type_id',
         'leave_type',
         'start_date',
         'end_date',
@@ -22,6 +23,11 @@ class LeaveRequest extends Model
         'reason',
         'status',
         'approved_by',
+        'workflow_status',
+        'applied_at',
+        'applied_by',
+        'rejection_reason',
+        'approved_at',
     ];
 
     protected $casts = [
@@ -36,6 +42,14 @@ class LeaveRequest extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * Get the leave type for this request.
+     */
+    public function leaveType(): BelongsTo
+    {
+        return $this->belongsTo(LeaveType::class);
     }
 
     /**

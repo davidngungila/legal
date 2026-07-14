@@ -199,7 +199,11 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             Route::prefix('leave')->name('leave.')->group(function () {
                 Route::get('/', [App\Http\Controllers\LeaveController::class, 'index'])->name('index');
                 Route::post('/', [App\Http\Controllers\LeaveController::class, 'store'])->name('store');
-                Route::put('/{leaveRequest}', [App\Http\Controllers\LeaveController::class, 'updateStatus'])->name('updateStatus');
+                Route::get('/{id}', [App\Http\Controllers\LeaveController::class, 'show'])->name('show');
+                Route::put('/{id}', [App\Http\Controllers\LeaveController::class, 'updateStatus'])->name('updateStatus');
+                Route::post('/{id}/approve', [App\Http\Controllers\LeaveController::class, 'approve'])->name('approve');
+                Route::post('/{id}/reject', [App\Http\Controllers\LeaveController::class, 'reject'])->name('reject');
+                Route::delete('/{id}', [App\Http\Controllers\LeaveController::class, 'destroy'])->name('destroy');
                 Route::get('/balances', [App\Http\Controllers\LeaveController::class, 'balances'])->name('balances');
                 Route::get('/calendar', [App\Http\Controllers\LeaveController::class, 'calendar'])->name('calendar');
                 Route::get('/reports', [App\Http\Controllers\LeaveController::class, 'reports'])->name('reports');
@@ -658,9 +662,9 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
         // Client Switching API
         Route::prefix('client-switch')->group(function () {
-            Route::post('/switch', [ClientSwitchController::class, 'switch']);
-            Route::get('/current', [ClientSwitchController::class, 'current']);
-            Route::get('/available', [ClientSwitchController::class, 'available']);
+            Route::post('/switch', [ClientSwitchController::class, 'switch'])->middleware('auth');
+            Route::get('/current', [ClientSwitchController::class, 'current'])->middleware('auth');
+            Route::get('/available', [ClientSwitchController::class, 'available'])->middleware('auth');
         });
 
         // HRIS Stats API

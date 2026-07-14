@@ -294,7 +294,8 @@ function updateCompanyNames(companyName) {
 function updateCharts(client) {
     // Update Chart.js charts if they exist
     if (typeof Chart !== 'undefined') {
-        Chart.helpers.each(Chart.instances, function(instance) {
+        // Modern Chart.js API - iterate over instances directly
+        Chart.instances.forEach(function(instance) {
             if (instance.config.type === 'doughnut' && instance.data.labels.includes('Employees')) {
                 instance.data.datasets[0].data[0] = client.employees;
                 instance.update();

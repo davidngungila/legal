@@ -13,53 +13,74 @@ class ClientSwitchController extends Controller
      */
     public function switch(Request $request)
     {
-        if (!auth()->user()->hasRole('super_admin')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
-        }
+        try {
+            if (!auth()->user()->hasRole('super_admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
 
-        $request->validate([
-            'client_id' => 'required|exists:clients,id'
-        ]);
+            $request->validate([
+                'client_id' => 'required|exists:clients,id'
+            ]);
 
-        $clientId = $request->client_id;
-        $client = Client::findOrFail($clientId);
+            $clientId = $request->client_id;
+            $client = Client::findOrFail($clientId);
 
-        // Store the current client in session
-        Session::put('current_client_id', $clientId);
-        Session::put('current_client_name', $client->name);
-        Session::put('current_client', $client);
-        
-        // Persist to user record if authenticated
-        if (auth()->check()) {
-            $user = auth()->user();
-            $user->update(['current_client_id' => $clientId]);
+            // Check if client is active
+            if ($client->status !== 'active') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot switch to inactive client'
+                ], 400);
+            }
+
+            // Store the current client in session
+            Session::put('current_client_id', $clientId);
+            Session::put('current_client_name', $client->name);
+            Session::put('current_client', $client);
             
-            // For super_admin users, ensure they can access any client
-            // by adding the client to their relationship if not already present
-            if ($user->hasRole('super_admin')) {
-                if (!$user->clients()->where('clients.id', $clientId)->exists()) {
-                    $user->clients()->syncWithoutDetaching([
-                        $clientId => [
-                            'role' => 'admin',
-                            'is_active' => true,
-                            'joined_at' => now(),
-                        ],
-                    ]);
+            // Persist to user record if authenticated
+            if (auth()->check()) {
+                $user = auth()->user();
+                $user->update(['current_client_id' => $clientId]);
+                
+                // For super_admin users, ensure they can access any client
+                // by adding the client to their relationship if not already present
+                if ($user->hasRole('super_admin')) {
+                    if (!$user->clients()->where('clients.id', $clientId)->exists()) {
+                        $user->clients()->syncWithoutDetaching([
+                            $clientId => [
+                                'role' => 'admin',
+                                'is_active' => true,
+                                'joined_at' => now(),
+                            ],
+                        ]);
+                    }
                 }
             }
-        }
-        
-        // Also share with views immediately for this request
-        view()->share('currentClient', $client);
+            
+            // Also share with views immediately for this request
+            view()->share('currentClient', $client);
 
-        return response()->json([
-            'success' => true,
-            'message' => "Switched to {$client->name}",
-            'client' => $client
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => "Switched to {$client->name}",
+                'client' => $client
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Client switch error: ' . $e->getMessage(), [
+                'client_id' => $request->client_id ?? null,
+                'user_id' => auth()->id() ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to switch client: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
