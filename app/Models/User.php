@@ -16,6 +16,13 @@ use App\Models\Traits\BelongsToCurrentClient;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = ['name'];
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, BelongsToCurrentClient;
 
@@ -166,6 +173,14 @@ class User extends Authenticatable
     public function supportTickets()
     {
         return $this->hasMany(SupportTicket::class);
+    }
+
+    /**
+     * Get the user's full name.
+     */
+    public function getNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
     }
 
     /**

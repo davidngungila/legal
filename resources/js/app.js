@@ -1,8 +1,10 @@
 import './bootstrap';
 import feather from 'feather-icons';
+import Chart from 'chart.js/auto';
 
 // Make feather globally available
 window.feather = feather;
+window.Chart = Chart;
 
 // LegalHR JavaScript Application
 
@@ -38,14 +40,12 @@ function showClientSwitchModal(clientId) {
     modalOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // Very light transparent overlay
     modalOverlay.id = 'clientSwitchModal';
     
-    // Get client name
-    const clients = {
-        '1': 'ABC Manufacturing Ltd',
-        '2': 'XYZ Construction Co',
-        '3': 'Tanzania Mining Corp',
-        '4': 'East Africa Logistics'
-    };
-    const clientName = clients[clientId] || 'Unknown Client';
+    // Resolve the live client name from the shared layout helpers when available
+    const clientName = typeof window.getClientNameById === 'function'
+        ? window.getClientNameById(clientId)
+        : (Array.isArray(window.allClients)
+            ? (window.allClients.find(c => String(c.id) === String(clientId))?.name || 'LegalHR - Tanzania HR Management System')
+            : 'LegalHR - Tanzania HR Management System');
     
     // Create modal content
     modalOverlay.innerHTML = `
@@ -106,12 +106,14 @@ function confirmClientSwitch(clientId, clientName) {
     showClientSwitchSplash(clientName);
     
     // Call backend API to switch client
-    fetch('/client-switch/switch', {
+    fetch('/api/client-switch/switch', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json'
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
             client_id: clientId
         })
@@ -195,13 +197,6 @@ function hideClientSwitchSplash(clientName) {
                     </div>
                     <h2 class="text-3xl font-bold mb-4">Client Switched!</h2>
                     <p class="text-xl opacity-90">You are now working in <strong>${clientName}</strong></p>
-                </div>
-                
-                <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-6">
-                    <p class="text-sm mb-2">✅ Dashboard data updated</p>
-                    <p class="text-sm mb-2">✅ Employee records refreshed</p>
-                    <p class="text-sm mb-2">✅ Analytics data synchronized</p>
-                    <p class="text-sm">✅ Company information loaded</p>
                 </div>
                 
                 <button onclick="closeClientSwitchSplash()" class="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
@@ -346,12 +341,7 @@ function createMobileOverlay() {
     document.body.appendChild(overlay);
 }
 
-function toggleUserDropdown() {
-    const dropdown = document.getElementById('userDropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('hidden');
-    }
-}
+
 
 // Notifications
 window.showNotification = function showNotification(message, type = 'info', duration = 3000) {
@@ -468,9 +458,18 @@ function hideTooltip() {
 
 // Chart Utilities
 function initializeCharts() {
+    if (typeof Chart === 'undefined') {
+        return;
+    }
+
     // Employee Distribution Chart
     const employeeCtx = document.getElementById('employeeChart');
-    if (employeeCtx && typeof Chart !== 'undefined') {
+    if (employeeCtx) {
+        const existingEmployeeChart = Chart.getChart(employeeCtx);
+        if (existingEmployeeChart) {
+            existingEmployeeChart.destroy();
+        }
+
         new Chart(employeeCtx, {
             type: 'doughnut',
             data: {
@@ -495,7 +494,12 @@ function initializeCharts() {
     
     // Attendance Trend Chart
     const attendanceCtx = document.getElementById('attendanceChart');
-    if (attendanceCtx && typeof Chart !== 'undefined') {
+    if (attendanceCtx) {
+        const existingAttendanceChart = Chart.getChart(attendanceCtx);
+        if (existingAttendanceChart) {
+            existingAttendanceChart.destroy();
+        }
+
         new Chart(attendanceCtx, {
             type: 'line',
             data: {
@@ -602,25 +606,6 @@ window.hideModal = function hideModal(modalId) {
     }
 }
 
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(event) {
-    // Close user dropdown
-    const userDropdown = document.getElementById('userDropdown');
-    const userButton = document.getElementById('userButton');
-    
-    if (userButton && !userButton.contains(event.target) && userDropdown && !userDropdown.contains(event.target)) {
-        userDropdown.classList.add('hidden');
-    }
-    
-    // Close notification dropdown
-    const notificationDropdown = document.getElementById('notificationDropdown');
-    const notificationButton = event.target.closest('button[onclick="toggleNotifications()"], button[onclick*="toggleNotifications"]');
-    
-    if (notificationDropdown && !notificationDropdown.contains(event.target) && !notificationButton) {
-        notificationDropdown.classList.add('hidden');
-    }
-});
-
 // Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
@@ -629,12 +614,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Notification System
-function toggleNotifications() {
-    const notificationDropdown = document.getElementById('notificationDropdown');
-    if (notificationDropdown) {
-        notificationDropdown.classList.toggle('hidden');
-    }
-}
 
 function removeNotification(id) {
     const notification = document.querySelector(`.notification-item[data-id="${id}"]`);
@@ -710,8 +689,25 @@ function addNotification(title, message, type = 'info') {
     updateNotificationBadge();
 }
 
-// Close notification dropdown when clicking outside
+// Close all dropdowns when clicking outside
 document.addEventListener('click', function(event) {
+    // Close client switcher dropdown
+    const clientSwitcherDropdown = document.getElementById('clientSwitcherDropdown');
+    const clientSwitcherButton = event.target.closest('button[onclick="toggleClientSwitcher()"]');
+    
+    if (clientSwitcherDropdown && !clientSwitcherDropdown.contains(event.target) && !clientSwitcherButton) {
+        clientSwitcherDropdown.classList.add('hidden');
+    }
+    
+    // Close user dropdown
+    const userDropdown = document.getElementById('userDropdown');
+    const userButton = event.target.closest('button[onclick="toggleUserDropdown()"]');
+    
+    if (userDropdown && !userDropdown.contains(event.target) && !userButton) {
+        userDropdown.classList.add('hidden');
+    }
+    
+    // Close notification dropdown
     const notificationDropdown = document.getElementById('notificationDropdown');
     const notificationButton = event.target.closest('button[onclick="toggleNotifications()"]');
     
@@ -720,9 +716,51 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// Toggle client switcher dropdown
+function toggleClientSwitcher() {
+    // Close other dropdowns first
+    document.getElementById('userDropdown')?.classList.add('hidden');
+    document.getElementById('notificationDropdown')?.classList.add('hidden');
+    
+    const dropdown = document.getElementById('clientSwitcherDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
+// Toggle user dropdown
+function toggleUserDropdown() {
+    // Close other dropdowns first
+    document.getElementById('clientSwitcherDropdown')?.classList.add('hidden');
+    document.getElementById('notificationDropdown')?.classList.add('hidden');
+    
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
+// Toggle notifications dropdown
+function toggleNotifications() {
+    // Close other dropdowns first
+    document.getElementById('clientSwitcherDropdown')?.classList.add('hidden');
+    document.getElementById('userDropdown')?.classList.add('hidden');
+    
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    if (notificationDropdown) {
+        notificationDropdown.classList.toggle('hidden');
+    }
+}
+
 // Export functions for global use
 window.LegalHR = {
     switchClient,
+    showClientSwitchModal,
+    closeClientSwitchModal,
+    confirmClientSwitch,
+    showClientSwitchSplash,
+    hideClientSwitchSplash,
+    closeClientSwitchSplash,
     toggleSidebar,
     toggleUserDropdown,
     showNotification,
@@ -732,8 +770,32 @@ window.LegalHR = {
     exportTable,
     validateForm,
     toggleNotifications,
+    toggleClientSwitcher,
     removeNotification,
     markAllAsRead,
     addNotification,
     updateNotificationBadge
 };
+
+// Also assign functions directly to window for backward compatibility with onclick handlers
+window.switchClient = switchClient;
+window.showClientSwitchModal = showClientSwitchModal;
+window.closeClientSwitchModal = closeClientSwitchModal;
+window.confirmClientSwitch = confirmClientSwitch;
+window.showClientSwitchSplash = showClientSwitchSplash;
+window.hideClientSwitchSplash = hideClientSwitchSplash;
+window.closeClientSwitchSplash = closeClientSwitchSplash;
+window.toggleSidebar = toggleSidebar;
+window.toggleUserDropdown = toggleUserDropdown;
+window.showNotification = showNotification;
+window.showModal = showModal;
+window.hideModal = hideModal;
+window.printPage = printPage;
+window.exportTable = exportTable;
+window.validateForm = validateForm;
+window.toggleNotifications = toggleNotifications;
+window.toggleClientSwitcher = toggleClientSwitcher;
+window.removeNotification = removeNotification;
+window.markAllAsRead = markAllAsRead;
+window.addNotification = addNotification;
+window.updateNotificationBadge = updateNotificationBadge;
