@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientSwitchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,13 @@ use App\Http\Controllers\ClientController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+// Client Switch API Routes
+Route::prefix('client-switch')->middleware(['web', 'auth'])->group(function () {
+    Route::post('/switch', [ClientSwitchController::class, 'switch']);
+    Route::get('/current', [ClientSwitchController::class, 'current']);
+    Route::get('/available', [ClientSwitchController::class, 'available']);
+});
 
 // Users API Routes
 Route::prefix('users')->group(function () {

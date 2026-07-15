@@ -14,10 +14,27 @@ class ClientSwitchController extends Controller
     public function switch(Request $request)
     {
         try {
-            if (!auth()->user()->hasRole('super_admin')) {
+            // Log the attempt
+            \Log::info('Client switch attempt', [
+                'client_id' => $request->client_id,
+                'user_id' => auth()->id(),
+                'user_email' => auth()->user()->email ?? null,
+                'user_roles' => auth()->user()->roles->pluck('name')->toArray() ?? []
+            ]);
+
+            // Check if user is authenticated
+            if (!auth()->check()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            // Check if user has appropriate role (super_admin, admin, or lead_hr_admin)
+            if (!auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('admin') && !auth()->user()->hasRole('lead_hr_admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: You do not have permission to switch clients'
                 ], 403);
             }
 
@@ -63,6 +80,12 @@ class ClientSwitchController extends Controller
             
             // Also share with views immediately for this request
             view()->share('currentClient', $client);
+
+            \Log::info('Client switch successful', [
+                'client_id' => $clientId,
+                'client_name' => $client->name,
+                'user_id' => auth()->id()
+            ]);
 
             return response()->json([
                 'success' => true,

@@ -99,18 +99,24 @@ function closeClientSwitchModal() {
 }
 
 function confirmClientSwitch(clientId, clientName) {
+    console.log('Starting client switch process for:', clientId, clientName);
+    
     // Close modal
     closeClientSwitchModal();
     
     // Show splash screen
     showClientSwitchSplash(clientName);
     
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    console.log('CSRF Token:', csrfToken ? 'Present' : 'Missing');
+    
     // Call backend API to switch client
     fetch('/api/client-switch/switch', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'X-CSRF-TOKEN': csrfToken || '',
             'Accept': 'application/json'
         },
         credentials: 'same-origin',
@@ -118,8 +124,13 @@ function confirmClientSwitch(clientId, clientName) {
             client_id: clientId
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Client switch response status:', response.status);
+        console.log('Client switch response ok:', response.ok);
+        return response.json();
+    })
     .then(data => {
+        console.log('Client switch response data:', data);
         if (data.success) {
             // Store selected client
             localStorage.setItem('selectedClient', clientId);
@@ -138,6 +149,7 @@ function confirmClientSwitch(clientId, clientName) {
             // Handle error
             hideClientSwitchSplash(clientName);
             showNotification('Failed to switch client: ' + (data.message || 'Unknown error'), 'error');
+            console.error('Client switch failed:', data);
         }
     })
     .catch(error => {
@@ -294,13 +306,22 @@ function updateCompanyNames(companyName) {
 function updateCharts(client) {
     // Update Chart.js charts if they exist
     if (typeof Chart !== 'undefined') {
-        // Modern Chart.js API - iterate over instances directly
-        Chart.instances.forEach(function(instance) {
-            if (instance.config.type === 'doughnut' && instance.data.labels.includes('Employees')) {
-                instance.data.datasets[0].data[0] = client.employees;
-                instance.update();
+        try {
+            // Modern Chart.js API - iterate over instances directly
+            if (Chart.instances && typeof Chart.instances.forEach === 'function') {
+                Chart.instances.forEach(function(instance) {
+                    if (instance.config.type === 'doughnut' && instance.data.labels.includes('Employees')) {
+                        instance.data.datasets[0].data[0] = client.employees;
+                        instance.update();
+                    }
+                });
+            } else {
+                // Fallback for older Chart.js versions or different API
+                console.log('Chart instances not available or API different, skipping chart update');
             }
-        });
+        } catch (error) {
+            console.error('Error updating charts:', error);
+        }
     }
 }
 
