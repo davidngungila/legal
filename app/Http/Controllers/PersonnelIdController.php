@@ -53,12 +53,12 @@ class PersonnelIdController extends Controller
             'valid_until' => 'required|date|after:valid_from',
             'access_areas' => 'nullable|string|max:1000',
             'special_permissions' => 'nullable|string|max:1000',
-            'photo' => 'required|file|mimes:jpg,jpeg,png|max:5120',
-            'signature' => 'required|file|mimes:jpg,jpeg,png|max:5120',
+            'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'signature' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'fingerprint' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
-            'emergency_access' => 'required|boolean',
-            'after_hours_access' => 'required|boolean',
-            'status' => 'required|in:pending,approved,rejected,issued,expired,lost,damaged',
+            'emergency_access' => 'nullable|boolean',
+            'after_hours_access' => 'nullable|boolean',
+            'status' => 'nullable|in:pending,approved,rejected,issued,expired,lost,damaged',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -95,6 +95,9 @@ class PersonnelIdController extends Controller
             $application = PersonnelIdApplication::create(array_merge($request->except(['photo', 'signature', 'fingerprint']), $uploadedFiles, [
                 'client_id' => session('current_client_id'),
                 'id_number' => $idNumber,
+                'status' => $request->input('status', 'pending'),
+                'emergency_access' => $request->input('emergency_access', false),
+                'after_hours_access' => $request->input('after_hours_access', false),
                 'created_by' => auth()->id(),
                 'updated_by' => auth()->id(),
             ]));

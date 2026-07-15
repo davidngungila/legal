@@ -16,7 +16,12 @@ class SocialRecordsController extends Controller
      */
     public function index()
     {
-        $employees = EmployeeRegistration::where('status', 'approved')
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $employees = EmployeeRegistration::where('client_id', $clientId)
             ->with('socialRecord')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -205,16 +210,57 @@ class SocialRecordsController extends Controller
     public function statistics()
     {
         try {
-            // In a real implementation, this would query the social_records table
+            $clientId = session('current_client_id');
+            
+            $totalEmployees = EmployeeRegistration::where('client_id', $clientId)->count();
+            
+            // Get employees with social records
+            $employeesWithRecords = SocialRecord::where('client_id', $clientId)
+                ->pluck('employee_registration_id')
+                ->toArray();
+            
+            $employeesWithNssf = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('nssf_number')
+                ->where('nssf_number', '!=', '')
+                ->count();
+            
+            $employeesWithNhif = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('nhif_number')
+                ->where('nhif_number', '!=', '')
+                ->count();
+            
+            $employeesWithTin = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('tin_number')
+                ->where('tin_number', '!=', '')
+                ->count();
+            
+            $employeesWithWcf = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('wcf_number')
+                ->where('wcf_number', '!=', '')
+                ->count();
+            
+            $employeesWithBank = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('bank_account_number')
+                ->where('bank_account_number', '!=', '')
+                ->count();
+            
+            $activeRecords = SocialRecord::where('client_id', $clientId)
+                ->where('status', 'active')
+                ->count();
+            
+            $inactiveRecords = SocialRecord::where('client_id', $clientId)
+                ->where('status', 'inactive')
+                ->count();
+
             $stats = [
-                'total_employees' => EmployeeRegistration::where('status', 'approved')->count(),
-                'employees_with_nssf' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'employees_with_nhif' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'employees_with_tin' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'employees_with_wcf' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'employees_with_bank' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'active_records' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'inactive_records' => 0, // Placeholder
+                'total_employees' => $totalEmployees,
+                'employees_with_nssf' => $employeesWithNssf,
+                'employees_with_nhif' => $employeesWithNhif,
+                'employees_with_tin' => $employeesWithTin,
+                'employees_with_wcf' => $employeesWithWcf,
+                'employees_with_bank' => $employeesWithBank,
+                'active_records' => $activeRecords,
+                'inactive_records' => $inactiveRecords,
             ];
 
             return response()->json([
@@ -237,15 +283,30 @@ class SocialRecordsController extends Controller
     public function missingRecords()
     {
         try {
-            // In a real implementation, this would find employees without complete social records
-            $employees = EmployeeRegistration::where('status', 'approved')
+            $clientId = session('current_client_id');
+            
+            // Find employees without complete social records
+            $employeesWithCompleteRecords = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('nssf_number')
+                ->where('nssf_number', '!=', '')
+                ->whereNotNull('nhif_number')
+                ->where('nhif_number', '!=', '')
+                ->whereNotNull('tin_number')
+                ->where('tin_number', '!=', '')
+                ->whereNotNull('bank_account_number')
+                ->where('bank_account_number', '!=', '')
+                ->pluck('employee_registration_id')
+                ->toArray();
+            
+            $employeesMissingRecords = EmployeeRegistration::where('client_id', $clientId)
+                ->whereNotIn('id', $employeesWithCompleteRecords)
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get();
 
             return response()->json([
                 'success' => true,
-                'employees' => $employees
+                'employees' => $employeesMissingRecords
             ]);
 
         } catch (\Exception $e) {
