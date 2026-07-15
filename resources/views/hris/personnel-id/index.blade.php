@@ -11,7 +11,7 @@
             <p class="text-gray-600 mt-2">Manage employee ID cards and access credentials</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button onclick="showAddApplicationModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+            <button type="button" onclick="document.getElementById('addApplicationModal').classList.remove('hidden'); document.getElementById('addApplicationModal').classList.add('flex'); document.body.style.overflow = 'hidden'; if(typeof feather !== 'undefined') feather.replace();" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
                 <i data-feather="plus" class="w-4 h-4 mr-2"></i>
                 Add Application
             </button>
@@ -294,154 +294,148 @@
 </div>
 
 <!-- Add Application Modal -->
-<div id="addApplicationModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="hideAddApplicationModal()"></div>
-    
-    <!-- Modal Container -->
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale100 opacity-100 max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl flex-shrink-0">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <i data-feather="credit-card" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Add ID Application</h3>
-                            <p class="text-sm text-gray-500">Create a new personnel ID card application</p>
-                        </div>
+<div id="addApplicationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[9999]">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col relative z-[10000]">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i data-feather="credit-card" class="w-5 h-5 text-white"></i>
                     </div>
-                    <button type="button" onclick="hideAddApplicationModal()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                        <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                    </button>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Add ID Application</h3>
+                        <p class="text-sm text-gray-500">Create a new personnel ID card application</p>
+                    </div>
                 </div>
+                <button type="button" onclick="document.getElementById('addApplicationModal').classList.add('hidden'); document.getElementById('addApplicationModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
+                    <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+                </button>
             </div>
+        </div>
             
-            <!-- Form Content -->
-            <form id="addApplicationForm" class="px-6 py-6 overflow-y-auto flex-1">
-                @csrf
-                <div class="space-y-6">
-                    <!-- Employee Selection -->
+        <!-- Form Content -->
+        <form id="addApplicationForm" class="px-6 py-6 overflow-y-auto flex-1">
+            @csrf
+            <div class="space-y-6">
+                <!-- Employee Selection -->
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="user" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                        Employee
+                        <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <select id="addEmployeeId" name="employee_id" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
+                        <option value="">Select Employee</option>
+                        @foreach($employees as $employee)
+                            <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }} - {{ $employee->employee_id }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <!-- ID Type and Purpose -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="user" class="w-4 h-4 mr-2 text-indigo-600"></i>
-                            Employee
+                            <i data-feather="hash" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                            ID Type
                             <span class="text-red-500 ml-1">*</span>
                         </label>
-                        <select id="addEmployeeId" name="employee_id" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
-                            <option value="">Select Employee</option>
-                            @foreach($employees as $employee)
-                                <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }} - {{ $employee->employee_id }}</option>
-                            @endforeach
+                        <select id="addIdType" name="id_type" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
+                            <option value="">Select Type</option>
+                            <option value="employee_card">Employee Card</option>
+                            <option value="access_card">Access Card</option>
+                            <option value="visitor_card">Visitor Card</option>
+                            <option value="contractor_card">Contractor Card</option>
                         </select>
                     </div>
-                    
-                    <!-- ID Type and Purpose -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="flex items-center text-sm font-semibold text-gray-700">
-                                <i data-feather="hash" class="w-4 h-4 mr-2 text-indigo-600"></i>
-                                ID Type
-                                <span class="text-red-500 ml-1">*</span>
-                            </label>
-                            <select id="addIdType" name="id_type" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
-                                <option value="">Select Type</option>
-                                <option value="employee_card">Employee Card</option>
-                                <option value="access_card">Access Card</option>
-                                <option value="visitor_card">Visitor Card</option>
-                                <option value="contractor_card">Contractor Card</option>
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex items-center text-sm font-semibold text-gray-700">
-                                <i data-feather="file-text" class="w-4 h-4 mr-2 text-indigo-600"></i>
-                                Purpose
-                                <span class="text-red-500 ml-1">*</span>
-                            </label>
-                            <textarea id="addIdPurpose" name="id_purpose" rows="1" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white resize-none" required placeholder="Brief purpose description"></textarea>
-                        </div>
-                    </div>
-                    
-                    <!-- Validity Period -->
                     <div class="space-y-2">
                         <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="calendar" class="w-4 h-4 mr-2 text-indigo-600"></i>
-                            Validity Period
+                            <i data-feather="file-text" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                            Purpose
                             <span class="text-red-500 ml-1">*</span>
                         </label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="text-xs text-gray-500 mb-1 block">Valid From</label>
-                                <input type="date" id="addValidFrom" name="valid_from" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-500 mb-1 block">Valid Until</label>
-                                <input type="date" id="addValidUntil" name="valid_until" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
-                            </div>
-                        </div>
+                        <textarea id="addIdPurpose" name="id_purpose" rows="1" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white resize-none" required placeholder="Brief purpose description"></textarea>
                     </div>
-                    
-                    <!-- Access Details -->
-                    <div class="space-y-2">
-                        <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="map" class="w-4 h-4 mr-2 text-indigo-600"></i>
-                            Access Details
-                        </label>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-xs text-gray-500 mb-1 block">Access Areas</label>
-                                <input type="text" id="addAccessAreas" name="access_areas" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" placeholder="e.g., Building A, Floor 1, Server Room">
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-500 mb-1 block">Special Permissions</label>
-                                <input type="text" id="addSpecialPermissions" name="special_permissions" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" placeholder="e.g., Lab access, Equipment room">
-                            </div>
+                </div>
+                
+                <!-- Validity Period -->
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="calendar" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                        Validity Period
+                        <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-xs text-gray-500 mb-1 block">Valid From</label>
+                            <input type="date" id="addValidFrom" name="valid_from" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
                         </div>
-                    </div>
-                    
-                    <!-- Access Privileges -->
-                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 space-y-3">
-                        <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="shield" class="w-4 h-4 mr-2 text-indigo-600"></i>
-                            Access Privileges
-                        </label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label class="flex items-center space-x-3 cursor-pointer group">
-                                <div class="relative">
-                                    <input type="checkbox" id="addEmergencyAccess" name="emergency_access" class="sr-only peer">
-                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all flex items-center justify-center">
-                                        <i data-feather="check" class="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
-                                    </div>
-                                </div>
-                                <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Emergency Access</span>
-                            </label>
-                            <label class="flex items-center space-x-3 cursor-pointer group">
-                                <div class="relative">
-                                    <input type="checkbox" id="addAfterHoursAccess" name="after_hours_access" class="sr-only peer">
-                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all flex items-center justify-center">
-                                        <i data-feather="check" class="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
-                                    </div>
-                                </div>
-                                <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">After Hours Access</span>
-                            </label>
+                        <div>
+                            <label class="text-xs text-gray-500 mb-1 block">Valid Until</label>
+                            <input type="date" id="addValidUntil" name="valid_until" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" required>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Footer Actions -->
-                <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
-                    <button type="button" onclick="hideAddApplicationModal()" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
-                        <i data-feather="plus" class="w-4 h-4 mr-2"></i>
-                        Add Application
-                    </button>
+                <!-- Access Details -->
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="map" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                        Access Details
+                    </label>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-gray-500 mb-1 block">Access Areas</label>
+                            <input type="text" id="addAccessAreas" name="access_areas" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" placeholder="e.g., Building A, Floor 1, Server Room">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 mb-1 block">Special Permissions</label>
+                            <input type="text" id="addSpecialPermissions" name="special_permissions" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white" placeholder="e.g., Lab access, Equipment room">
+                        </div>
+                    </div>
                 </div>
-            </form>
-        </div>
+                
+                <!-- Access Privileges -->
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 space-y-3">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="shield" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                        Access Privileges
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-center space-x-3 cursor-pointer group">
+                            <div class="relative">
+                                <input type="checkbox" id="addEmergencyAccess" name="emergency_access" class="sr-only peer">
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all flex items-center justify-center">
+                                    <i data-feather="check" class="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Emergency Access</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer group">
+                            <div class="relative">
+                                <input type="checkbox" id="addAfterHoursAccess" name="after_hours_access" class="sr-only peer">
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all flex items-center justify-center">
+                                    <i data-feather="check" class="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">After Hours Access</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
+                <button type="button" onclick="document.getElementById('addApplicationModal').classList.add('hidden'); document.getElementById('addApplicationModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
+                    <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                    Add Application
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -789,100 +783,94 @@
 </div>
 
 <!-- Report Lost Modal -->
-<div id="reportLostModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="hideReportLostModal()"></div>
-    
-    <!-- Modal Container -->
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale100 opacity-100 max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-pink-50 rounded-t-2xl flex-shrink-0">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <i data-feather="alert-circle" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Report Lost ID Card</h3>
-                            <p class="text-sm text-gray-500">Report a lost or missing personnel ID card</p>
-                        </div>
+<div id="reportLostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[9999]">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col relative z-[10000]">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-pink-50 rounded-t-2xl flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i data-feather="alert-circle" class="w-5 h-5 text-white"></i>
                     </div>
-                    <button type="button" onclick="hideReportLostModal()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                        <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                    </button>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Report Lost ID Card</h3>
+                        <p class="text-sm text-gray-500">Report a lost or missing personnel ID card</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('reportLostModal').classList.add('hidden'); document.getElementById('reportLostModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
+                    <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+                </button>
+            </div>
+        </div>
+            
+        <!-- Form Content -->
+        <form id="reportLostForm" class="px-6 py-6 overflow-y-auto flex-1">
+            @csrf
+            <input type="hidden" id="lostEmployeeId" name="employee_id">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="calendar" class="w-4 h-4 mr-2 text-red-600"></i>
+                        Lost Date
+                        <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <input type="date" name="lost_date" id="lostDate" required
+                           class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white">
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="map-pin" class="w-4 h-4 mr-2 text-red-600"></i>
+                        Lost Location
+                        <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <input type="text" name="lost_location" id="lostLocation" required
+                           class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white" placeholder="e.g., Office building, parking lot">
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <i data-feather="file-text" class="w-4 h-4 mr-2 text-red-600"></i>
+                        Circumstances
+                        <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea name="circumstances" id="circumstances" rows="3" required
+                              class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white resize-none" placeholder="Describe how the ID card was lost..."></textarea>
+                </div>
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-4 space-y-3">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" name="police_report_filed" id="police_report_filed" class="sr-only peer">
+                            <div class="w-5 h-5 border-2 border-gray-300 rounded-lg peer-checked:bg-red-600 peer-checked:border-red-600 transition-all flex items-center justify-center">
+                                <i data-feather="check" class="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Police Report Filed</span>
+                    </label>
+                    <div>
+                        <label class="text-xs text-gray-500 mb-1 block">Police Report Number</label>
+                        <input type="text" name="police_report_number" id="policeReportNumber"
+                               class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white" placeholder="Enter report number if filed">
+                    </div>
                 </div>
             </div>
             
-            <!-- Form Content -->
-            <form id="reportLostForm" class="px-6 py-6 overflow-y-auto flex-1">
-                @csrf
-                <input type="hidden" id="lostEmployeeId" name="employee_id">
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                        <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="calendar" class="w-4 h-4 mr-2 text-red-600"></i>
-                            Lost Date
-                            <span class="text-red-500 ml-1">*</span>
-                        </label>
-                        <input type="date" name="lost_date" id="lostDate" required
-                               class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white">
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
+                <button type="button" onclick="document.getElementById('reportLostModal').classList.add('hidden'); document.getElementById('reportLostModal').classList.remove('flex'); document.body.style.overflow = 'auto';"
+                        class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
+                    Cancel
+                </button>
+                <button type="submit" id="reportLostBtn"
+                        class="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
+                    <span id="reportLostBtnText">Report Lost</span>
+                    <div id="reportLostBtnLoader" class="hidden ml-2">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="map-pin" class="w-4 h-4 mr-2 text-red-600"></i>
-                            Lost Location
-                            <span class="text-red-500 ml-1">*</span>
-                        </label>
-                        <input type="text" name="lost_location" id="lostLocation" required
-                               class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white" placeholder="e.g., Office building, parking lot">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center text-sm font-semibold text-gray-700">
-                            <i data-feather="file-text" class="w-4 h-4 mr-2 text-red-600"></i>
-                            Circumstances
-                            <span class="text-red-500 ml-1">*</span>
-                        </label>
-                        <textarea name="circumstances" id="circumstances" rows="3" required
-                                  class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white resize-none" placeholder="Describe how the ID card was lost..."></textarea>
-                    </div>
-                    <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-4 space-y-3">
-                        <label class="flex items-center space-x-3 cursor-pointer group">
-                            <div class="relative">
-                                <input type="checkbox" name="police_report_filed" id="police_report_filed" class="sr-only peer">
-                                <div class="w-5 h-5 border-2 border-gray-300 rounded-lg peer-checked:bg-red-600 peer-checked:border-red-600 transition-all flex items-center justify-center">
-                                    <i data-feather="check" class="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
-                                </div>
-                            </div>
-                            <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Police Report Filed</span>
-                        </label>
-                        <div>
-                            <label class="text-xs text-gray-500 mb-1 block">Police Report Number</label>
-                            <input type="text" name="police_report_number" id="policeReportNumber"
-                                   class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-gray-50 focus:bg-white" placeholder="Enter report number if filed">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Footer Actions -->
-                <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
-                    <button type="button" onclick="hideReportLostModal()"
-                            class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" id="reportLostBtn"
-                            class="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
-                        <span id="reportLostBtnText">Report Lost</span>
-                        <div id="reportLostBtnLoader" class="hidden ml-2">
-                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </div>
-                    </button>
-                </div>
-            </form>
-        </div>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
@@ -1031,6 +1019,17 @@ class PersonnelIdManager {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         
+        // Convert checkbox values to boolean
+        data.emergency_access = formData.has('emergency_access') ? '1' : '0';
+        data.after_hours_access = formData.has('after_hours_access') ? '1' : '0';
+        
+        // Add default status if not present
+        if (!data.status) {
+            data.status = 'pending';
+        }
+        
+        console.log('Submitting data:', data);
+        
         try {
             const response = await fetch('/personnel-id', {
                 method: 'POST',
@@ -1043,12 +1042,17 @@ class PersonnelIdManager {
             });
             
             const result = await response.json();
+            console.log('Response:', result);
+            
             if (result.success) {
                 this.showNotification(result.message, 'success');
                 hideAddApplicationModal();
                 setTimeout(() => window.location.reload(), 1000);
             } else {
                 this.showNotification(result.message || 'Failed to add application', 'error');
+                if (result.errors) {
+                    console.error('Validation errors:', result.errors);
+                }
             }
         } catch (error) {
             console.error('Error adding application:', error);

@@ -125,9 +125,21 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200" id="employeesTableBody">
                     @forelse($employees as $employee)
+                        @php
+                            $hasSocialRecord = $employee->socialRecord !== null;
+                            $nssfRegistered = $hasSocialRecord && $employee->socialRecord->nssf_number;
+                            $nhifRegistered = $hasSocialRecord && $employee->socialRecord->nhif_number;
+                            $tinRegistered = $hasSocialRecord && $employee->socialRecord->tin_number;
+                            $wcfRegistered = $hasSocialRecord && $employee->socialRecord->wcf_number;
+                            $bankRegistered = $hasSocialRecord && $employee->socialRecord->bank_account_number;
+                            $emergencyComplete = $hasSocialRecord && $employee->socialRecord->emergency_contact_name;
+                            $nextOfKinComplete = $hasSocialRecord && $employee->socialRecord->next_of_kin_name;
+                            $isComplete = $nssfRegistered && $nhifRegistered && $tinRegistered && $bankRegistered;
+                        @endphp
                         <tr class="hover:bg-gray-50 transition-colors employee-row" 
                             data-name="{{ $employee->first_name . ' ' . $employee->surname }}"
-                            data-workstation="{{ $employee->work_station }}">
+                            data-workstation="{{ $employee->work_station }}"
+                            data-has-social="{{ $hasSocialRecord ? '1' : '0' }}">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
@@ -147,59 +159,52 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-xs space-y-1">
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->nssf_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
-                                        <span>NSSF: {{ $employee->socialRecord && $employee->socialRecord->nssf_number ? 'Registered' : 'Not Found' }}</span>
+                                        <span class="w-2 h-2 {{ $nssfRegistered ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>NSSF: {{ $nssfRegistered ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->nhif_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
-                                        <span>NHIF: {{ $employee->socialRecord && $employee->socialRecord->nhif_number ? 'Registered' : 'Not Found' }}</span>
+                                        <span class="w-2 h-2 {{ $nhifRegistered ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>NHIF: {{ $nhifRegistered ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->tin_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
-                                        <span>TIN: {{ $employee->socialRecord && $employee->socialRecord->tin_number ? 'Registered' : 'Not Found' }}</span>
+                                        <span class="w-2 h-2 {{ $tinRegistered ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>TIN: {{ $tinRegistered ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="w-2 h-2 {{ $employee->socialRecord && $employee->socialRecord->wcf_number ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
-                                        <span>WCF: {{ $employee->socialRecord && $employee->socialRecord->wcf_number ? 'Registered' : 'Not Found' }}</span>
+                                        <span class="w-2 h-2 {{ $wcfRegistered ? 'bg-green-400' : 'bg-red-400' }} rounded-full mr-1"></span>
+                                        <span>WCF: {{ $wcfRegistered ? 'Registered' : 'Not Found' }}</span>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm {{ $employee->socialRecord && $employee->socialRecord->bank_account_number ? 'text-gray-900' : 'text-red-600 font-semibold' }}">
-                                    Bank: {{ $employee->socialRecord && $employee->socialRecord->bank_name ? $employee->socialRecord->bank_name : 'No Data' }}
+                                <div class="text-sm {{ $bankRegistered ? 'text-gray-900' : 'text-red-600 font-semibold' }}">
+                                    Bank: {{ $hasSocialRecord && $employee->socialRecord->bank_name ? $employee->socialRecord->bank_name : 'No Data' }}
                                 </div>
                                 <div class="text-sm text-gray-500">
-                                    Account: {{ $employee->socialRecord && $employee->socialRecord->bank_account_number ? 'Verified' : 'Missing' }}
+                                    Account: {{ $bankRegistered ? 'Verified' : 'Missing' }}
                                 </div>
-                                @if($employee->socialRecord && $employee->socialRecord->bank_verification_path)
+                                @if($hasSocialRecord && $employee->socialRecord->bank_verification_path)
                                     <div class="text-xs text-green-600">Documents: Complete</div>
                                 @else
                                     <div class="text-xs text-red-500">Documents: Incomplete</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'text-gray-900' : 'text-red-600 font-semibold' }}">
-                                    Emergency: {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'On file' : 'Missing' }}
+                                <div class="text-sm {{ $emergencyComplete ? 'text-gray-900' : 'text-red-600 font-semibold' }}">
+                                    Emergency: {{ $emergencyComplete ? 'On file' : 'Missing' }}
                                 </div>
                                 <div class="text-sm text-gray-500">
-                                    Next of Kin: {{ $employee->socialRecord && $employee->socialRecord->next_of_kin_name ? 'On file' : 'Missing' }}
+                                    Next of Kin: {{ $nextOfKinComplete ? 'On file' : 'Missing' }}
                                 </div>
-                                <div class="text-xs {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'text-blue-600' : 'text-red-500' }}">
-                                    {{ $employee->socialRecord && $employee->socialRecord->emergency_contact_name ? 'Complete' : 'Action Required' }}
+                                <div class="text-xs {{ $emergencyComplete && $nextOfKinComplete ? 'text-blue-600' : 'text-red-500' }}">
+                                    {{ $emergencyComplete && $nextOfKinComplete ? 'Complete' : 'Action Required' }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @php
-                                    $isComplete = $employee->socialRecord && 
-                                                 $employee->socialRecord->nssf_number && 
-                                                 $employee->socialRecord->nhif_number && 
-                                                 $employee->socialRecord->tin_number && 
-                                                 $employee->socialRecord->bank_account_number;
-                                @endphp
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $isComplete ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $isComplete ? 'Complete' : 'Incomplete' }}
                                 </span>
-                                <div class="text-xs text-gray-500 mt-1">Status: Active</div>
+                                <div class="text-xs text-gray-500 mt-1">Status: {{ $employee->status ?? 'Active' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">
@@ -224,7 +229,7 @@
                                 <div class="py-8">
                                     <i data-feather="shield" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
                                     <p class="text-lg font-medium">No employees found</p>
-                                    <p class="text-sm">No approved employees to manage social records for.</p>
+                                    <p class="text-sm">No employees to manage social records for.</p>
                                 </div>
                             </td>
                         </tr>
@@ -357,24 +362,28 @@ class SocialRecordsManager {
         try {
             const response = await fetch('/social-records/statistics');
             const result = await response.json();
+            
+            console.log('Statistics response:', result);
 
             if (result.success) {
                 const stats = result.statistics;
                 
                 // Update main page statistics
-                document.getElementById('totalEmployees').textContent = stats.total_employees;
-                document.getElementById('nssfCount').textContent = stats.employees_with_nssf;
-                document.getElementById('nhifCount').textContent = stats.employees_with_nhif;
-                document.getElementById('bankCount').textContent = stats.employees_with_bank;
+                document.getElementById('totalEmployees').textContent = stats.total_employees || 0;
+                document.getElementById('nssfCount').textContent = stats.employees_with_nssf || 0;
+                document.getElementById('nhifCount').textContent = stats.employees_with_nhif || 0;
+                document.getElementById('bankCount').textContent = stats.employees_with_bank || 0;
 
                 // Update modal statistics
-                document.getElementById('modalTotalEmployees').textContent = stats.total_employees;
-                document.getElementById('modalNssfCount').textContent = stats.employees_with_nssf;
-                document.getElementById('modalNhifCount').textContent = stats.employees_with_nhif;
-                document.getElementById('modalTinCount').textContent = stats.employees_with_tin;
-                document.getElementById('modalWcfCount').textContent = stats.employees_with_wcf;
-                document.getElementById('modalBankCount').textContent = stats.employees_with_bank;
-                document.getElementById('modalActiveCount').textContent = stats.active_records;
+                document.getElementById('modalTotalEmployees').textContent = stats.total_employees || 0;
+                document.getElementById('modalNssfCount').textContent = stats.employees_with_nssf || 0;
+                document.getElementById('modalNhifCount').textContent = stats.employees_with_nhif || 0;
+                document.getElementById('modalTinCount').textContent = stats.employees_with_tin || 0;
+                document.getElementById('modalWcfCount').textContent = stats.employees_with_wcf || 0;
+                document.getElementById('modalBankCount').textContent = stats.employees_with_bank || 0;
+                document.getElementById('modalActiveCount').textContent = stats.active_records || 0;
+            } else {
+                console.error('Statistics failed:', result.message);
             }
         } catch (error) {
             console.error('Failed to load statistics:', error);
