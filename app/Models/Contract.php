@@ -72,13 +72,11 @@ class Contract extends Model
      * Contract types.
      */
     const CONTRACT_TYPES = [
-        'permanent' => 'Permanent Employment',
-        'fixed_term' => 'Fixed-Term Contract',
-        'probation' => 'Probation Contract',
+        'unspecified' => 'Unspecified (Permanent)',
+        'fixed_term' => 'Fixed Term Contract',
+        'specific_task' => 'Specific Task Contract',
+        'commission' => 'Commission Contract',
         'internship' => 'Internship Agreement',
-        'consultant' => 'Consultant Agreement',
-        'part_time' => 'Part-Time Contract',
-        'temporary' => 'Temporary Contract',
     ];
 
     /**
@@ -298,21 +296,19 @@ class Contract extends Model
     public function getContractTemplate(): string
     {
         return match($this->contract_type) {
-            'permanent' => $this->getPermanentContractTemplate(),
+            'unspecified' => $this->getUnspecifiedContractTemplate(),
             'fixed_term' => $this->getFixedTermContractTemplate(),
-            'probation' => $this->getProbationContractTemplate(),
+            'specific_task' => $this->getSpecificTaskContractTemplate(),
+            'commission' => $this->getCommissionContractTemplate(),
             'internship' => $this->getInternshipContractTemplate(),
-            'consultant' => $this->getConsultantContractTemplate(),
-            'part_time' => $this->getPartTimeContractTemplate(),
-            'temporary' => $this->getTemporaryContractTemplate(),
             default => $this->getStandardContractTemplate(),
         };
     }
 
     /**
-     * Get permanent contract template.
+     * Get unspecified (permanent) contract template.
      */
-    private function getPermanentContractTemplate(): string
+    private function getUnspecifiedContractTemplate(): string
     {
         return '
 EMPLOYMENT CONTRACT
@@ -409,10 +405,13 @@ Employee: {{employee_name}} _____________________ Date: _________
     /**
      * Get probation contract template.
      */
-    private function getProbationContractTemplate(): string
+    /**
+     * Get specific task contract template.
+     */
+    private function getSpecificTaskContractTemplate(): string
     {
         return '
-PROBATION EMPLOYMENT CONTRACT
+SPECIFIC TASK EMPLOYMENT CONTRACT
 
 Contract Number: {{contract_number}}
 Date: {{current_date}}
@@ -426,22 +425,69 @@ EMPLOYMENT DETAILS
 
 Position: {{position}}
 Department: {{department}}
-Probation Period: {{start_date}} to {{probation_end_date}}
+Contract Period: {{start_date}} to {{end_date}}
 Salary: {{salary}} ({{payment_frequency}})
 Work Schedule: {{work_schedule}}
 Work Location: {{work_location}}
 
 TERMS AND CONDITIONS
 
-This is a probationary employment contract for a period from {{start_date}} to {{probation_end_date}} between {{client_name}} (hereinafter referred to as "Employer") and {{employee_name}} (hereinafter referred to as "Employee").
+This is a specific task employment contract for the defined task(s) specified below, between {{client_name}} (hereinafter referred to as "Employer") and {{employee_name}} (hereinafter referred to as "Employee").
 
-1. PROBATIONARY PERIOD: Employee shall be on probation for the specified period. During this time, performance will be regularly assessed.
+1. EMPLOYMENT: Employee agrees to carry out the specific task of {{job_description}} in the {{department}} department. This contract is limited to the duration required to complete the specified task.
 
-2. COMPENSATION: Employee shall receive a salary of {{salary}} paid {{payment_frequency}}.
+2. COMPENSATION: Employee shall receive a salary of {{salary}} paid {{payment_frequency}}, subject to applicable deductions and withholdings.
 
-3. ASSESSMENT: Employee\'s performance will be assessed at the end of the probationary period to determine suitability for permanent employment.
+3. CONTRACT TERM: This contract shall expire upon completion of the specific task or on {{end_date}}, whichever comes first.
 
-4. TERMINATION: This contract may be terminated by either party with written notice during the probationary period.
+4. TERMINATION: Either party may terminate this contract with written notice as specified in Tanzanian labor laws.
+
+This contract is governed by the laws of Tanzania.
+
+SIGNATURES
+
+Employer: _______________________ Date: _________
+
+Employee: {{employee_name}} _____________________ Date: _________
+        ';
+    }
+
+    /**
+     * Get commission contract template.
+     */
+    private function getCommissionContractTemplate(): string
+    {
+        return '
+COMMISSION EMPLOYMENT CONTRACT
+
+Contract Number: {{contract_number}}
+Date: {{current_date}}
+
+PARTIES
+
+1. EMPLOYER: {{client_name}}
+2. EMPLOYEE: {{employee_name}} (ID: {{employee_id}})
+
+EMPLOYMENT DETAILS
+
+Position: {{position}}
+Department: {{department}}
+Contract Period: {{start_date}} to {{end_date}}
+Remuneration: {{salary}} ({{payment_frequency}})
+Work Schedule: {{work_schedule}}
+Work Location: {{work_location}}
+
+TERMS AND CONDITIONS
+
+This is a commission-based employment contract between {{client_name}} (hereinafter referred to as "Employer") and {{employee_name}} (hereinafter referred to as "Employee").
+
+1. EMPLOYMENT: Employee agrees to work as {{position}} in the {{department}} department on a commission basis.
+
+2. COMPENSATION: Employee shall be remunerated on a commission basis as agreed, paid {{payment_frequency}}, subject to applicable deductions and withholdings.
+
+3. CONTRACT TERM: This contract shall remain in effect from {{start_date}} to {{end_date}} unless terminated earlier in accordance with Tanzanian labor laws.
+
+4. TERMINATION: Either party may terminate this contract with written notice as specified in Tanzanian labor laws.
 
 This contract is governed by the laws of Tanzania.
 
@@ -499,148 +545,6 @@ SIGNATURES
 Company Representative: _______________________ Date: _________
 
 Intern: {{employee_name}} _____________________ Date: _________
-        ';
-    }
-
-    /**
-     * Get consultant contract template.
-     */
-    private function getConsultantContractTemplate(): string
-    {
-        return '
-CONSULTANT AGREEMENT
-
-Contract Number: {{contract_number}}
-Date: {{current_date}}
-
-PARTIES
-
-1. CLIENT: {{client_name}}
-2. CONSULTANT: {{employee_name}} (ID: {{employee_id}})
-
-SERVICES
-
-Position: {{position}}
-Department: {{department}}
-Engagement Period: {{start_date}} to {{end_date}}
-Consulting Fee: {{salary}} ({{payment_frequency}})
-Work Location: {{work_location}}
-
-TERMS AND CONDITIONS
-
-This consultant agreement is for professional services between {{client_name}} and {{employee_name}}.
-
-1. SERVICES: Consultant shall provide {{position}} services to the client as specified in the Statement of Work attached hereto.
-
-2. COMPENSATION: Client shall pay consultant {{salary}} for services rendered, payable {{payment_frequency}}.
-
-3. DELIVERABLES: Consultant shall deliver professional services as agreed upon by both parties.
-
-4. CONFIDENTIALITY: Consultant shall maintain confidentiality of all client information.
-
-5. TERMINATION: Either party may terminate this agreement with written notice as specified.
-
-This agreement is governed by the laws of Tanzania.
-
-SIGNATURES
-
-Client: _______________________ Date: _________
-
-Consultant: {{employee_name}} _____________________ Date: _________
-        ';
-    }
-
-    /**
-     * Get part-time contract template.
-     */
-    private function getPartTimeContractTemplate(): string
-    {
-        return '
-PART-TIME EMPLOYMENT CONTRACT
-
-Contract Number: {{contract_number}}
-Date: {{current_date}}
-
-PARTIES
-
-1. EMPLOYER: {{client_name}}
-2. EMPLOYEE: {{employee_name}} (ID: {{employee_id}})
-
-EMPLOYMENT DETAILS
-
-Position: {{position}}
-Department: {{department}}
-Contract Period: {{start_date}} to {{end_date}}
-Hours: {{work_schedule}}
-Hourly Rate: {{salary}}
-Work Location: {{work_location}}
-
-TERMS AND CONDITIONS
-
-This is a part-time employment contract between {{client_name}} and {{employee_name}}.
-
-1. EMPLOYMENT: Employee agrees to work part-time as {{position}} for {{work_schedule}}.
-
-2. COMPENSATION: Employee shall be paid {{salary}} per hour for hours worked.
-
-3. BENEFITS: Part-time employees may be eligible for certain benefits as per company policy and Tanzanian law.
-
-4. TERMINATION: Either party may terminate this employment with written notice.
-
-This contract is governed by the laws of Tanzania.
-
-SIGNATURES
-
-Employer: _______________________ Date: _________
-
-Employee: {{employee_name}} _____________________ Date: _________
-        ';
-    }
-
-    /**
-     * Get temporary contract template.
-     */
-    private function getTemporaryContractTemplate(): string
-    {
-        return '
-TEMPORARY EMPLOYMENT CONTRACT
-
-Contract Number: {{contract_number}}
-Date: {{current_date}}
-
-PARTIES
-
-1. EMPLOYER: {{client_name}}
-2. EMPLOYEE: {{employee_name}} (ID: {{employee_id}})
-
-EMPLOYMENT DETAILS
-
-Position: {{position}}
-Department: {{department}}
-Contract Period: {{start_date}} to {{end_date}}
-Salary: {{salary}} ({{payment_frequency}})
-Work Schedule: {{work_schedule}}
-Work Location: {{work_location}}
-
-TERMS AND CONDITIONS
-
-This is a temporary employment contract for the period specified above between {{client_name}} and {{employee_name}}.
-
-1. EMPLOYMENT: Employee agrees to work as {{position}} for the specified temporary period.
-
-2. COMPENSATION: Employee shall receive {{salary}} paid {{payment_frequency}}.
-
-3. TEMPORARY NATURE: This employment is temporary and will terminate automatically on {{end_date}}.
-
-4. BENEFITS: Temporary employees may be eligible for certain benefits as per company policy.
-
-This contract is governed by the laws of Tanzania.
-
-SIGNATURES
-
-Employer: _______________________ Date: _________
-
-Employee: {{employee_name}} _____________________ Date: _________
         ';
     }
 

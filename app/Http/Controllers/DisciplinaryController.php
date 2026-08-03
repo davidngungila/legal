@@ -64,8 +64,89 @@ class DisciplinaryController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        $cases = DisciplinaryCase::with(['employee', 'reporter'])->where('client_id', $clientId)->where('status', 'investigating')->latest()->paginate(20);
-        return view('discipline.investigations', compact('currentClient', 'cases'));
+        $cases = DisciplinaryCase::with(['employee', 'reporter', 'hearing'])
+            ->where('client_id', $clientId)
+            ->whereIn('status', ['reported', 'investigating'])
+            ->latest()
+            ->paginate(20);
+
+        $employees = Employee::where('client_id', $clientId)->get(['id', 'employee_id', 'first_name', 'last_name']);
+
+        $stats = [
+            'active' => $cases->where('status', 'investigating')->count(),
+            'reported' => $cases->where('status', 'reported')->count(),
+            'total' => $cases->total(),
+        ];
+
+        return view('discipline.investigations', compact('currentClient', 'cases', 'employees', 'stats'));
+    }
+
+    public function startInvestigation(Request $request, $id)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
+        $case = DisciplinaryCase::where('client_id', $clientId)->findOrFail($id);
+
+        $validated = $request->validate([
+            'investigator' => 'required|string|max:255',
+            'investigation_started_at' => 'nullable|date',
+        ]);
+
+        $case->update([
+            'investigator' => $validated['investigator'],
+            'investigation_started_at' => $validated['investigation_started_at'] ?: now()->toDateString(),
+            'status' => 'investigating',
+        ]);
+
+        return redirect()->route('discipline.investigations')->with('success', 'Investigation started for ' . $case->case_number . '.');
+    }
+
+    public function updateInvestigation(Request $request, $id)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
+        $case = DisciplinaryCase::where('client_id', $clientId)->findOrFail($id);
+
+        $validated = $request->validate([
+            'investigator' => 'required|string|max:255',
+            'investigation_findings' => 'nullable|string',
+            'recommendation' => 'nullable|string',
+            'status' => 'required|in:reported,investigating,hearing,resolved',
+        ]);
+
+        $case->update($validated);
+
+        return redirect()->route('discipline.investigations')->with('success', 'Investigation updated for ' . $case->case_number . '.');
+    }
+
+    public function scheduleHearing(Request $request, $id)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
+        $case = DisciplinaryCase::where('client_id', $clientId)->findOrFail($id);
+
+        $validated = $request->validate([
+            'hearing_date' => 'required|date',
+            'hearing_time' => 'nullable',
+            'venue' => 'nullable|string',
+            'committee_members' => 'nullable|string',
+            'employee_representative' => 'nullable|string',
+            'proceedings_notes' => 'nullable|string',
+        ]);
+
+        DisciplinaryHearing::updateOrCreate(['case_id' => $case->id], $validated);
+        $case->update(['status' => 'hearing']);
+
+        return redirect()->route('discipline.investigations')->with('success', 'Hearing scheduled and case moved to hearings.');
     }
 
     public function hearings()
@@ -166,6 +247,15 @@ class DisciplinaryController extends Controller
 
     public function destroy(DisciplinaryCase $case)
     {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
+        if ($case->client_id != $clientId) {
+            abort(403, 'Unauthorized access to case record.');
+        }
+
         $case->delete();
         return back()->with('success', 'Case deleted!');
     }

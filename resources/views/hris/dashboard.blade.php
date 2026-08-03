@@ -320,22 +320,20 @@
 </div>
 
 <!-- System Statistics Modal -->
-<div id="systemStatsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">System Statistics</h3>
-            <div class="space-y-4" id="systemStatsContent">
-                <!-- Will be populated dynamically -->
-            </div>
-            <div class="flex justify-end mt-6">
-                <button onclick="hideSystemStatsModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                    Close
-                </button>
-            </div>
-        </div>
+<x-advanced-modal id="systemStatsModal" title="System Statistics"
+    icon="bar-chart-2" color="indigo" size="md">
+    <div class="space-y-4" id="systemStatsContent">
+        <!-- Will be populated dynamically -->
     </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="hideSystemStatsModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endsection
 
 @push('scripts')
@@ -383,7 +381,6 @@ class HrisDashboard {
     }
 
     showSystemStats() {
-        const modal = document.getElementById('systemStatsModal');
         const content = document.getElementById('systemStatsContent');
         
         content.innerHTML = `
@@ -423,11 +420,11 @@ class HrisDashboard {
             </div>
         `;
         
-        modal.classList.remove('hidden');
+        openModal('systemStatsModal');
     }
 
     hideSystemStatsModal() {
-        document.getElementById('systemStatsModal').classList.add('hidden');
+        closeModal('systemStatsModal');
     }
 }
 

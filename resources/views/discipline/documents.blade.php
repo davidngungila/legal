@@ -85,71 +85,52 @@
     </div>
 
     <!-- Add Document Modal -->
-    <div id="documentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Add Document</h3>
-                    <button type="button" onclick="closeModal('documentModal')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
+    <x-advanced-modal id="documentModal" title="Add Document" icon="file-text" color="indigo" size="lg">
+        <form id="documentForm" action="{{ route('discipline.documents.store') }}" method="POST">
+            @csrf
+            @php
+                $clientId = session('current_client_id');
+                $availableCases = $clientId ? \App\Models\DisciplinaryCase::with(['employee'])->where('client_id', $clientId)->get() : collect();
+            @endphp
+            <div class="space-y-4">
+                <div>
+                    <label for="docCaseId" class="block text-sm font-medium text-gray-700">Case</label>
+                    <select id="docCaseId" name="case_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                        <option value="">Select case</option>
+                        @foreach($availableCases as $c)
+                            <option value="{{ $c->id }}">{{ $c->case_number }} - {{ $c->employee->first_name }} {{ $c->employee->last_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="docType" class="block text-sm font-medium text-gray-700">Document Type</label>
+                    <select id="docType" name="doc_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                        <option value="">Select type</option>
+                        <option value="Show Cause Notice">Show Cause Notice</option>
+                        <option value="Suspension Letter">Suspension Letter</option>
+                        <option value="Warning Letter">Warning Letter</option>
+                        <option value="Termination Letter">Termination Letter</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filePath" class="block text-sm font-medium text-gray-700">File Path (Optional)</label>
+                    <input type="text" id="filePath" name="file_path" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                 </div>
             </div>
-            <form id="documentForm" action="{{ route('discipline.documents.store') }}" method="POST" class="p-6">
-                @csrf
-                @php
-                    $clientId = session('current_client_id');
-                    $availableCases = $clientId ? \App\Models\DisciplinaryCase::with(['employee'])->where('client_id', $clientId)->get() : collect();
-                @endphp
-                <div class="space-y-4">
-                    <div>
-                        <label for="docCaseId" class="block text-sm font-medium text-gray-700">Case</label>
-                        <select id="docCaseId" name="case_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            <option value="">Select case</option>
-                            @foreach($availableCases as $c)
-                                <option value="{{ $c->id }}">{{ $c->case_number }} - {{ $c->employee->first_name }} {{ $c->employee->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="docType" class="block text-sm font-medium text-gray-700">Document Type</label>
-                        <select id="docType" name="doc_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            <option value="">Select type</option>
-                            <option value="Show Cause Notice">Show Cause Notice</option>
-                            <option value="Suspension Letter">Suspension Letter</option>
-                            <option value="Warning Letter">Warning Letter</option>
-                            <option value="Termination Letter">Termination Letter</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="filePath" class="block text-sm font-medium text-gray-700">File Path (Optional)</label>
-                        <input type="text" id="filePath" name="file_path" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal('documentModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Add Document</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </form>
+
+        <x-slot:footer>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeModal('documentModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" form="documentForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Add Document</button>
+            </div>
+        </x-slot:footer>
+    </x-advanced-modal>
 </div>
 
 <script>
     feather.replace();
-
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
 
     function openDocumentModal() {
         openModal('documentModal');

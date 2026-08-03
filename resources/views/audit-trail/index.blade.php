@@ -128,19 +128,11 @@
 </div>
 
 <!-- Audit Details Modal -->
-<div id="auditDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Audit Details</h2>
-            <button onclick="closeAuditDetails()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <div id="auditDetailsContent">
-            <!-- Content will be loaded here -->
-        </div>
+<x-advanced-modal id="auditDetailsModal" title="Audit Details" icon="clipboard" color="purple" size="3xl">
+    <div id="auditDetailsContent">
+        <!-- Content will be loaded here -->
     </div>
-</div>
+</x-advanced-modal>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -264,8 +256,7 @@
                     ${newValuesHtml}
                 `;
                 
-                document.getElementById('auditDetailsModal').classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
+                openModal('auditDetailsModal');
             }
         } catch (error) {
             console.error('Error fetching audit details:', error);
@@ -273,8 +264,7 @@
     }
     
     function closeAuditDetails() {
-        document.getElementById('auditDetailsModal').classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
+        closeModal('auditDetailsModal');
     }
 </script>
 @endsection

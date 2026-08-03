@@ -244,9 +244,6 @@ function openCompEdit(employeeId) {
         return;
     }
 
-    const modal = document.getElementById('compEditModal');
-    if (!modal) return;
-
     document.getElementById('compEditEmployeeId').value = employee.id;
     document.getElementById('compEditTitle').textContent = `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || `Employee #${employee.id}`;
 
@@ -259,13 +256,11 @@ function openCompEdit(employeeId) {
         cb.checked = benefitValues.has(String(cb.value));
     });
 
-    modal.classList.remove('hidden');
+    openModal('compEditModal');
 }
 
 function closeCompEdit() {
-    const modal = document.getElementById('compEditModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
+    closeModal('compEditModal');
 }
 
 function formatNumber(value) {
@@ -379,30 +374,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
-
-    const overlay = document.getElementById('compEditModal');
-    if (overlay) {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeCompEdit();
-        });
-    }
 });
 </script>
 
-<div id="compEditModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-xl">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900">Edit Compensation</h3>
-                <p class="text-sm text-gray-500" id="compEditTitle"></p>
-            </div>
-            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeCompEdit()">
-                <i data-feather="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <div class="p-6 space-y-4">
-            <input type="hidden" id="compEditEmployeeId">
+<x-advanced-modal id="compEditModal" title="Edit Compensation" subtitle-id="compEditTitle" description="Employee compensation details" icon="edit" color="indigo" size="xl">
+    <div class="space-y-4">
+        <input type="hidden" id="compEditEmployeeId">
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-2">
@@ -461,10 +438,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-end space-x-2">
-            <button type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" onclick="closeCompEdit()">Cancel</button>
-            <button type="button" id="compSaveBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="saveCompEdit()">Save</button>
-        </div>
-    </div>
-</div>
+        <x-slot:footer>
+            <div class="flex items-center justify-end space-x-2">
+                <button type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" onclick="closeModal('compEditModal')">Cancel</button>
+                <button type="button" id="compSaveBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="saveCompEdit()">Save</button>
+            </div>
+        </x-slot:footer>
+    </x-advanced-modal>
 @endpush

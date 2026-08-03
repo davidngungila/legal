@@ -162,17 +162,17 @@
     </div>
 
     <!-- Results Modal -->
-    <div id="results-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <h3 class="text-lg font-semibold mb-4">Upload Results</h3>
-            <div id="results-content"></div>
-            <div class="mt-6 flex justify-end">
-                <button onclick="closeResultsModal()" class="btn-transition bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+    <x-advanced-modal id="results-modal" title="Upload Results" icon="check-circle" color="green" size="2xl">
+        <div id="results-content"></div>
+
+        <x-slot:footer>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal('results-modal')" class="btn-transition bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
                     Close
                 </button>
             </div>
-        </div>
-    </div>
+        </x-slot:footer>
+    </x-advanced-modal>
 </div>
 @endsection
 
@@ -241,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showResults(result) {
-    const modal = document.getElementById('results-modal');
     const content = document.getElementById('results-content');
     
     let html = `
@@ -285,11 +284,11 @@ function showResults(result) {
     `;
     
     content.innerHTML = html;
-    modal.classList.remove('hidden');
+    openModal('results-modal');
 }
 
 function closeResultsModal() {
-    document.getElementById('results-modal').classList.add('hidden');
+    closeModal('results-modal');
 }
 
 function loadRecentUploads() {

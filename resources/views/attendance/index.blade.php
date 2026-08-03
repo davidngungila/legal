@@ -17,12 +17,12 @@
             @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
+            <button class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i data-feather="upload" class="w-4 h-4"></i>
                 Export Report
             </button>
-            <button type="button" onclick="openTimesheetImport()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                <i data-feather="upload" class="w-4 h-4 inline mr-2"></i>
+            <button type="button" onclick="openTimesheetImport()" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="download" class="w-4 h-4"></i>
                 Import Timesheet
             </button>
         </div>

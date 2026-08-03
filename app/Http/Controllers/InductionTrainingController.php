@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\AuditLogger;
 use App\Models\Employee;
 use App\Models\InductionTraining;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class InductionTrainingController extends Controller
 {
@@ -20,8 +22,12 @@ class InductionTrainingController extends Controller
             ->with('inductionTrainings')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
-        return view('hris.induction-training.index', compact('employees'));
+
+        $allEmployees = Employee::where('status', 'active')
+            ->orderBy('first_name')
+            ->get();
+
+        return view('hris.induction-training.index', compact('employees', 'allEmployees'));
     }
 
     /**
@@ -32,6 +38,7 @@ class InductionTrainingController extends Controller
         $trainings = InductionTraining::where('employee_id', $employee->id)
             ->orderBy('training_date', 'desc')
             ->get();
+
         return view('hris.induction-training.employee-training', compact('employee', 'trainings'));
     }
 
@@ -42,7 +49,7 @@ class InductionTrainingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'employee_id' => 'required|exists:employees,id',
-            'training_date' => 'required|date|before_or_equal:today',
+            'training_date' => 'required|date',
             'training_type' => 'required|in:company_policies,safety_procedures,job_specific,compliance,other',
             'training_title' => 'required|string|max:255',
             'training_description' => 'required|string|max:2000',
@@ -62,45 +69,44 @@ class InductionTrainingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            // Handle file uploads
-            $uploadedFiles = [];
-            $fileFields = [
-                'training_materials' => 'training_materials_path',
-                'completion_certificate' => 'completion_certificate_path'
-            ];
+            $uploadedFiles = $this->storeUploadedFiles($request);
 
-            foreach ($fileFields as $fileInput => $dbField) {
-                if ($request->hasFile($fileInput)) {
-                    $file = $request->file($fileInput);
-                    $fileName = time() . '_' . $fileInput . '_' . $request->employee_id . '.' . $file->getClientOriginalExtension();
-                    $filePath = $file->storeAs('induction-training', $fileName, 'public');
-                    $uploadedFiles[$dbField] = $filePath;
-                }
-            }
+            $training = InductionTraining::create(array_merge(
+                $request->except(['training_materials', 'completion_certificate']),
+                $uploadedFiles,
+                [
+                    'client_id' => session('current_client_id'),
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
+                ]
+            ));
 
-            // Create induction training record
-            $training = InductionTraining::create(array_merge($request->except(['training_materials', 'completion_certificate']), $uploadedFiles, [
-                'client_id' => session('current_client_id'),
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
-            ]));
+            AuditLogger::log(
+                'induction_training.created',
+                $training,
+                'Induction Training',
+                "Induction training '{$training->training_title}' recorded for employee #{$training->employee_id}",
+                null,
+                $training->toArray()
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Induction training record created successfully',
-                'data' => $training
+                'data' => $training,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Induction training creation failed: ' . $e->getMessage());
+            \Log::error('Induction training creation failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
@@ -111,12 +117,15 @@ class InductionTrainingController extends Controller
     public function update(Request $request, Employee $employee)
     {
         $validator = Validator::make($request->all(), [
-            'training_date' => 'required|date|before_or_equal:today',
+            'training_id' => 'required|exists:induction_trainings,id',
+            'training_date' => 'required|date',
             'training_type' => 'required|in:company_policies,safety_procedures,job_specific,compliance,other',
             'training_title' => 'required|string|max:255',
             'training_description' => 'required|string|max:2000',
             'trainer_name' => 'required|string|max:255',
             'training_duration_hours' => 'required|numeric|min:0.5|max:40',
+            'training_materials' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:10240',
+            'completion_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'assessment_score' => 'nullable|numeric|min:0|max:100',
             'assessment_passed' => 'required|boolean',
             'feedback_comments' => 'nullable|string|max:1000',
@@ -129,51 +138,98 @@ class InductionTrainingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            // In a real implementation, this would update the induction_training table
-            $trainingData = array_merge($request->all(), [
-                'updated_by' => auth()->id(),
-                'updated_at' => now(),
-            ]);
+            $training = InductionTraining::where('employee_id', $employee->id)
+                ->where('id', $request->training_id)
+                ->first();
+
+            if (! $training) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Training record not found for this employee',
+                ], 404);
+            }
+
+            $uploadedFiles = $this->storeUploadedFiles($request);
+
+            $oldValues = $training->toArray();
+
+            $training->update(array_merge(
+                $request->except(['training_id', 'training_materials', 'completion_certificate']),
+                $uploadedFiles,
+                ['updated_by' => auth()->id()]
+            ));
+
+            AuditLogger::log(
+                'induction_training.updated',
+                $training,
+                'Induction Training',
+                "Induction training '{$training->training_title}' updated for employee #{$employee->id}",
+                $oldValues,
+                $training->toArray()
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Induction training record updated successfully',
-                'data' => $trainingData
+                'data' => $training,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Induction training update failed: ' . $e->getMessage());
+            \Log::error('Induction training update failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Generate training completion certificate.
+     * Generate training completion certificate (PDF download).
      */
     public function generateCertificate(Employee $employee)
     {
         try {
-            // This would generate a PDF certificate using a library like DomPDF
-            // For now, return a success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Training certificate generated successfully',
-                'download_url' => '/induction-training/' . $employee->id . '/certificate'
+            $training = InductionTraining::where('employee_id', $employee->id)
+                ->where('status', 'completed')
+                ->orderBy('training_date', 'desc')
+                ->first();
+
+            if (! $training) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No completed training found for this employee',
+                ], 404);
+            }
+
+            AuditLogger::log(
+                'induction_training.certificate_generated',
+                $training,
+                'Induction Training',
+                "Certificate generated for employee #{$employee->id} - {$training->training_title}",
+                null,
+                ['training_id' => $training->id]
+            );
+
+            $pdf = Pdf::loadView('hris.induction-training.certificate', [
+                'employee' => $employee,
+                'training' => $training,
+                'clientName' => session('current_client') ? session('current_client')->name : 'Orvion HRIS',
             ]);
 
+            return $pdf->download('certificate-'.$employee->employee_id.'.pdf');
+
         } catch (\Exception $e) {
-            \Log::error('Certificate generation failed: ' . $e->getMessage());
+            \Log::error('Certificate generation failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
@@ -184,33 +240,52 @@ class InductionTrainingController extends Controller
     public function statistics()
     {
         try {
-            // In a real implementation, this would query the induction_training table
+            $clientId = session('current_client_id');
+            if (! $clientId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select a client first.',
+                ], 400);
+            }
+
+            $trainings = InductionTraining::where('client_id', $clientId)->get();
+            $activeEmployees = Employee::where('status', 'active')->get();
+
+            $completedTrainings = $trainings->where('status', 'completed');
+            $trainedEmployeeIds = $completedTrainings->pluck('employee_id')->unique();
+
+            $totalEmployees = $activeEmployees->count();
+            $employeesTrained = $activeEmployees->whereIn('id', $trainedEmployeeIds)->count();
+
+            $completed = $completedTrainings->count();
+            $total = $trainings->count();
+
             $stats = [
-                'total_employees' => Employee::where('status', 'approved')->count(),
-                'employees_trained' => Employee::where('status', 'approved')->count(), // Placeholder
-                'training_completion_rate' => 85.5, // Placeholder
-                'average_training_hours' => 8.2, // Placeholder
-                'training_types' => [
-                    'company_policies' => 45,
-                    'safety_procedures' => 38,
-                    'job_specific' => 52,
-                    'compliance' => 41,
-                    'other' => 12
-                ],
-                'upcoming_trainings' => 15, // Placeholder
-                'overdue_trainings' => 3, // Placeholder
+                'total_employees' => $totalEmployees,
+                'employees_trained' => $employeesTrained,
+                'training_completion_rate' => $total > 0 ? round($completed / $total * 100, 1) : 0,
+                'average_training_hours' => $completed > 0 ? round($completedTrainings->avg('training_duration_hours'), 1) : 0,
+                'training_types' => $trainings->groupBy('training_type')->map->count()->toArray(),
+                'upcoming_trainings' => $trainings->where('status', 'scheduled')
+                    ->where('training_date', '>=', now()->toDateString())
+                    ->count(),
+                'overdue_trainings' => $trainings->where('status', 'scheduled')
+                    ->where('training_date', '<', now()->toDateString())
+                    ->count(),
+                'required_modules' => 4,
             ];
 
             return response()->json([
                 'success' => true,
-                'statistics' => $stats
+                'statistics' => $stats,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Statistics retrieval failed: ' . $e->getMessage());
+            \Log::error('Statistics retrieval failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
@@ -221,40 +296,62 @@ class InductionTrainingController extends Controller
     public function requiringTraining()
     {
         try {
-            // In a real implementation, this would find employees requiring training
-            $employees = Employee::where('status', 'approved')
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
-                ->get();
+            $clientId = session('current_client_id');
+            if (! $clientId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select a client first.',
+                ], 400);
+            }
+
+            $trainedEmployeeIds = InductionTraining::where('client_id', $clientId)
+                ->where('status', 'completed')
+                ->distinct()
+                ->pluck('employee_id');
+
+            $employees = Employee::where('status', 'active')
+                ->whereNotIn('id', $trainedEmployeeIds)
+                ->orderBy('first_name')
+                ->get()
+                ->map(fn ($e) => [
+                    'id' => $e->id,
+                    'first_name' => $e->first_name,
+                    'last_name' => $e->last_name,
+                    'full_name' => $e->full_name,
+                    'employee_id' => $e->employee_id,
+                    'position' => $e->position,
+                    'department' => $e->department,
+                ]);
 
             return response()->json([
                 'success' => true,
-                'employees' => $employees
+                'employees' => $employees,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Requiring training employees retrieval failed: ' . $e->getMessage());
+            \Log::error('Requiring training employees retrieval failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Schedule training for employees.
+     * Schedule training for employees (creates scheduled induction records).
      */
     public function scheduleTraining(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'employee_ids' => 'required|array',
-            'employee_ids.*' => 'exists:employee_registrations,id',
+            'employee_ids' => 'required|array|min:1',
+            'employee_ids.*' => 'exists:employees,id',
             'training_type' => 'required|in:company_policies,safety_procedures,job_specific,compliance,other',
             'training_title' => 'required|string|max:255',
             'scheduled_date' => 'required|date|after:today',
             'trainer_name' => 'required|string|max:255',
             'estimated_duration_hours' => 'required|numeric|min:0.5|max:40',
-            'location' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -262,73 +359,129 @@ class InductionTrainingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            // In a real implementation, this would create scheduled training records
-            $scheduledData = array_merge($request->all(), [
-                'scheduled_by' => auth()->id(),
-                'scheduled_at' => now(),
-            ]);
+            $clientId = session('current_client_id');
+
+            $created = collect($request->employee_ids)->map(function ($employeeId) use ($request, $clientId) {
+                return InductionTraining::create([
+                    'client_id' => $clientId,
+                    'employee_id' => $employeeId,
+                    'training_date' => $request->scheduled_date,
+                    'training_type' => $request->training_type,
+                    'training_title' => $request->training_title,
+                    'training_description' => $request->training_title,
+                    'trainer_name' => $request->trainer_name,
+                    'training_duration_hours' => $request->estimated_duration_hours,
+                    'status' => 'scheduled',
+                    'notes' => trim(($request->notes ?? '').($request->location ? "\nLocation: ".$request->location : '')),
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
+                ]);
+            });
+
+            AuditLogger::log(
+                'induction_training.scheduled',
+                $created->first(),
+                'Induction Training',
+                "Training '{$request->training_title}' scheduled for {$created->count()} employees on {$request->scheduled_date}",
+                null,
+                ['employee_ids' => $request->employee_ids, 'training_type' => $request->training_type, 'scheduled_date' => $request->scheduled_date]
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Training scheduled successfully for ' . count($request->employee_ids) . ' employees',
-                'data' => $scheduledData
+                'message' => 'Training scheduled successfully for '.$created->count().' employees',
+                'data' => ['count' => $created->count()],
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Training scheduling failed: ' . $e->getMessage());
+            \Log::error('Training scheduling failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Upload training materials.
+     * Upload training materials and attach them to a training record.
      */
     public function uploadMaterials(Request $request, Employee $employee)
     {
         $validator = Validator::make($request->all(), [
             'materials_file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,zip|max:20480',
             'materials_description' => 'required|string|max:500',
+            'training_id' => 'nullable|exists:induction_trainings,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            if ($request->hasFile('materials_file')) {
-                $file = $request->file('materials_file');
-                $fileName = time() . '_materials_' . $employee->id . '.' . $file->getClientOriginalExtension();
-                $filePath = $file->storeAs('induction-training-materials', $fileName, 'public');
-
+            if (! $request->hasFile('materials_file')) {
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Training materials uploaded successfully',
-                    'file_path' => $filePath
-                ]);
+                    'success' => false,
+                    'message' => 'No file uploaded',
+                ], 400);
             }
 
+            $file = $request->file('materials_file');
+            $fileName = time().'_materials_'.$employee->id.'.'.$file->getClientOriginalExtension();
+            $filePath = $file->storeAs('induction-training-materials', $fileName, 'public');
+
+            $trainingId = null;
+
+            // Attach materials to a specific training, or the employee's latest training
+            if ($request->training_id) {
+                $training = InductionTraining::where('employee_id', $employee->id)
+                    ->where('id', $request->training_id)
+                    ->first();
+            } else {
+                $training = InductionTraining::where('employee_id', $employee->id)
+                    ->orderBy('training_date', 'desc')
+                    ->first();
+            }
+
+            if ($training) {
+                $training->update([
+                    'training_materials_path' => $filePath,
+                    'updated_by' => auth()->id(),
+                ]);
+                $trainingId = $training->id;
+            }
+
+            AuditLogger::log(
+                'induction_training.materials_uploaded',
+                $training,
+                'Induction Training',
+                "Training materials uploaded for employee #{$employee->id}".($trainingId ? " (training #{$trainingId})" : ''),
+                null,
+                ['file_path' => $filePath]
+            );
+
             return response()->json([
-                'success' => false,
-                'message' => 'No file uploaded'
-            ], 400);
+                'success' => true,
+                'message' => 'Training materials uploaded successfully',
+                'file_path' => $filePath,
+                'training_id' => $trainingId,
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('Materials upload failed: ' . $e->getMessage());
+            \Log::error('Materials upload failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
@@ -339,60 +492,105 @@ class InductionTrainingController extends Controller
     public function downloadMaterials(Employee $employee, $materialId)
     {
         try {
-            // In a real implementation, this would fetch the materials from storage
-            return response()->json([
-                'success' => false,
-                'message' => 'Materials download feature coming soon'
-            ], 501);
+            $training = InductionTraining::where('employee_id', $employee->id)
+                ->where('id', $materialId)
+                ->first();
+
+            if (! $training || ! $training->training_materials_path) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Materials not found for this training record',
+                ], 404);
+            }
+
+            $fullPath = storage_path('app/public/'.$training->training_materials_path);
+
+            if (! file_exists($fullPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Materials file is missing on disk',
+                ], 404);
+            }
+
+            return response()->download($fullPath, basename($training->training_materials_path));
 
         } catch (\Exception $e) {
-            \Log::error('Materials download failed: ' . $e->getMessage());
+            \Log::error('Materials download failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get training calendar.
+     * Get training calendar (upcoming scheduled trainings).
      */
     public function calendar()
     {
         try {
-            // In a real implementation, this would return training events for calendar
-            $events = [
-                [
-                    'title' => 'Company Policies Training',
-                    'start' => now()->addDays(5)->format('Y-m-d'),
-                    'type' => 'company_policies',
-                    'employees' => 12
-                ],
-                [
-                    'title' => 'Safety Procedures Workshop',
-                    'start' => now()->addDays(10)->format('Y-m-d'),
-                    'type' => 'safety_procedures',
-                    'employees' => 8
-                ],
-                [
-                    'title' => 'Compliance Training',
-                    'start' => now()->addDays(15)->format('Y-m-d'),
-                    'type' => 'compliance',
-                    'employees' => 15
-                ]
-            ];
+            $clientId = session('current_client_id');
+            if (! $clientId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select a client first.',
+                ], 400);
+            }
+
+            $scheduled = InductionTraining::where('client_id', $clientId)
+                ->where('status', 'scheduled')
+                ->where('training_date', '>=', now()->toDateString())
+                ->with('employee')
+                ->orderBy('training_date', 'asc')
+                ->get();
+
+            $events = $scheduled->groupBy('training_date')->map(function ($group, $date) {
+                return [
+                    'training_id' => $group->first()->id,
+                    'title' => $group->first()->training_title,
+                    'start' => $date instanceof Carbon ? $date->format('Y-m-d') : date('Y-m-d', strtotime($date)),
+                    'type' => $group->first()->training_type,
+                    'employees_count' => $group->count(),
+                    'trainer' => $group->first()->trainer_name,
+                    'employee_names' => $group->map(fn ($t) => $t->employee ? $t->employee->full_name : 'Employee')->values(),
+                ];
+            })->values();
 
             return response()->json([
                 'success' => true,
-                'events' => $events
+                'events' => $events,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Calendar retrieval failed: ' . $e->getMessage());
+            \Log::error('Calendar retrieval failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => 'Sorry! Operation failed - '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Persist uploaded training files and return their storage paths.
+     */
+    private function storeUploadedFiles(Request $request): array
+    {
+        $uploadedFiles = [];
+        $fileFields = [
+            'training_materials' => 'training_materials_path',
+            'completion_certificate' => 'completion_certificate_path',
+        ];
+
+        foreach ($fileFields as $fileInput => $dbField) {
+            if ($request->hasFile($fileInput)) {
+                $file = $request->file($fileInput);
+                $fileName = time().'_'.$fileInput.'_'.($request->employee_id ?? 'employee').'.'.$file->getClientOriginalExtension();
+                $uploadedFiles[$dbField] = $file->storeAs('induction-training', $fileName, 'public');
+            }
+        }
+
+        return $uploadedFiles;
     }
 }

@@ -528,17 +528,17 @@ class HelpManager {
     displaySearchResults(articles, query) {
         // Create search results modal
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                <div class="p-6 border-b border-gray-200">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-xl font-bold text-gray-900">Search Results</h3>
                             <p class="text-sm text-gray-600 mt-1">Found ${articles.length} results for "${query}"</p>
                         </div>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                            <i data-feather="x" class="w-6 h-6"></i>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-white/70 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-feather="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -608,17 +608,17 @@ class HelpManager {
 
     displayArticle(article) {
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                <div class="p-6 border-b border-gray-200">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-xl font-bold text-gray-900">${article.title}</h3>
                             <p class="text-sm text-gray-600 mt-1">${article.category} · ${article.views} views</p>
                         </div>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                            <i data-feather="x" class="w-6 h-6"></i>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-white/70 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-feather="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -651,14 +651,14 @@ class HelpManager {
 
     showCreateTicketModal() {
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                <div class="p-6 border-b border-gray-200">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                     <div class="flex items-center justify-between">
                         <h3 class="text-xl font-bold text-gray-900">Create Support Ticket</h3>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                            <i data-feather="x" class="w-6 h-6"></i>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-white/70 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-feather="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -774,17 +774,17 @@ class HelpManager {
 
     displayTicket(ticket) {
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                <div class="p-6 border-b border-gray-200">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-xl font-bold text-gray-900">${ticket.subject}</h3>
                             <p class="text-sm text-gray-600 mt-1">Ticket #${ticket.ticket_number}</p>
                         </div>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                            <i data-feather="x" class="w-6 h-6"></i>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-white/70 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-feather="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -888,14 +888,14 @@ class HelpManager {
     callSupport() {
         // Create contact modal
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-md w-full">
-                <div class="p-6 border-b border-gray-200">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                     <div class="flex items-center justify-between">
                         <h3 class="text-xl font-bold text-gray-900">Contact Support</h3>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                            <i data-feather="x" class="w-6 h-6"></i>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-white/70 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-feather="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>

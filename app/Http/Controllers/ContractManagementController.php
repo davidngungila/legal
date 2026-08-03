@@ -39,7 +39,7 @@ class ContractManagementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'employee_registration_id' => 'required|exists:employee_registrations,id',
-            'contract_type' => 'required|in:permanent,temporary,probation,internship,consultant,contractor',
+            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'contract_number' => 'required|string|max:50',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
@@ -120,7 +120,7 @@ class ContractManagementController extends Controller
     public function update(Request $request, EmployeeRegistration $employee)
     {
         $validator = Validator::make($request->all(), [
-            'contract_type' => 'required|in:permanent,temporary,probation,internship,consultant,contractor',
+            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'contract_number' => 'required|string|max:50',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
@@ -496,3 +496,4 @@ class ContractManagementController extends Controller
         }
     }
 }
+

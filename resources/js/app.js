@@ -610,23 +610,54 @@ function initializeSearch() {
 }
 
 // Modal functionality
-window.showModal = function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
+let modalStackCount = 0;
+
+function lockScroll() {
+    modalStackCount++;
+    document.body.style.overflow = 'hidden';
+}
+
+function unlockScroll() {
+    modalStackCount = Math.max(0, modalStackCount - 1);
+    if (modalStackCount === 0) {
+        document.body.style.overflow = '';
     }
 }
 
-window.hideModal = function hideModal(modalId) {
+window.openModal = function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        lockScroll();
+    }
+}
+
+window.closeModal = function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = 'auto';
+        unlockScroll();
     }
 }
+
+// Backward compatible aliases
+window.showModal = function showModal(modalId) {
+    openModal(modalId);
+}
+
+window.hideModal = function hideModal(modalId) {
+    closeModal(modalId);
+}
+
+// Close the topmost open modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('[data-modal-root]:not(.hidden)');
+        if (openModals.length) {
+            closeModal(openModals[openModals.length - 1].id);
+        }
+    }
+});
 
 // Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -786,6 +817,8 @@ window.LegalHR = {
     toggleSidebar,
     toggleUserDropdown,
     showNotification,
+    openModal,
+    closeModal,
     showModal,
     hideModal,
     printPage,
@@ -810,6 +843,8 @@ window.closeClientSwitchSplash = closeClientSwitchSplash;
 window.toggleSidebar = toggleSidebar;
 window.toggleUserDropdown = toggleUserDropdown;
 window.showNotification = showNotification;
+window.openModal = openModal;
+window.closeModal = closeModal;
 window.showModal = showModal;
 window.hideModal = hideModal;
 window.printPage = printPage;

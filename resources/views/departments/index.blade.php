@@ -26,11 +26,11 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export
             </button>
-            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center" onclick="showModal('importDepartmentsModal')">
+            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center" onclick="openModal('importDepartmentsModal')">
                 <i data-feather="upload" class="w-4 h-4 inline mr-2"></i>
                 Bulk Import
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center" onclick="showModal('createDepartmentModal')">
+            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center" onclick="openModal('createDepartmentModal')">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Add Department
             </button>
@@ -173,7 +173,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <button class="text-indigo-600 hover:text-indigo-900" onclick="showModal('editDepartmentModal{{ $department->id }}')">
+                                <button class="text-indigo-600 hover:text-indigo-900" onclick="openModal('editDepartmentModal{{ $department->id }}')">
                                     <i data-feather="edit-2" class="w-4 h-4"></i>
                                 </button>
                                 <button class="{{ $department->is_active ? 'text-green-600 hover:text-green-900' : 'text-gray-400 hover:text-gray-600' }}" onclick="toggleDepartmentStatus({{ $department->id }}, {{ $department->is_active ? 'false' : 'true' }})" title="{{ $department->is_active ? 'Deactivate' : 'Activate' }}">
@@ -192,7 +192,7 @@
                                 <i data-feather="briefcase" class="w-12 h-12 text-gray-400 mb-4"></i>
                                 <p class="text-lg font-medium text-gray-900">No departments found</p>
                                 <p class="text-sm text-gray-600 mt-2">Get started by creating your first department</p>
-                                <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="showModal('createDepartmentModal')">
+                                <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="openModal('createDepartmentModal')">
                                     <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                                     Add Department
                                 </button>
@@ -207,193 +207,171 @@
 </div>
 
 <!-- Import Departments Modal -->
-<div id="importDepartmentsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
-    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Bulk Import Departments</h3>
-                <button type="button" onclick="hideModal('importDepartmentsModal')" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            
-            <div class="mb-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <h4 class="font-medium text-blue-800 mb-2">Import Instructions</h4>
-                    <ul class="text-sm text-blue-700 space-y-1">
-                        <li>• Upload a CSV file with department data</li>
-                        <li>• Required columns: name, code</li>
-                        <li>• Optional columns: description, parent_id, manager_id, is_active</li>
-                        <li>• First row should contain column headers</li>
-                    </ul>
-                </div>
-                
-                <div class="mb-4">
-                    <a href="/departments/import-template" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                        <i data-feather="download" class="w-4 h-4 inline mr-1"></i>
-                        Download CSV Template
-                    </a>
-                </div>
-            </div>
-            
-            <form id="importDepartmentsForm" enctype="multipart/form-data">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">CSV File <span class="text-red-500">*</span></label>
-                    <input type="file" name="csv_file" accept=".csv" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                
-                <div id="importResults" class="hidden mb-4">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="font-medium text-gray-900 mb-2">Import Results</h4>
-                        <div id="importResultsContent"></div>
-                    </div>
-                </div>
-            </form>
+<x-advanced-modal id="importDepartmentsModal" title="Bulk Import Departments" description="Upload a CSV file to import departments in bulk." icon="upload" color="green" size="2xl">
+    <div class="mb-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h4 class="font-medium text-blue-800 mb-2">Import Instructions</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li>• Upload a CSV file with department data</li>
+                <li>• Required columns: name, code</li>
+                <li>• Optional columns: description, parent_id, manager_id, is_active</li>
+                <li>• First row should contain column headers</li>
+            </ul>
         </div>
-        <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-            <button type="button" onclick="hideModal('importDepartmentsModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+
+        <div class="mb-4">
+            <a href="/departments/import-template" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                <i data-feather="download" class="w-4 h-4 inline mr-1"></i>
+                Download CSV Template
+            </a>
+        </div>
+    </div>
+
+    <form id="importDepartmentsForm" enctype="multipart/form-data" class="space-y-4">
+        @csrf
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">CSV File <span class="text-red-500">*</span></label>
+            <input type="file" name="csv_file" accept=".csv" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+
+        <div id="importResults" class="hidden">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-2">Import Results</h4>
+                <div id="importResultsContent"></div>
+            </div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('importDepartmentsModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
             <button type="button" onclick="importDepartments()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Import</button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Create Department Modal -->
-<div id="createDepartmentModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
-    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <form method="POST" action="{{ route('departments.store') }}">
-            @csrf
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Add New Department</h3>
-                    <button type="button" onclick="hideModal('createDepartmentModal')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Department Name <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Human Resources">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Department Code</label>
-                        <input type="text" name="code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., HR">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Parent Department</label>
-                        <select name="parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">None (Top-level)</option>
-                            @foreach($departments as $dept)
-                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Manager</label>
-                        <select name="manager_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">None</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->first_name }} {{ $user->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief description of the department..."></textarea>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <div class="flex items-center">
-                            <input type="checkbox" name="is_active" id="isActive" value="1" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="isActive" class="ml-2 block text-sm text-gray-700">
-                                Department is active
-                            </label>
-                        </div>
-                    </div>
+<x-advanced-modal id="createDepartmentModal" title="Add New Department" description="Create a department and assign it a parent, manager, and code." icon="plus" color="indigo" size="2xl">
+    <form id="createDepartmentForm" method="POST" action="{{ route('departments.store') }}">
+        @csrf
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Department Name <span class="text-red-500">*</span></label>
+                <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Human Resources">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Department Code</label>
+                <input type="text" name="code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., HR">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Parent Department</label>
+                <select name="parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">None (Top-level)</option>
+                    @foreach($departments as $dept)
+                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Manager</label>
+                <select name="manager_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">None</option>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->first_name }} {{ $user->last_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief description of the department..."></textarea>
+            </div>
+            
+            <div class="md:col-span-2">
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_active" id="isActive" value="1" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="isActive" class="ml-2 block text-sm text-gray-700">
+                        Department is active
+                    </label>
                 </div>
             </div>
-            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-                <button type="button" onclick="hideModal('createDepartmentModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Department</button>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('createDepartmentModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="createDepartmentForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Department</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Edit Department Modals -->
 @foreach($departments as $department)
-<div id="editDepartmentModal{{ $department->id }}" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
-    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <form method="POST" action="{{ route('departments.update', $department->id) }}">
-            @csrf
-            @method('PUT')
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Edit Department</h3>
-                    <button type="button" onclick="hideModal('editDepartmentModal{{ $department->id }}')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Department Name <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $department->name }}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Department Code</label>
-                        <input type="text" name="code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $department->code }}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Parent Department</label>
-                        <select name="parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">None (Top-level)</option>
-                            @foreach($departments as $dept)
-                                @if($dept->id !== $department->id)
-                                    <option value="{{ $dept->id }}" {{ $department->parent_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Manager</label>
-                        <select name="manager_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">None</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ $department->manager_id == $user->id ? 'selected' : '' }}>{{ $user->first_name }} {{ $user->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $department->description }}</textarea>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <div class="flex items-center">
-                            <input type="checkbox" name="is_active" id="isActive{{ $department->id }}" value="1" {{ $department->is_active ? 'checked' : '' }} class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="isActive{{ $department->id }}" class="ml-2 block text-sm text-gray-700">
-                                Department is active
-                            </label>
-                        </div>
-                    </div>
+<x-advanced-modal id="editDepartmentModal{{ $department->id }}" title="Edit Department" description="Update department details, parent, manager, and status." icon="edit" color="indigo" size="2xl">
+    <form id="editDepartmentForm{{ $department->id }}" method="POST" action="{{ route('departments.update', $department->id) }}">
+        @csrf
+        @method('PUT')
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Department Name <span class="text-red-500">*</span></label>
+                <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $department->name }}">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Department Code</label>
+                <input type="text" name="code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $department->code }}">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Parent Department</label>
+                <select name="parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">None (Top-level)</option>
+                    @foreach($departments as $dept)
+                        @if($dept->id !== $department->id)
+                            <option value="{{ $dept->id }}" {{ $department->parent_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Manager</label>
+                <select name="manager_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">None</option>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}" {{ $department->manager_id == $user->id ? 'selected' : '' }}>{{ $user->first_name }} {{ $user->last_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $department->description }}</textarea>
+            </div>
+            
+            <div class="md:col-span-2">
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_active" id="isActive{{ $department->id }}" value="1" {{ $department->is_active ? 'checked' : '' }} class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="isActive{{ $department->id }}" class="ml-2 block text-sm text-gray-700">
+                        Department is active
+                    </label>
                 </div>
             </div>
-            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-                <button type="button" onclick="hideModal('editDepartmentModal{{ $department->id }}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Department</button>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('editDepartmentModal{{ $department->id }}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="editDepartmentForm{{ $department->id }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Department</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endforeach
 
 @push('scripts')
@@ -424,15 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('departmentSearch').addEventListener('input', filterDepartments);
     document.getElementById('statusFilter').addEventListener('change', filterDepartments);
     document.getElementById('parentFilter').addEventListener('change', filterDepartments);
-    
-    // Close modals when clicking outside
-    document.querySelectorAll('[id^="createDepartmentModal"], [id^="editDepartmentModal"]').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                hideModal(modal.id);
-            }
-        });
-    });
 });
 
 function exportDepartments() {

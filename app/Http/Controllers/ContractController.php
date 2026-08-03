@@ -57,7 +57,7 @@ class ContractController extends Controller
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'employee_id' => 'required|exists:employees,id',
-            'contract_type' => 'required|in:permanent,fixed_term,probation,internship,consultant,part_time,temporary',
+            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
             'probation_end_date' => 'nullable|date|after:start_date|before:end_date',
@@ -133,7 +133,7 @@ class ContractController extends Controller
 
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'contract_type' => 'required|in:permanent,fixed_term,probation,internship,consultant,part_time,temporary',
+            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
             'probation_end_date' => 'nullable|date|after:start_date|before:end_date',

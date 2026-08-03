@@ -90,68 +90,49 @@
     </div>
 
     <!-- Hearing Modal -->
-    <div id="hearingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Edit Hearing Details</h3>
-                    <button type="button" onclick="closeModal('hearingModal')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
+    <x-advanced-modal id="hearingModal" title="Edit Hearing Details" icon="calendar" color="indigo" size="lg">
+        <form id="hearingForm" action="{{ route('discipline.hearings.store') }}" method="POST">
+            @csrf
+            <input type="hidden" id="hearingCaseId" name="case_id" />
+            <div class="space-y-4">
+                <div>
+                    <label for="hearingDate" class="block text-sm font-medium text-gray-700">Hearing Date</label>
+                    <input type="date" id="hearingDate" name="hearing_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                </div>
+                <div>
+                    <label for="hearingTime" class="block text-sm font-medium text-gray-700">Hearing Time</label>
+                    <input type="time" id="hearingTime" name="hearing_time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+                <div>
+                    <label for="venue" class="block text-sm font-medium text-gray-700">Venue</label>
+                    <input type="text" id="venue" name="venue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+                <div>
+                    <label for="committeeMembers" class="block text-sm font-medium text-gray-700">Committee Members</label>
+                    <textarea id="committeeMembers" name="committee_members" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                </div>
+                <div>
+                    <label for="employeeRep" class="block text-sm font-medium text-gray-700">Employee Representative</label>
+                    <input type="text" id="employeeRep" name="employee_representative" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+                <div>
+                    <label for="proceedingsNotes" class="block text-sm font-medium text-gray-700">Proceedings Notes</label>
+                    <textarea id="proceedingsNotes" name="proceedings_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                 </div>
             </div>
-            <form id="hearingForm" action="{{ route('discipline.hearings.store') }}" method="POST" class="p-6">
-                @csrf
-                <input type="hidden" id="hearingCaseId" name="case_id" />
-                <div class="space-y-4">
-                    <div>
-                        <label for="hearingDate" class="block text-sm font-medium text-gray-700">Hearing Date</label>
-                        <input type="date" id="hearingDate" name="hearing_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
-                    </div>
-                    <div>
-                        <label for="hearingTime" class="block text-sm font-medium text-gray-700">Hearing Time</label>
-                        <input type="time" id="hearingTime" name="hearing_time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                    </div>
-                    <div>
-                        <label for="venue" class="block text-sm font-medium text-gray-700">Venue</label>
-                        <input type="text" id="venue" name="venue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                    </div>
-                    <div>
-                        <label for="committeeMembers" class="block text-sm font-medium text-gray-700">Committee Members</label>
-                        <textarea id="committeeMembers" name="committee_members" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
-                    </div>
-                    <div>
-                        <label for="employeeRep" class="block text-sm font-medium text-gray-700">Employee Representative</label>
-                        <input type="text" id="employeeRep" name="employee_representative" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                    </div>
-                    <div>
-                        <label for="proceedingsNotes" class="block text-sm font-medium text-gray-700">Proceedings Notes</label>
-                        <textarea id="proceedingsNotes" name="proceedings_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal('hearingModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Hearing Details</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </form>
+
+        <x-slot:footer>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeModal('hearingModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" form="hearingForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Hearing Details</button>
+            </div>
+        </x-slot:footer>
+    </x-advanced-modal>
 </div>
 
 <script>
     feather.replace();
-
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
 
     function openHearingModal(caseId, hearingData) {
         document.getElementById('hearingCaseId').value = caseId;

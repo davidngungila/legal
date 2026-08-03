@@ -131,16 +131,8 @@
 </div>
 
 <!-- Create Permission Modal -->
-<div id="createPermissionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Create New Permission</h2>
-            <button onclick="closeCreatePermissionModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <form id="createPermissionForm" class="space-y-6">
+<x-advanced-modal id="createPermissionModal" title="Create New Permission" icon="plus" color="indigo" size="md">
+    <form id="createPermissionForm" class="space-y-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Permission Name</label>
                 <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., users.view">
@@ -172,30 +164,23 @@
                 <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe what this permission allows"></textarea>
             </div>
             
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeCreatePermissionModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
-                    Create Permission
-                </button>
-            </div>
         </form>
-    </div>
-</div>
-
-<!-- Edit Permission Modal -->
-<div id="editPermissionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Edit Permission</h2>
-            <button onclick="closeEditPermissionModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeCreatePermissionModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="createPermissionForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
+                Create Permission
             </button>
         </div>
-        
-        <form id="editPermissionForm" class="space-y-6">
+    </x-slot:footer>
+</x-advanced-modal>
+
+<!-- Edit Permission Modal -->
+<x-advanced-modal id="editPermissionModal" title="Edit Permission" icon="edit" color="indigo" size="md">
+    <form id="editPermissionForm" class="space-y-6">
             <input type="hidden" name="permission_id" id="editPermissionId">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Permission Name</label>
@@ -228,18 +213,19 @@
                 <textarea name="description" id="editPermissionDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
             </div>
             
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeEditPermissionModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
-                    Update Permission
-                </button>
-            </div>
         </form>
-    </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeEditPermissionModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="editPermissionForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
+                Update Permission
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 @push('scripts')
 <script>
@@ -375,24 +361,20 @@ function updateStats() {
 
 // Modal functions
 function showCreatePermissionModal() {
-    document.getElementById('createPermissionModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('createPermissionModal');
 }
 
 function closeCreatePermissionModal() {
-    document.getElementById('createPermissionModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('createPermissionModal');
     document.getElementById('createPermissionForm').reset();
 }
 
 function showEditPermissionModal() {
-    document.getElementById('editPermissionModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('editPermissionModal');
 }
 
 function closeEditPermissionModal() {
-    document.getElementById('editPermissionModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('editPermissionModal');
 }
 
 // CRUD operations

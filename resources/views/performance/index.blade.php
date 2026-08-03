@@ -17,7 +17,7 @@
             @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button onclick="document.getElementById('exportModal').classList.remove('hidden')" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onclick="exportPerformanceReport()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export Report
             </button>
@@ -267,17 +267,10 @@
 </div>
 
 <!-- New Review Modal -->
-<div id="newReviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Schedule New Review</h3>
-            <button onclick="closeModal('newReviewModal')" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <form action="{{ route('performance.store') }}" method="POST">
-            @csrf
-            <div class="space-y-4">
+<x-advanced-modal id="newReviewModal" title="Schedule New Review" icon="plus" color="indigo" size="lg">
+    <form action="{{ route('performance.store') }}" method="POST" id="newReviewForm">
+        @csrf
+        <div class="space-y-4">
                 <div>
                     <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
                     <select id="employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -304,14 +297,15 @@
                     <label for="comments" class="block text-sm font-medium text-gray-700">Review Comments</label>
                     <textarea id="comments" name="comments" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                 </div>
-            </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="closeModal('newReviewModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Schedule Review</button>
-            </div>
+                </div>
         </form>
-    </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('newReviewModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" form="newReviewForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Schedule Review</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <script>
 function applyFilters() {
@@ -324,16 +318,36 @@ function viewReview(id) {
     alert('Viewing review ' + id);
 }
 
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
+function exportPerformanceReport() {
+    const reviews = @json($reviews->map(fn($r) => [
+        'Employee' => ($r->employee?->first_name ?? '') . ' ' . ($r->employee?->last_name ?? ''),
+        'Title' => $r->employee?->job_title ?? '',
+        'Status' => ucfirst(str_replace('_', ' ', $r->status)),
+        'Date' => $r->review_date?->format('Y-m-d') ?? '',
+        'Rating' => $r->rating,
+        'Score' => $r->status === 'completed' ? $r->rating * 20 : '',
+        'Comments' => $r->comments ?? '',
+    ])->values());
 
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    if (!reviews.length) {
+        alert('No performance reviews to export.');
+        return;
+    }
+
+    const headers = Object.keys(reviews[0]);
+    const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csv = [
+        headers.join(','),
+        ...reviews.map(row => headers.map(h => escapeCsv(row[h])).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'performance-report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 </script>
 @endsection

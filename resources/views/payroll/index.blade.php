@@ -389,21 +389,14 @@
 </div>
 
 <!-- Import Modal -->
-<div id="importModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Import Payroll Data</h2>
-            <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <div id="importPreview" class="space-y-4">
-            <!-- Preview will be shown here -->
-        </div>
-        
-        <div class="flex justify-end space-x-3 mt-6">
-            <button onclick="closeImportModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+<x-advanced-modal id="importModal" title="Import Payroll Data" icon="upload" color="green" size="2xl">
+    <div id="importPreview" class="space-y-4">
+        <!-- Preview will be shown here -->
+    </div>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeModal('importModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 Cancel
             </button>
             <button onclick="confirmImport()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
@@ -411,46 +404,35 @@
                 Import Data
             </button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Payslip Modal -->
-<div id="payslipModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Salary Slip</h2>
-            <div class="flex space-x-2">
-                <button onclick="viewFullPayslip()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="external-link" class="w-4 h-4 inline mr-2"></i>
-                    View Full Page
-                </button>
-                <button onclick="printPayslip()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                    <i data-feather="printer" class="w-4 h-4 inline mr-2"></i>
-                    Print
-                </button>
-                <button onclick="closePayslipModal()" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-        </div>
-        
-        <div id="payslipContent">
-            <!-- Payslip content will be generated here -->
-        </div>
+<x-advanced-modal id="payslipModal" title="Salary Slip" icon="receipt" color="blue" size="4xl">
+    <div id="payslipContent">
+        <!-- Payslip content will be generated here -->
     </div>
-</div>
 
-<!-- Edit Employee Modal -->
-<div id="editEmployeeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Edit Employee Payroll</h2>
-            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="viewFullPayslip()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
+                <i data-feather="external-link" class="w-4 h-4 inline mr-2"></i>
+                View Full Page
+            </button>
+            <button onclick="printPayslip()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors inline-flex items-center">
+                <i data-feather="printer" class="w-4 h-4 inline mr-2"></i>
+                Print
+            </button>
+            <button onclick="closeModal('payslipModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Close
             </button>
         </div>
-        
-        <form id="editEmployeeForm" class="space-y-6">
+    </x-slot:footer>
+</x-advanced-modal>
+
+<!-- Edit Employee Modal -->
+<x-advanced-modal id="editEmployeeModal" title="Edit Employee Payroll" icon="edit" color="indigo" size="4xl">
+    <form id="editEmployeeForm" class="space-y-6">
             <!-- Employee Information -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-200 pb-2">Employee Information</h3>
@@ -592,34 +574,27 @@
                 <input type="text" id="editMonthOfPayment" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., March 2026">
             </div>
         </form>
-        
-        <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
-            <button onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                Cancel
-            </button>
-            <button onclick="calculatePayroll()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <i data-feather="calculator" class="w-4 h-4 inline mr-2"></i>
-                Calculate
-            </button>
-            <button id="saveEmployeeBtn" onclick="saveEmployee()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
-                Update Payroll
-            </button>
-        </div>
-    </div>
-</div>
+
+        <x-slot:footer>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="calculatePayroll()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i data-feather="calculator" class="w-4 h-4 inline mr-2"></i>
+                    Calculate
+                </button>
+                <button id="saveEmployeeBtn" onclick="saveEmployee()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
+                    Update Payroll
+                </button>
+            </div>
+        </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Bulk Actions Modal -->
-<div id="bulkActionsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Bulk Payslip Actions</h2>
-            <button onclick="closeBulkModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <div class="space-y-6">
+<x-advanced-modal id="bulkActionsModal" title="Bulk Payslip Actions" icon="layers" color="purple" size="2xl">
+    <div class="space-y-6">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 class="text-lg font-semibold text-blue-900 mb-2">Download All Payslips</h3>
                 <p class="text-blue-700 mb-4">Generate and download payslips for all employees in the current payroll.</p>
@@ -647,8 +622,7 @@
                 </button>
             </div>
         </div>
-    </div>
-</div>
+</x-advanced-modal>
 
 @push('scripts')
 <script>
@@ -956,11 +930,11 @@ function updateComplianceItem(itemId, status, progress) {
 }
 
 function showImportModal() {
-    document.getElementById('importModal').classList.remove('hidden');
+    openModal('importModal');
 }
 
 function closeImportModal() {
-    document.getElementById('importModal').classList.add('hidden');
+    closeModal('importModal');
 }
 
 function handleFileUpload(event) {
@@ -1754,7 +1728,7 @@ function generatePayslip(empId) {
 }
 
 function closePayslipModal() {
-    document.getElementById('payslipModal').classList.add('hidden');
+    closeModal('payslipModal');
 }
 
 function printPayslip() {
@@ -1919,7 +1893,7 @@ function editEmployee(empId) {
     window.currentEditingEmployee = employee;
     
     // Show modal
-    document.getElementById('editEmployeeModal').classList.remove('hidden');
+    openModal('editEmployeeModal');
     
     // Re-initialize feather icons
     if (typeof feather !== 'undefined') {
@@ -1928,7 +1902,7 @@ function editEmployee(empId) {
 }
 
 function closeEditModal() {
-    document.getElementById('editEmployeeModal').classList.add('hidden');
+    closeModal('editEmployeeModal');
 }
 
 function calculatePayroll() {
@@ -2113,7 +2087,7 @@ function viewFullPayslip() {
 }
 
 function showBulkActions() {
-    document.getElementById('bulkActionsModal').classList.remove('hidden');
+    openModal('bulkActionsModal');
     
     // Re-initialize feather icons
     if (typeof feather !== 'undefined') {
@@ -2122,7 +2096,7 @@ function showBulkActions() {
 }
 
 function closeBulkModal() {
-    document.getElementById('bulkActionsModal').classList.add('hidden');
+    closeModal('bulkActionsModal');
 }
 
 function downloadAllPayslipsPDF() {

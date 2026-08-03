@@ -109,7 +109,7 @@
                 <select id="departmentFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Departments</option>
                     @foreach($departments as $dept)
-                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        <option value="{{ $dept->name }}">{{ $dept->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -147,7 +147,7 @@
                     <tr class="timesheet-row" 
                         data-employee-name="{{ strtolower($data['employee']->first_name . ' ' . $data['employee']->last_name) }}"
                         data-employee-id="{{ strtolower($data['employee']->employee_id ?? '') }}"
-                        data-department-id="{{ $data['employee']->department_id ?? '' }}"
+                        data-department-name="{{ strtolower($data['employee']->department ?? '') }}"
                         data-has-absence="{{ $data['summary']->absent_days > 0 ? 'true' : 'false' }}"
                         data-has-overtime="{{ $data['summary']->overtime_hours > 0 ? 'true' : 'false' }}">
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -171,12 +171,12 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                {{ $data['employee']->department->name ?? '-' }}
+                                {{ $data['employee']->department ?? '-' }}
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                {{ $data['employee']->position->title ?? '-' }}
+                                {{ $data['employee']->position ?? '-' }}
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.querySelectorAll('.timesheet-row').forEach(row => {
             const nameMatch = row.dataset.employeeName.includes(search) || row.dataset.employeeId.includes(search);
-            const deptMatch = !deptId || row.dataset.departmentId === deptId;
+            const deptMatch = !deptId || row.dataset.departmentName === deptId.toLowerCase();
             const statusMatch = !status || 
                 (status === 'has_absence' && row.dataset.hasAbsence === 'true') ||
                 (status === 'has_overtime' && row.dataset.hasOvertime === 'true');

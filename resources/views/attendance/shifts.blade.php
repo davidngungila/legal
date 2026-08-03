@@ -21,7 +21,7 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" data-bs-toggle="modal" data-bs-target="#createShiftModal">
+            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="openModal('createShiftModal')">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Add Shift
             </button>
@@ -167,7 +167,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <button class="text-indigo-600 hover:text-indigo-900" data-bs-toggle="modal" data-bs-target="#editShiftModal{{ $shift->id }}">
+                                <button class="text-indigo-600 hover:text-indigo-900" onclick="openModal('editShiftModal{{ $shift->id }}')">
                                     <i data-feather="edit-2" class="w-4 h-4"></i>
                                 </button>
                                 <button class="text-red-600 hover:text-red-900" onclick="deleteShift({{ $shift->id }})">
@@ -193,17 +193,10 @@
     </div>
 
     <!-- Create Shift Modal -->
-    <div class="modal fade" id="createShiftModal" tabindex="-1" aria-labelledby="createShiftModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form method="POST" action="{{ route('attendance.shifts.store') }}">
-                    @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title text-lg font-semibold" id="createShiftModalLabel">Add New Shift</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <x-advanced-modal id="createShiftModal" title="Add New Shift" description="Create a new shift pattern" icon="clock" color="indigo" size="lg">
+        <form id="createShiftForm" method="POST" action="{{ route('attendance.shifts.store') }}">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Shift Name <span class="text-red-500">*</span></label>
                                 <input type="text" name="shift_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Morning Shift">
@@ -246,30 +239,23 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Shift</button>
-                    </div>
-                </form>
-            </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('createShiftModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="createShiftForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Shift</button>
         </div>
-    </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
     <!-- Edit Shift Modals -->
     @foreach($shiftPatterns as $shift)
-    <div class="modal fade" id="editShiftModal{{ $shift->id }}" tabindex="-1" aria-labelledby="editShiftModalLabel{{ $shift->id }}" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form method="POST" action="{{ route('attendance.shifts.update', $shift) }}">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-header">
-                        <h5 class="modal-title text-lg font-semibold" id="editShiftModalLabel{{ $shift->id }}">Edit Shift</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <x-advanced-modal id="editShiftModal{{ $shift->id }}" title="Edit Shift" description="Update shift details" icon="edit" color="indigo" size="lg">
+        <form id="editShiftForm{{ $shift->id }}" method="POST" action="{{ route('attendance.shifts.update', $shift) }}">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Shift Name <span class="text-red-500">*</span></label>
                                 <input type="text" name="shift_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $shift->shift_name }}">
@@ -312,15 +298,15 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Shift</button>
-                    </div>
-                </form>
-            </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('editShiftModal{{ $shift->id }}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="editShiftForm{{ $shift->id }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Shift</button>
         </div>
-    </div>
+    </x-slot:footer>
+</x-advanced-modal>
     @endforeach
 </div>
 @endsection

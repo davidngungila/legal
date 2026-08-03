@@ -22,10 +22,15 @@ class DisciplinaryCase extends Model
         'incident_description',
         'reported_by',
         'status',
+        'investigator',
+        'investigation_started_at',
+        'investigation_findings',
+        'recommendation',
     ];
 
     protected $casts = [
         'incident_date' => 'date',
+        'investigation_started_at' => 'date',
     ];
 
     public function employee(): BelongsTo

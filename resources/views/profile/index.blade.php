@@ -40,19 +40,19 @@
                     </div>
                     
                     <!-- Photo Preview Modal -->
-                    <div id="photo-preview-modal" class="fixed inset-0 modal-backdrop-blur z-50 hidden flex items-center justify-center p-4">
-                        <div class="bg-white rounded-xl max-w-lg w-full p-6">
-                            <h3 class="text-xl font-bold text-gray-900 mb-4">Preview Photo</h3>
-                            <div class="mb-4">
-                                <div class="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-100">
-                                    <img id="preview-img" src="" alt="Preview" class="w-full h-full object-cover">
-                                </div>
+                    <x-advanced-modal id="photo-preview-modal" title="Preview Photo"
+                                       description="Review your new profile photo" icon="image" color="indigo" size="lg">
+                        <div class="mb-4">
+                            <div class="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-100">
+                                <img id="preview-img" src="" alt="Preview" class="w-full h-full object-cover">
                             </div>
-                            <div class="mb-4 text-sm text-gray-600">
-                                <p>File: <span id="preview-file-name"></span></p>
-                                <p>Size: <span id="preview-file-size"></span></p>
-                                <p>Type: <span id="preview-file-type"></span></p>
-                            </div>
+                        </div>
+                        <div class="mb-4 text-sm text-gray-600">
+                            <p>File: <span id="preview-file-name"></span></p>
+                            <p>Size: <span id="preview-file-size"></span></p>
+                            <p>Type: <span id="preview-file-type"></span></p>
+                        </div>
+                        <x-slot:footer>
                             <div class="flex justify-end space-x-3">
                                 <button type="button" onclick="profileManager.cancelPhotoUpload()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
                                     Cancel
@@ -61,8 +61,8 @@
                                     Upload Photo
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </x-slot:footer>
+                    </x-advanced-modal>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $user->first_name }} {{ $user->last_name }}</h3>
                     <p class="text-gray-600 mb-2">{{ $user->job_title ?? 'Employee' }}</p>
                     @if($user->roles->count() > 0)
@@ -952,8 +952,7 @@ class ProfileManager {
         if (fileType) fileType.textContent = file.type;
 
         if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            openModal('photo-preview-modal');
         }
 
         this.currentPhotoFile = file;
@@ -962,8 +961,7 @@ class ProfileManager {
     cancelPhotoUpload() {
         const modal = document.getElementById('photo-preview-modal');
         if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            closeModal('photo-preview-modal');
         }
         
         document.getElementById('photo-upload').value = '';
@@ -1004,8 +1002,7 @@ class ProfileManager {
                 
                 const modal = document.getElementById('photo-preview-modal');
                 if (modal) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
+                    closeModal('photo-preview-modal');
                 }
                 
                 document.getElementById('photo-upload').value = '';

@@ -111,16 +111,8 @@
 </div>
 
 <!-- Create Role Modal -->
-<div id="createRoleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Create New Role</h2>
-            <button onclick="closeCreateRoleModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <form id="createRoleForm" class="space-y-6">
+<x-advanced-modal id="createRoleModal" title="Create New Role" icon="plus" color="indigo" size="2xl">
+    <form id="createRoleForm" class="space-y-6">
             <!-- Role Information -->
             <div class="bg-gray-50 rounded-lg p-4">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Role Information</h3>
@@ -154,30 +146,23 @@
                 </div>
             </div>
             
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeCreateRoleModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
-                    Create Role
-                </button>
-            </div>
         </form>
-    </div>
-</div>
-
-<!-- Edit Role Modal -->
-<div id="editRoleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Edit Role</h2>
-            <button onclick="closeEditRoleModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeCreateRoleModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="createRoleForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
+                Create Role
             </button>
         </div>
-        
-        <form id="editRoleForm" class="space-y-6">
+    </x-slot:footer>
+</x-advanced-modal>
+
+<!-- Edit Role Modal -->
+<x-advanced-modal id="editRoleModal" title="Edit Role" icon="edit" color="indigo" size="2xl">
+    <form id="editRoleForm" class="space-y-6">
             <input type="hidden" name="role_id" id="editRoleId">
             <!-- Similar fields as create form but pre-filled -->
             <div class="bg-gray-50 rounded-lg p-4">
@@ -211,18 +196,19 @@
                 </div>
             </div>
             
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeEditRoleModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
-                    Update Role
-                </button>
-            </div>
         </form>
-    </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeEditRoleModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="editRoleForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
+                Update Role
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 @push('scripts')
 <script>
@@ -394,24 +380,20 @@ function updateStats() {
 
 // Modal functions
 function showCreateRoleModal() {
-    document.getElementById('createRoleModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('createRoleModal');
 }
 
 function closeCreateRoleModal() {
-    document.getElementById('createRoleModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('createRoleModal');
     document.getElementById('createRoleForm').reset();
 }
 
 function showEditRoleModal() {
-    document.getElementById('editRoleModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('editRoleModal');
 }
 
 function closeEditRoleModal() {
-    document.getElementById('editRoleModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('editRoleModal');
 }
 
 // CRUD operations

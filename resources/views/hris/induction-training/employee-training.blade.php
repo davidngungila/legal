@@ -16,12 +16,12 @@
             <p class="text-gray-600 mt-2">Comprehensive training and induction records for {{ $employee->employee_id }}</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button onclick="window.history.back()" 
+            <button onclick="window.history.back()"
                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
                 <i data-feather="arrow-left" class="w-4 h-4 mr-2"></i>
                 Back
             </button>
-            <button onclick="window.print()" 
+            <button onclick="window.print()"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
                 <i data-feather="printer" class="w-4 h-4 mr-2"></i>
                 Print History
@@ -41,7 +41,7 @@
                 <h2 class="text-lg font-bold text-gray-900">{{ $employee->first_name }} {{ $employee->last_name }}</h2>
                 <p class="text-sm text-gray-500">{{ $employee->employee_id }}</p>
                 <p class="text-xs text-gray-400 mt-1">{{ $employee->position }}</p>
-                
+
                 <div class="mt-6 pt-6 border-t border-gray-100 space-y-3 text-left">
                     <div class="flex justify-between text-xs">
                         <span class="text-gray-500">Total Trainings:</span>
@@ -99,7 +99,7 @@
                     <div class="flex flex-col md:flex-row">
                         <!-- Left bar indicator -->
                         <div class="w-2 {{ $training->assessment_passed ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                        
+
                         <div class="flex-1 p-6">
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
                                 <div>
@@ -114,14 +114,18 @@
                                     <h3 class="text-xl font-bold text-gray-900">{{ $training->training_title }}</h3>
                                     <p class="text-sm text-gray-500 mt-1">Trainer: <span class="font-medium text-gray-700">{{ $training->trainer_name }}</span></p>
                                 </div>
-                                <div class="mt-4 md:mt-0 flex flex-col items-end">
-                                    <div class="flex items-center space-x-2 mb-2">
+                                <div class="mt-4 md:mt-0 flex flex-col items-end space-y-2">
+                                    <div class="flex items-center space-x-2">
                                         <span class="text-xs text-gray-500">Duration:</span>
                                         <span class="text-sm font-bold text-gray-900">{{ $training->training_duration_hours }} Hours</span>
                                     </div>
                                     <span class="px-3 py-1 {{ $training->assessment_passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }} text-xs font-semibold rounded-full">
                                         {{ $training->assessment_passed ? 'Assessment Passed' : 'Assessment Failed' }}
                                     </span>
+                                    <button onclick="openEditModal({{ $training->id }})"
+                                            class="px-3 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold rounded-full transition-colors">
+                                        <i data-feather="edit-2" class="w-3 h-3 mr-1 inline"></i>Edit
+                                    </button>
                                 </div>
                             </div>
 
@@ -163,7 +167,7 @@
                                     @endif
                                 </div>
                             </div>
-                            
+
                             @if($training->feedback_comments)
                                 <div class="mt-4 p-3 border-l-4 border-indigo-100 bg-indigo-50/30 rounded-r-lg">
                                     <p class="text-xs italic text-gray-600">"{{ $training->feedback_comments }}"</p>
@@ -183,7 +187,7 @@
                     <p class="text-gray-600 max-w-md mx-auto mb-8">
                         This employee has no training history recorded in the system.
                     </p>
-                    <a href="{{ route('induction-training.index') }}" 
+                    <a href="{{ route('induction-training.index') }}"
                        class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                         <i data-feather="plus" class="w-4 h-4 mr-2"></i>
                         Schedule New Training
@@ -193,14 +197,212 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Training Modal -->
+<x-advanced-modal id="editModal" title="Edit Training Record"
+                  description="Update induction training details" icon="edit" color="indigo" size="2xl">
+    <form id="editForm" class="space-y-4">
+        <input type="hidden" name="training_id" id="editTrainingId">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Training Date <span class="text-red-500">*</span></label>
+                <input type="date" name="training_date" id="editTrainingDate" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Training Type <span class="text-red-500">*</span></label>
+                <select name="training_type" id="editTrainingType" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select Type</option>
+                    <option value="company_policies">Company Policies</option>
+                    <option value="safety_procedures">Safety Procedures</option>
+                    <option value="job_specific">Job Specific</option>
+                    <option value="compliance">Compliance</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Training Title <span class="text-red-500">*</span></label>
+                <input type="text" name="training_title" id="editTrainingTitle" required maxlength="255"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Trainer Name <span class="text-red-500">*</span></label>
+                <input type="text" name="trainer_name" id="editTrainerName" required maxlength="255"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Duration (Hours) <span class="text-red-500">*</span></label>
+                <input type="number" name="training_duration_hours" id="editDuration" required min="0.5" max="40" step="0.5"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Assessment Score (%)</label>
+                <input type="number" name="assessment_score" id="editAssessmentScore" min="0" max="100" step="0.1"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
+                <select name="status" id="editStatus" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="completed">Completed</option>
+                    <option value="incomplete">Incomplete</option>
+                    <option value="scheduled">Scheduled</option>
+                </select>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" id="editAssessmentPassed" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="editAssessmentPassed" class="ml-2 block text-sm text-gray-900">Assessment Passed</label>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Next Training Date</label>
+                <input type="date" name="next_training_date" id="editNextTrainingDate"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Training Materials (File)</label>
+                <input type="file" name="training_materials" accept=".pdf,.doc,.docx,.ppt,.pptx"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Completion Certificate (File)</label>
+                <input type="file" name="completion_certificate" accept=".pdf,.jpg,.jpeg,.png"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Training Description <span class="text-red-500">*</span></label>
+                <textarea name="training_description" id="editDescription" rows="3" required maxlength="2000"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Feedback Comments</label>
+                <textarea name="feedback_comments" id="editFeedback" rows="2" maxlength="1000"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea name="notes" id="editNotes" rows="2" maxlength="1000"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+            </div>
+        </div>
+    </form>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="hideEditModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="editForm" id="editBtn"
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                <span id="editBtnText">Update Training</span>
+                <div id="editBtnLoader" class="hidden ml-2">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endsection
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof feather !== 'undefined') {
-            feather.replace();
+const employeeId = {{ $employee->id }};
+const trainingsData = @json($trainings);
+
+function openEditModal(trainingId) {
+    const training = trainingsData.find(t => t.id === trainingId);
+    if (!training) return;
+
+    document.getElementById('editTrainingId').value = training.id;
+    document.getElementById('editTrainingDate').value = training.training_date ? training.training_date.substring(0, 10) : '';
+    document.getElementById('editTrainingType').value = training.training_type || '';
+    document.getElementById('editTrainingTitle').value = training.training_title || '';
+    document.getElementById('editTrainerName').value = training.trainer_name || '';
+    document.getElementById('editDuration').value = training.training_duration_hours || '';
+    document.getElementById('editAssessmentScore').value = training.assessment_score ?? '';
+    document.getElementById('editStatus').value = training.status || 'completed';
+    document.getElementById('editAssessmentPassed').checked = !!training.assessment_passed;
+    document.getElementById('editNextTrainingDate').value = training.next_training_date ? training.next_training_date.substring(0, 10) : '';
+    document.getElementById('editDescription').value = training.training_description || '';
+    document.getElementById('editFeedback').value = training.feedback_comments || '';
+    document.getElementById('editNotes').value = training.notes || '';
+
+    openModal('editModal');
+    if (typeof feather !== 'undefined') { feather.replace(); }
+}
+
+function hideEditModal() {
+    closeModal('editModal');
+    document.getElementById('editForm').reset();
+}
+
+async function submitEdit(event) {
+    event.preventDefault();
+    const form = document.getElementById('editForm');
+    const formData = new FormData(form);
+    formData.set('_method', 'PUT');
+    formData.set('assessment_passed', document.getElementById('editAssessmentPassed').checked ? '1' : '0');
+
+    const btnText = document.getElementById('editBtnText');
+    const btnLoader = document.getElementById('editBtnLoader');
+    const btn = document.getElementById('editBtn');
+    btnText.textContent = 'Updating...';
+    btnLoader.classList.remove('hidden');
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`/induction-training/${employeeId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showNotification('Training record updated successfully', 'success');
+            hideEditModal();
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            showNotification(result.message || 'Update failed', 'error');
         }
-    });
+    } catch (error) {
+        console.error('Edit error:', error);
+        showNotification('An error occurred updating the training', 'error');
+    } finally {
+        btnText.textContent = 'Update Training';
+        btnLoader.classList.add('hidden');
+        btn.disabled = false;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('editForm').addEventListener('submit', submitEdit);
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
 </script>
 @endpush

@@ -144,145 +144,112 @@
     </div>
 
     <!-- Edit Case Modal -->
-    <div id="editCaseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Edit Disciplinary Case</h3>
-                    <button type="button" onclick="closeModal('editCaseModal')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
+    <x-advanced-modal id="editCaseModal" title="Edit Disciplinary Case" icon="edit" color="indigo" size="lg">
+        <form id="editCaseForm" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="space-y-4">
+                <div>
+                    <label for="edit_employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
+                    <select id="edit_employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @foreach($employees as $employee)
+                        <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="edit_case_type" class="block text-sm font-medium text-gray-700">Case Type</label>
+                    <select id="edit_case_type" name="case_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="minor">Minor</option>
+                        <option value="major">Major</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="edit_incident_date" class="block text-sm font-medium text-gray-700">Incident Date</label>
+                    <input type="date" id="edit_incident_date" name="incident_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="edit_incident_description" class="block text-sm font-medium text-gray-700">Incident Description</label>
+                    <textarea id="edit_incident_description" name="incident_description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required></textarea>
                 </div>
             </div>
-            <form id="editCaseForm" method="POST" class="p-6">
-                @csrf
-                @method('PUT')
-                <div class="space-y-4">
-                    <div>
-                        <label for="edit_employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
-                        <select id="edit_employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="edit_case_type" class="block text-sm font-medium text-gray-700">Case Type</label>
-                        <select id="edit_case_type" name="case_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="minor">Minor</option>
-                            <option value="major">Major</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="edit_incident_date" class="block text-sm font-medium text-gray-700">Incident Date</label>
-                        <input type="date" id="edit_incident_date" name="incident_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="edit_incident_description" class="block text-sm font-medium text-gray-700">Incident Description</label>
-                        <textarea id="edit_incident_description" name="incident_description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required></textarea>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal('editCaseModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </form>
+
+        <x-slot:footer>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeModal('editCaseModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" form="editCaseForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Changes</button>
+            </div>
+        </x-slot:footer>
+    </x-advanced-modal>
 
     <!-- Update Status Modal -->
-    <div id="statusModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Update Case Status</h3>
-                    <button type="button" onclick="closeModal('statusModal')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
+    <x-advanced-modal id="statusModal" title="Update Case Status" icon="toggle-right" color="blue" size="md">
+        <form id="statusForm" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="space-y-4">
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700">New Status</label>
+                    <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="reported">Reported</option>
+                        <option value="investigating">Investigating</option>
+                        <option value="hearing">Hearing</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
                 </div>
             </div>
-            <form id="statusForm" method="POST" class="p-6">
-                @csrf
-                @method('PUT')
-                <div class="space-y-4">
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700">New Status</label>
-                        <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="reported">Reported</option>
-                            <option value="investigating">Investigating</option>
-                            <option value="hearing">Hearing</option>
-                            <option value="resolved">Resolved</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal('statusModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Update Status</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </form>
+
+        <x-slot:footer>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeModal('statusModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" form="statusForm" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Update Status</button>
+            </div>
+        </x-slot:footer>
+    </x-advanced-modal>
 
     <!-- New Case Modal -->
-<div id="newCaseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">New Disciplinary Case</h3>
-                <button type="button" onclick="closeModal('newCaseModal')" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
+<x-advanced-modal id="newCaseModal" title="New Disciplinary Case" icon="plus" color="indigo" size="lg">
+    <form id="newCaseForm" action="{{ route('discipline.store') }}" method="POST">
+        @csrf
+        <div class="space-y-4">
+            <div>
+                <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
+                <select id="employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    @foreach($employees as $employee)
+                    <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="case_type" class="block text-sm font-medium text-gray-700">Case Type</label>
+                <select id="case_type" name="case_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="minor">Minor</option>
+                    <option value="major">Major</option>
+                </select>
+            </div>
+            <div>
+                <label for="incident_date" class="block text-sm font-medium text-gray-700">Incident Date</label>
+                <input type="date" id="incident_date" name="incident_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+            </div>
+            <div>
+                <label for="incident_description" class="block text-sm font-medium text-gray-700">Incident Description</label>
+                <textarea id="incident_description" name="incident_description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required></textarea>
             </div>
         </div>
-            <form action="{{ route('discipline.store') }}" method="POST" class="p-6">
-                @csrf
-                <div class="space-y-4">
-                    <div>
-                        <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
-                        <select id="employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="case_type" class="block text-sm font-medium text-gray-700">Case Type</label>
-                        <select id="case_type" name="case_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="minor">Minor</option>
-                            <option value="major">Major</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="incident_date" class="block text-sm font-medium text-gray-700">Incident Date</label>
-                        <input type="date" id="incident_date" name="incident_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="incident_description" class="block text-sm font-medium text-gray-700">Incident Description</label>
-                        <textarea id="incident_description" name="incident_description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required></textarea>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="document.getElementById('newCaseModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Open Case</button>
-                </div>
-            </form>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('newCaseModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" form="newCaseForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Open Case</button>
         </div>
-    </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
     <script>
     feather.replace();
-
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
 
     function openEditCaseModal(caseId, employeeId, caseType, incidentDate, incidentDesc) {
         const form = document.getElementById('editCaseForm');

@@ -424,16 +424,8 @@
 </div>
 
 <!-- Leave Application Modal -->
-<div id="leaveModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Apply for Leave</h2>
-            <button onclick="closeLeaveModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <form id="leaveForm" class="space-y-6">
+<x-advanced-modal id="leaveModal" title="Apply for Leave" icon="calendar" color="indigo" size="md">
+    <form id="leaveForm" class="space-y-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Leave Type</label>
                 <select name="leave_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -462,30 +454,23 @@
                 <textarea name="reason" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Please provide reason for leave request..."></textarea>
             </div>
             
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeLeaveModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
-                    Submit Request
-                </button>
-            </div>
         </form>
-    </div>
-</div>
-
-<!-- Complaint Modal -->
-<div id="complaintModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">File Complaint</h2>
-            <button onclick="closeComplaintModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeLeaveModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="leaveForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
+                Submit Request
             </button>
         </div>
-        
-        <form id="complaintForm" class="space-y-6">
+    </x-slot:footer>
+</x-advanced-modal>
+
+<!-- Complaint Modal -->
+<x-advanced-modal id="complaintModal" title="File Complaint" icon="message-square" color="orange" size="md">
+    <form id="complaintForm" class="space-y-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Complaint Type</label>
                 <select name="complaint_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -516,30 +501,23 @@
                 <textarea name="resolution" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="What would you like to see as the outcome?"></textarea>
             </div>
             
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeComplaintModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
-                    Submit Complaint
-                </button>
-            </div>
         </form>
-    </div>
-</div>
-
-<!-- Contract Modal -->
-<div id="contractModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Employment Contract</h2>
-            <button onclick="closeContractModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeComplaintModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="complaintForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="send" class="w-4 h-4 inline mr-2"></i>
+                Submit Complaint
             </button>
         </div>
-        
-        <div class="space-y-6">
+    </x-slot:footer>
+</x-advanced-modal>
+
+<!-- Contract Modal -->
+<x-advanced-modal id="contractModal" title="Employment Contract" icon="file-text" color="blue" size="2xl">
+    <div class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Employee Information</h3>
@@ -679,53 +657,48 @@
                 </div>
             </div>
             
-            <div class="flex justify-end space-x-3 mt-6">
-                <button onclick="downloadContract()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
-                    Download PDF
-                </button>
-                <button onclick="printContract()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    <i data-feather="printer" class="w-4 h-4 inline mr-2"></i>
-                    Print
-                </button>
-            </div>
         </div>
-    </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="downloadContract()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
+                Download PDF
+            </button>
+            <button onclick="printContract()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <i data-feather="printer" class="w-4 h-4 inline mr-2"></i>
+                Print
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 @push('scripts')
 <script>
 // Modal functions
 function showLeaveModal() {
-    document.getElementById('leaveModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('leaveModal');
 }
 
 function closeLeaveModal() {
-    document.getElementById('leaveModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('leaveModal');
     document.getElementById('leaveForm').reset();
 }
 
 function showComplaintModal() {
-    document.getElementById('complaintModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('complaintModal');
 }
 
 function closeComplaintModal() {
-    document.getElementById('complaintModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('complaintModal');
     document.getElementById('complaintForm').reset();
 }
 
 function showContractModal() {
-    document.getElementById('contractModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    openModal('contractModal');
 }
 
 function closeContractModal() {
-    document.getElementById('contractModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    closeModal('contractModal');
 }
 
 // Client switching function (required by sidebar)

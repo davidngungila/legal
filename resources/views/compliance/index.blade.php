@@ -649,13 +649,13 @@ class ComplianceManager {
     viewReport(button) {
         // Create report modal with blur backdrop
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 modal-backdrop-blur z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-900">Compliance Report Details</h2>
-                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
+                    <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-feather="x" class="w-5 h-5"></i>
                     </button>
                 </div>
                 <div class="space-y-6">
@@ -702,13 +702,13 @@ class ComplianceManager {
     displayAuditResults(results) {
         // Create audit results modal
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 modal-backdrop-blur z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-900">Audit Results</h2>
-                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
+                    <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-feather="x" class="w-5 h-5"></i>
                     </button>
                 </div>
                 <div class="space-y-4">

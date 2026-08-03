@@ -26,11 +26,11 @@
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Export
             </button>
-            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center" onclick="showModal('importPositionsModal')">
+            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center" onclick="openModal('importPositionsModal')">
                 <i data-feather="upload" class="w-4 h-4 inline mr-2"></i>
                 Bulk Import
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center" onclick="showModal('createPositionModal')">
+            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center" onclick="openModal('createPositionModal')">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 Add Position
             </button>
@@ -180,7 +180,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <button class="text-indigo-600 hover:text-indigo-900" onclick="showModal('editPositionModal{{ $position->id }}')">
+                                <button class="text-indigo-600 hover:text-indigo-900" onclick="openModal('editPositionModal{{ $position->id }}')">
                                     <i data-feather="edit-2" class="w-4 h-4"></i>
                                 </button>
                                 <button class="{{ $position->is_active ? 'text-green-600 hover:text-green-900' : 'text-gray-400 hover:text-gray-600' }}" onclick="togglePositionStatus({{ $position->id }}, {{ $position->is_active ? 'false' : 'true' }})" title="{{ $position->is_active ? 'Deactivate' : 'Activate' }}">
@@ -199,7 +199,7 @@
                                 <i data-feather="briefcase" class="w-12 h-12 text-gray-400 mb-4"></i>
                                 <p class="text-lg font-medium text-gray-900">No positions found</p>
                                 <p class="text-sm text-gray-600 mt-2">Get started by creating your first position</p>
-                                <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="showModal('createPositionModal')">
+                                <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="openModal('createPositionModal')">
                                     <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                                     Add Position
                                 </button>
@@ -214,211 +214,189 @@
 </div>
 
 <!-- Import Positions Modal -->
-<div id="importPositionsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
-    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Bulk Import Positions</h3>
-                <button type="button" onclick="hideModal('importPositionsModal')" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            
-            <div class="mb-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <h4 class="font-medium text-blue-800 mb-2">Import Instructions</h4>
-                    <ul class="text-sm text-blue-700 space-y-1">
-                        <li>• Upload a CSV file with position data</li>
-                        <li>• Required columns: title, department_id</li>
-                        <li>• Optional columns: job_code, grade_level, min_salary, max_salary, description, requirements, is_active</li>
-                        <li>• First row should contain column headers</li>
-                    </ul>
-                </div>
-                
-                <div class="mb-4">
-                    <a href="/positions/import-template" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                        <i data-feather="download" class="w-4 h-4 inline mr-1"></i>
-                        Download CSV Template
-                    </a>
-                </div>
-            </div>
-            
-            <form id="importPositionsForm" enctype="multipart/form-data">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">CSV File <span class="text-red-500">*</span></label>
-                    <input type="file" name="csv_file" accept=".csv" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                
-                <div id="importResults" class="hidden mb-4">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="font-medium text-gray-900 mb-2">Import Results</h4>
-                        <div id="importResultsContent"></div>
-                    </div>
-                </div>
-            </form>
+<x-advanced-modal id="importPositionsModal" title="Bulk Import Positions" description="Upload a CSV file to import positions in bulk." icon="upload" color="green" size="2xl">
+    <div class="mb-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h4 class="font-medium text-blue-800 mb-2">Import Instructions</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li>• Upload a CSV file with position data</li>
+                <li>• Required columns: title, department_id</li>
+                <li>• Optional columns: job_code, grade_level, min_salary, max_salary, description, requirements, is_active</li>
+                <li>• First row should contain column headers</li>
+            </ul>
         </div>
-        <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-            <button type="button" onclick="hideModal('importPositionsModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+
+        <div class="mb-4">
+            <a href="/positions/import-template" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                <i data-feather="download" class="w-4 h-4 inline mr-1"></i>
+                Download CSV Template
+            </a>
+        </div>
+    </div>
+
+    <form id="importPositionsForm" enctype="multipart/form-data" class="space-y-4">
+        @csrf
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">CSV File <span class="text-red-500">*</span></label>
+            <input type="file" name="csv_file" accept=".csv" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+
+        <div id="importResults" class="hidden">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-2">Import Results</h4>
+                <div id="importResultsContent"></div>
+            </div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('importPositionsModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
             <button type="button" onclick="importPositions()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Import</button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Create Position Modal -->
-<div id="createPositionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
-    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <form method="POST" action="{{ route('positions.store') }}">
-            @csrf
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Add New Position</h3>
-                    <button type="button" onclick="hideModal('createPositionModal')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Position Title <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Software Engineer">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Department <span class="text-red-500">*</span></label>
-                        <select name="department_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Select Department</option>
-                            @foreach($departments as $department)
-                                <option value="{{ $department->id }}">{{ $department->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Job Code</label>
-                        <input type="text" name="job_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., SE-001">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Grade Level</label>
-                        <input type="number" name="grade_level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="1" max="20">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Salary</label>
-                        <input type="number" name="min_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Salary</label>
-                        <input type="number" name="max_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0">
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief job description..."></textarea>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Requirements</label>
-                        <textarea name="requirements" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Job requirements..."></textarea>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <div class="flex items-center">
-                            <input type="checkbox" name="is_active" id="isActive" value="1" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="isActive" class="ml-2 block text-sm text-gray-700">
-                                Position is active
-                            </label>
-                        </div>
-                    </div>
+<x-advanced-modal id="createPositionModal" title="Add New Position" description="Create a position and assign a department, salary range, and details." icon="plus" color="indigo" size="2xl">
+    <form id="createPositionForm" method="POST" action="{{ route('positions.store') }}">
+        @csrf
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Position Title <span class="text-red-500">*</span></label>
+                <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Software Engineer">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Department <span class="text-red-500">*</span></label>
+                <select name="department_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select Department</option>
+                    @foreach($departments as $department)
+                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Job Code</label>
+                <input type="text" name="job_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., SE-001">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Grade Level</label>
+                <input type="number" name="grade_level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="1" max="20">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Salary</label>
+                <input type="number" name="min_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Salary</label>
+                <input type="number" name="max_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0">
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief job description..."></textarea>
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Requirements</label>
+                <textarea name="requirements" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Job requirements..."></textarea>
+            </div>
+            
+            <div class="md:col-span-2">
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_active" id="isActive" value="1" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="isActive" class="ml-2 block text-sm text-gray-700">
+                        Position is active
+                    </label>
                 </div>
             </div>
-            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-                <button type="button" onclick="hideModal('createPositionModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Position</button>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('createPositionModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="createPositionForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save Position</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Edit Position Modals -->
 @foreach($positions as $position)
-<div id="editPositionModal{{ $position->id }}" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
-    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <form method="POST" action="{{ route('positions.update', $position->id) }}">
-            @csrf
-            @method('PUT')
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Edit Position</h3>
-                    <button type="button" onclick="hideModal('editPositionModal{{ $position->id }}')" class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Position Title <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $position->title }}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Department <span class="text-red-500">*</span></label>
-                        <select name="department_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Select Department</option>
-                            @foreach($departments as $department)
-                                <option value="{{ $department->id }}" {{ $position->department_id == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Job Code</label>
-                        <input type="text" name="job_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $position->job_code }}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Grade Level</label>
-                        <input type="number" name="grade_level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="1" max="20" value="{{ $position->grade_level }}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Salary</label>
-                        <input type="number" name="min_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" value="{{ $position->min_salary }}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Salary</label>
-                        <input type="number" name="max_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" value="{{ $position->max_salary }}">
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $position->description }}</textarea>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Requirements</label>
-                        <textarea name="requirements" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $position->requirements }}</textarea>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <div class="flex items-center">
-                            <input type="checkbox" name="is_active" id="isActive{{ $position->id }}" value="1" {{ $position->is_active ? 'checked' : '' }} class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="isActive{{ $position->id }}" class="ml-2 block text-sm text-gray-700">
-                                Position is active
-                            </label>
-                        </div>
-                    </div>
+<x-advanced-modal id="editPositionModal{{ $position->id }}" title="Edit Position" description="Update position details, department, salary range, and status." icon="edit" color="indigo" size="2xl">
+    <form id="editPositionForm{{ $position->id }}" method="POST" action="{{ route('positions.update', $position->id) }}">
+        @csrf
+        @method('PUT')
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Position Title <span class="text-red-500">*</span></label>
+                <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $position->title }}">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Department <span class="text-red-500">*</span></label>
+                <select name="department_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select Department</option>
+                    @foreach($departments as $department)
+                        <option value="{{ $department->id }}" {{ $position->department_id == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Job Code</label>
+                <input type="text" name="job_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $position->job_code }}">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Grade Level</label>
+                <input type="number" name="grade_level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" min="1" max="20" value="{{ $position->grade_level }}">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Salary</label>
+                <input type="number" name="min_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" value="{{ $position->min_salary }}">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Salary</label>
+                <input type="number" name="max_salary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" value="{{ $position->max_salary }}">
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $position->description }}</textarea>
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Requirements</label>
+                <textarea name="requirements" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $position->requirements }}</textarea>
+            </div>
+            
+            <div class="md:col-span-2">
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_active" id="isActive{{ $position->id }}" value="1" {{ $position->is_active ? 'checked' : '' }} class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="isActive{{ $position->id }}" class="ml-2 block text-sm text-gray-700">
+                        Position is active
+                    </label>
                 </div>
             </div>
-            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-                <button type="button" onclick="hideModal('editPositionModal{{ $position->id }}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Position</button>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('editPositionModal{{ $position->id }}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="editPositionForm{{ $position->id }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Position</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endforeach
 
 @push('scripts')
@@ -449,15 +427,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('positionSearch').addEventListener('input', filterPositions);
     document.getElementById('statusFilter').addEventListener('change', filterPositions);
     document.getElementById('departmentFilter').addEventListener('change', filterPositions);
-    
-    // Close modals when clicking outside
-    document.querySelectorAll('[id^="createPositionModal"], [id^="editPositionModal"]').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                hideModal(modal.id);
-            }
-        });
-    });
 });
 
 function exportPositions() {

@@ -60,8 +60,8 @@
                             <div class="text-sm font-bold text-gray-900">{{ $contract->employee->full_name }}</div>
                             <div class="text-xs text-gray-500">{{ $contract->employee->position }}</div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600 capitalize">
-                            {{ str_replace('_', ' ', $contract->contract_type) }}
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ \App\Models\Contract::CONTRACT_TYPES[$contract->contract_type] ?? str_replace('_', ' ', $contract->contract_type) }}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">
                             {{ $contract->start_date->format('d M, Y') }}

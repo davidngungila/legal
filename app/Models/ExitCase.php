@@ -30,6 +30,23 @@ class ExitCase extends Model
         'notice_date' => 'date',
     ];
 
+    const EXIT_TYPES = [
+        'resignation' => 'Resignation',
+        'misconduct_termination' => 'Termination (Misconduct)',
+        'retrenchment' => 'Retrenchment',
+        'mutual_separation' => 'Mutual Separation',
+        'retirement' => 'Retirement',
+        'death_in_service' => 'Death in Service',
+        'capacity' => 'Capacity',
+    ];
+
+    const STATUSES = [
+        'initiated' => 'Initiated',
+        'pending_clearance' => 'Pending Clearance',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ];
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

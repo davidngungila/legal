@@ -262,67 +262,63 @@
 </div>
 
 <!-- Statistics Modal -->
-<div id="statisticsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Social Records Statistics</h3>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Total Employees:</span>
-                    <span class="text-sm font-medium" id="modalTotalEmployees">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">NSSF Registered:</span>
-                    <span class="text-sm font-medium" id="modalNssfCount">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">NHIF Registered:</span>
-                    <span class="text-sm font-medium" id="modalNhifCount">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">TIN Registered:</span>
-                    <span class="text-sm font-medium" id="modalTinCount">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">WCF Registered:</span>
-                    <span class="text-sm font-medium" id="modalWcfCount">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Bank Records:</span>
-                    <span class="text-sm font-medium" id="modalBankCount">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Active Records:</span>
-                    <span class="text-sm font-medium" id="modalActiveCount">-</span>
-                </div>
-            </div>
-            <div class="flex justify-end mt-6">
-                <button onclick="hideStatisticsModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                    Close
-                </button>
-            </div>
+<x-advanced-modal id="statisticsModal" title="Social Records Statistics"
+    icon="bar-chart-2" color="indigo" size="md">
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Total Employees:</span>
+            <span class="text-sm font-medium" id="modalTotalEmployees">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">NSSF Registered:</span>
+            <span class="text-sm font-medium" id="modalNssfCount">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">NHIF Registered:</span>
+            <span class="text-sm font-medium" id="modalNhifCount">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">TIN Registered:</span>
+            <span class="text-sm font-medium" id="modalTinCount">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">WCF Registered:</span>
+            <span class="text-sm font-medium" id="modalWcfCount">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Bank Records:</span>
+            <span class="text-sm font-medium" id="modalBankCount">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Active Records:</span>
+            <span class="text-sm font-medium" id="modalActiveCount">-</span>
         </div>
     </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="hideStatisticsModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Missing Records Modal -->
-<div id="missingRecordsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Employees Missing Records</h3>
-            <div id="missingRecordsList" class="space-y-2 max-h-64 overflow-y-auto">
-                <!-- Will be populated dynamically -->
-            </div>
-            <div class="flex justify-end mt-6">
-                <button onclick="hideMissingRecordsModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                    Close
-                </button>
-            </div>
-        </div>
+<x-advanced-modal id="missingRecordsModal" title="Employees Missing Records"
+    icon="alert-triangle" color="orange" size="md">
+    <div id="missingRecordsList" class="space-y-2 max-h-64 overflow-y-auto">
+        <!-- Will be populated dynamically -->
     </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="hideMissingRecordsModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endsection
 
 @push('scripts')
@@ -438,11 +434,11 @@ class SocialRecordsManager {
 
 // Modal functions
 function showStatisticsModal() {
-    document.getElementById('statisticsModal').classList.remove('hidden');
+    openModal('statisticsModal');
 }
 
 function hideStatisticsModal() {
-    document.getElementById('statisticsModal').classList.add('hidden');
+    closeModal('statisticsModal');
 }
 
 async function showMissingRecordsModal() {
@@ -469,7 +465,7 @@ async function showMissingRecordsModal() {
                 });
             }
             
-            document.getElementById('missingRecordsModal').classList.remove('hidden');
+            openModal('missingRecordsModal');
         } else {
             window.socialRecordsManager.showNotification('Failed to load missing records', 'error');
         }
@@ -480,7 +476,7 @@ async function showMissingRecordsModal() {
 }
 
 function hideMissingRecordsModal() {
-    document.getElementById('missingRecordsModal').classList.add('hidden');
+    closeModal('missingRecordsModal');
 }
 
 // Action functions

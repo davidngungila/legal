@@ -106,12 +106,11 @@
             <div>
                 <select id="contractTypeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Contract Types</option>
-                    <option value="permanent">Permanent</option>
-                    <option value="temporary">Temporary</option>
-                    <option value="probation">Probation</option>
+                    <option value="unspecified">Unspecified (Permanent)</option>
+                    <option value="fixed_term">Fixed Term</option>
+                    <option value="specific_task">Specific Task</option>
+                    <option value="commission">Commission</option>
                     <option value="internship">Internship</option>
-                    <option value="consultant">Consultant</option>
-                    <option value="contractor">Contractor</option>
                 </select>
             </div>
             <div>
@@ -255,169 +254,161 @@
 </div>
 
 <!-- Statistics Modal -->
-<div id="statisticsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Contract Statistics</h3>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Total Contracts:</span>
-                    <span class="text-sm font-medium" id="modalTotalContracts">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Active Contracts:</span>
-                    <span class="text-sm font-medium" id="modalActiveContracts">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Expired Contracts:</span>
-                    <span class="text-sm font-medium" id="modalExpiredContracts">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Terminated Contracts:</span>
-                    <span class="text-sm font-medium" id="modalTerminatedContracts">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Expiring Soon:</span>
-                    <span class="text-sm font-medium" id="modalExpiringSoon">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Average Duration:</span>
-                    <span class="text-sm font-medium" id="modalAvgDuration">-</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Renewal Rate:</span>
-                    <span class="text-sm font-medium" id="modalRenewalRate">-</span>
-                </div>
-            </div>
-            <div class="border-t pt-4 mt-4">
-                <h4 class="text-sm font-medium text-gray-900 mb-2">By Contract Type</h4>
-                <div class="space-y-2" id="contractTypeStats">
-                    <!-- Will be populated dynamically -->
-                </div>
-            </div>
-            <div class="flex justify-end mt-6">
-                <button onclick="hideStatisticsModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                    Close
-                </button>
-            </div>
+<x-advanced-modal id="statisticsModal" title="Contract Statistics"
+    icon="bar-chart-2" color="indigo" size="md">
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Total Contracts:</span>
+            <span class="text-sm font-medium" id="modalTotalContracts">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Active Contracts:</span>
+            <span class="text-sm font-medium" id="modalActiveContracts">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Expired Contracts:</span>
+            <span class="text-sm font-medium" id="modalExpiredContracts">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Terminated Contracts:</span>
+            <span class="text-sm font-medium" id="modalTerminatedContracts">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Expiring Soon:</span>
+            <span class="text-sm font-medium" id="modalExpiringSoon">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Average Duration:</span>
+            <span class="text-sm font-medium" id="modalAvgDuration">-</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Renewal Rate:</span>
+            <span class="text-sm font-medium" id="modalRenewalRate">-</span>
         </div>
     </div>
-</div>
+    <div class="border-t pt-4 mt-4">
+        <h4 class="text-sm font-medium text-gray-900 mb-2">By Contract Type</h4>
+        <div class="space-y-2" id="contractTypeStats">
+            <!-- Will be populated dynamically -->
+        </div>
+    </div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="hideStatisticsModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Requiring Attention Modal -->
-<div id="requiringAttentionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Contracts Requiring Attention</h3>
-            <div id="requiringAttentionList" class="space-y-2 max-h-64 overflow-y-auto">
-                <!-- Will be populated dynamically -->
-            </div>
-            <div class="flex justify-end mt-6">
-                <button onclick="hideRequiringAttentionModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                    Close
-                </button>
-            </div>
-        </div>
+<x-advanced-modal id="requiringAttentionModal" title="Contracts Requiring Attention"
+    icon="alert-triangle" color="orange" size="md">
+    <div id="requiringAttentionList" class="space-y-2 max-h-64 overflow-y-auto">
+        <!-- Will be populated dynamically -->
     </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="hideRequiringAttentionModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Calendar Modal -->
-<div id="calendarModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Contract Calendar</h3>
-            <div class="space-y-2" id="calendarEvents">
-                <!-- Will be populated dynamically -->
-            </div>
-            <div class="flex justify-end mt-6">
-                <button onclick="hideCalendarModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                    Close
-                </button>
-            </div>
-        </div>
+<x-advanced-modal id="calendarModal" title="Contract Calendar"
+    icon="calendar" color="purple" size="md">
+    <div class="space-y-2" id="calendarEvents">
+        <!-- Will be populated dynamically -->
     </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="hideCalendarModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Terminate Contract Modal -->
-<div id="terminateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Terminate Contract</h3>
-            <form id="terminateForm" class="space-y-4">
-                <input type="hidden" name="employee_id" id="terminateEmployeeId">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date <span class="text-red-500">*</span></label>
-                    <input type="date" name="termination_date" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Termination Reason <span class="text-red-500">*</span></label>
-                    <textarea name="termination_reason" rows="3" required
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Termination Type <span class="text-red-500">*</span></label>
-                    <select name="termination_type" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select Type</option>
-                        <option value="resignation">Resignation</option>
-                        <option value="dismissal">Dismissal</option>
-                        <option value="retirement">Retirement</option>
-                        <option value="contract_expiry">Contract Expiry</option>
-                        <option value="mutual_agreement">Mutual Agreement</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Final Settlement Amount</label>
-                    <input type="number" name="final_settlement_amount" min="0" step="0.01"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div class="space-y-2">
-                    <div class="flex items-center">
-                        <input type="checkbox" name="handover_completed" id="handover_completed"
-                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <label for="handover_completed" class="ml-2 block text-sm text-gray-900">
-                            Handover Completed
-                        </label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" name="clearance_completed" id="clearance_completed"
-                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <label for="clearance_completed" class="ml-2 block text-sm text-gray-900">
-                            Clearance Completed
-                        </label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" name="exit_interview_completed" id="exit_interview_completed"
-                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <label for="exit_interview_completed" class="ml-2 block text-sm text-gray-900">
-                            Exit Interview Completed
-                        </label>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t">
-                    <button type="button" onclick="hideTerminateModal()"
-                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                        Cancel
-                    </button>
-                    <button type="submit" id="terminateBtn"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
-                        <span id="terminateBtnText">Terminate</span>
-                        <div id="terminateBtnLoader" class="hidden ml-2">
-                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </div>
-                    </button>
-                </div>
-            </form>
+<x-advanced-modal id="terminateModal" title="Terminate Contract"
+    icon="alert-triangle" color="red" size="md">
+    <form id="terminateForm" class="space-y-4">
+        <input type="hidden" name="employee_id" id="terminateEmployeeId">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date <span class="text-red-500">*</span></label>
+            <input type="date" name="termination_date" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
         </div>
-    </div>
-</div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Termination Reason <span class="text-red-500">*</span></label>
+            <textarea name="termination_reason" rows="3" required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Termination Type <span class="text-red-500">*</span></label>
+            <select name="termination_type" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">Select Type</option>
+                <option value="resignation">Resignation</option>
+                <option value="dismissal">Dismissal</option>
+                <option value="retirement">Retirement</option>
+                <option value="contract_expiry">Contract Expiry</option>
+                <option value="mutual_agreement">Mutual Agreement</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Final Settlement Amount</label>
+            <input type="number" name="final_settlement_amount" min="0" step="0.01"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="space-y-2">
+            <div class="flex items-center">
+                <input type="checkbox" name="handover_completed" id="handover_completed"
+                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="handover_completed" class="ml-2 block text-sm text-gray-900">
+                    Handover Completed
+                </label>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" name="clearance_completed" id="clearance_completed"
+                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="clearance_completed" class="ml-2 block text-sm text-gray-900">
+                    Clearance Completed
+                </label>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" name="exit_interview_completed" id="exit_interview_completed"
+                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="exit_interview_completed" class="ml-2 block text-sm text-gray-900">
+                    Exit Interview Completed
+                </label>
+            </div>
+        </div>
+    </form>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="hideTerminateModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="terminateForm" id="terminateBtn"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
+                <span id="terminateBtnText">Terminate</span>
+                <div id="terminateBtnLoader" class="hidden ml-2">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endsection
 
 @push('scripts')
@@ -504,12 +495,11 @@ class ContractManagementManager {
 
     getContractTypeLabel(type) {
         const labels = {
-            'permanent' => 'Permanent',
-            'temporary' => 'Temporary',
-            'probation' => 'Probation',
-            'internship' => 'Internship',
-            'consultant' => 'Consultant',
-            'contractor' => 'Contractor'
+            'unspecified' => 'Unspecified (Permanent)',
+            'fixed_term' => 'Fixed Term',
+            'specific_task' => 'Specific Task',
+            'commission' => 'Commission',
+            'internship' => 'Internship'
         };
         return labels[type] || type;
     }
@@ -613,11 +603,11 @@ class ContractManagementManager {
 
 // Modal functions
 function showStatisticsModal() {
-    document.getElementById('statisticsModal').classList.remove('hidden');
+    openModal('statisticsModal');
 }
 
 function hideStatisticsModal() {
-    document.getElementById('statisticsModal').classList.add('hidden');
+    closeModal('statisticsModal');
 }
 
 async function showRequiringAttentionModal() {
@@ -644,7 +634,7 @@ async function showRequiringAttentionModal() {
                 });
             }
             
-            document.getElementById('requiringAttentionModal').classList.remove('hidden');
+            openModal('requiringAttentionModal');
         } else {
             window.contractManagementManager.showNotification('Failed to load requiring attention contracts', 'error');
         }
@@ -655,7 +645,7 @@ async function showRequiringAttentionModal() {
 }
 
 function hideRequiringAttentionModal() {
-    document.getElementById('requiringAttentionModal').classList.add('hidden');
+    closeModal('requiringAttentionModal');
 }
 
 async function showCalendarModal() {
@@ -679,7 +669,7 @@ async function showCalendarModal() {
                 container.appendChild(eventDiv);
             });
             
-            document.getElementById('calendarModal').classList.remove('hidden');
+            openModal('calendarModal');
         } else {
             window.contractManagementManager.showNotification('Failed to load calendar events', 'error');
         }
@@ -690,16 +680,16 @@ async function showCalendarModal() {
 }
 
 function hideCalendarModal() {
-    document.getElementById('calendarModal').classList.add('hidden');
+    closeModal('calendarModal');
 }
 
 function showTerminateModal(employeeId) {
     document.getElementById('terminateEmployeeId').value = employeeId;
-    document.getElementById('terminateModal').classList.remove('hidden');
+    openModal('terminateModal');
 }
 
 function hideTerminateModal() {
-    document.getElementById('terminateModal').classList.add('hidden');
+    closeModal('terminateModal');
     document.getElementById('terminateForm').reset();
 }
 

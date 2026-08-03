@@ -201,7 +201,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <button class="text-indigo-600 hover:text-indigo-900" data-bs-toggle="modal" data-bs-target="#editViolationModal{{ $violation->id }}">
+                                <button class="text-indigo-600 hover:text-indigo-900" onclick="openModal('editViolationModal{{ $violation->id }}')">
                                     <i data-feather="edit-2" class="w-4 h-4"></i>
                                 </button>
                                 @if($violation->status == 'open')
@@ -237,18 +237,11 @@
 
     <!-- Edit Violation Modals -->
     @foreach($violations as $violation)
-    <div class="modal fade" id="editViolationModal{{ $violation->id }}" tabindex="-1" aria-labelledby="editViolationModalLabel{{ $violation->id }}" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form method="POST" action="{{ route('attendance.violations.update', $violation) }}">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-header">
-                        <h5 class="modal-title text-lg font-semibold" id="editViolationModalLabel{{ $violation->id }}">Edit Violation</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="grid grid-cols-1 gap-4">
+    <x-advanced-modal id="editViolationModal{{ $violation->id }}" title="Edit Violation" description="Update violation details" icon="alert-circle" color="red" size="lg">
+        <form id="editViolationForm{{ $violation->id }}" method="POST" action="{{ route('attendance.violations.update', $violation) }}">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Details</label>
                                 <textarea name="details" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ $violation->details }}</textarea>
@@ -262,15 +255,15 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Violation</button>
-                    </div>
-                </form>
-            </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('editViolationModal{{ $violation->id }}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+            <button type="submit" form="editViolationForm{{ $violation->id }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Violation</button>
         </div>
-    </div>
+    </x-slot:footer>
+</x-advanced-modal>
     @endforeach
 </div>
 @endsection

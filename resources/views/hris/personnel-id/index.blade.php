@@ -11,7 +11,7 @@
             <p class="text-gray-600 mt-2">Manage employee ID cards and access credentials</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button type="button" onclick="document.getElementById('addApplicationModal').classList.remove('hidden'); document.getElementById('addApplicationModal').classList.add('flex'); document.body.style.overflow = 'hidden'; if(typeof feather !== 'undefined') feather.replace();" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+            <button type="button" onclick="openModal('addApplicationModal')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
                 <i data-feather="plus" class="w-4 h-4 mr-2"></i>
                 Add Application
             </button>
@@ -294,28 +294,9 @@
 </div>
 
 <!-- Add Application Modal -->
-<div id="addApplicationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[9999]">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col relative z-[10000]">
-        <!-- Header -->
-        <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl flex-shrink-0">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <i data-feather="credit-card" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900">Add ID Application</h3>
-                        <p class="text-sm text-gray-500">Create a new personnel ID card application</p>
-                    </div>
-                </div>
-                <button type="button" onclick="document.getElementById('addApplicationModal').classList.add('hidden'); document.getElementById('addApplicationModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                    <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                </button>
-            </div>
-        </div>
-            
-        <!-- Form Content -->
-        <form id="addApplicationForm" class="px-6 py-6 overflow-y-auto flex-1">
+<x-advanced-modal id="addApplicationModal" title="Add ID Application" description="Create a new personnel ID card application"
+    icon="credit-card" color="indigo" size="2xl" :z-index="9999">
+    <form id="addApplicationForm">
             @csrf
             <div class="space-y-6">
                 <!-- Employee Selection -->
@@ -425,48 +406,25 @@
                 </div>
             </div>
             
-            <!-- Footer Actions -->
-            <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
-                <button type="button" onclick="document.getElementById('addApplicationModal').classList.add('hidden'); document.getElementById('addApplicationModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
-                    Cancel
-                </button>
-                <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
-                    <i data-feather="plus" class="w-4 h-4 mr-2"></i>
-                    Add Application
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('addApplicationModal')" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
+                Cancel
+            </button>
+            <button type="submit" form="addApplicationForm" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
+                <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                Add Application
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Edit Application Modal -->
-<div id="editApplicationModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="hideEditApplicationModal()"></div>
-    
-    <!-- Modal Container -->
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale100 opacity-100 max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl flex-shrink-0">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <i data-feather="edit-2" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Edit ID Application</h3>
-                            <p class="text-sm text-gray-500">Update personnel ID card application details</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="hideEditApplicationModal()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                        <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Form Content -->
-            <form id="editApplicationForm" class="px-6 py-6 overflow-y-auto flex-1">
+<x-advanced-modal id="editApplicationModal" title="Edit ID Application" description="Update personnel ID card application details"
+    icon="edit" color="indigo" size="2xl">
+    <form id="editApplicationForm">
                 @csrf
                 <input type="hidden" id="editApplicationId" name="application_id">
                 <input type="hidden" id="editEmployeeId" name="employee_id">
@@ -581,49 +539,24 @@
                     </div>
                 </div>
                 
-                <!-- Footer Actions -->
-                <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
-                    <button type="button" onclick="hideEditApplicationModal()" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
-                        <i data-feather="save" class="w-4 h-4 mr-2"></i>
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('editApplicationModal')" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
+                Cancel
+            </button>
+            <button type="submit" form="editApplicationForm" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
+                <i data-feather="save" class="w-4 h-4 mr-2"></i>
+                Save Changes
+            </button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Statistics Modal -->
-<div id="statisticsModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="hideStatisticsModal()"></div>
-    
-    <!-- Modal Container -->
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all scale100 opacity-100 max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-t-2xl flex-shrink-0">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <i data-feather="bar-chart-2" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">ID Statistics</h3>
-                            <p class="text-sm text-gray-500">Overview of personnel ID card applications</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="hideStatisticsModal()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                        <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Content -->
-            <div class="px-6 py-6 overflow-y-auto flex-1">
+<x-advanced-modal id="statisticsModal" title="ID Statistics" description="Overview of personnel ID card applications"
+    icon="bar-chart-2" color="indigo" size="lg">
                 <div class="space-y-4">
                     <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
                         <span class="text-sm text-gray-600">Total Applications:</span>
@@ -667,93 +600,34 @@
                         <!-- Will be populated dynamically -->
                     </div>
                 </div>
-            </div>
-            
-            <!-- Footer -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-                <div class="flex justify-end">
-                    <button onclick="hideStatisticsModal()" class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all font-medium">
-                        Close
-                    </button>
-                </div>
-            </div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeModal('statisticsModal')" class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all font-medium">
+                Close
+            </button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Requiring Attention Modal -->
-<div id="requiringAttentionModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="hideRequiringAttentionModal()"></div>
-    
-    <!-- Modal Container -->
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all scale100 opacity-100 max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50 rounded-t-2xl flex-shrink-0">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <i data-feather="alert-triangle" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Applications Requiring Attention</h3>
-                            <p class="text-sm text-gray-500">Review applications that need action</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="hideRequiringAttentionModal()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                        <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Content -->
-            <div class="px-6 py-6 overflow-y-auto flex-1">
+<x-advanced-modal id="requiringAttentionModal" title="Applications Requiring Attention" description="Review applications that need action"
+    icon="alert-triangle" color="orange" size="lg">
                 <div id="requiringAttentionList" class="space-y-3 max-h-96 overflow-y-auto">
                     <!-- Will be populated dynamically -->
                 </div>
-            </div>
-            
-            <!-- Footer -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-                <div class="flex justify-end">
-                    <button onclick="hideRequiringAttentionModal()" class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all font-medium">
-                        Close
-                    </button>
-                </div>
-            </div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeModal('requiringAttentionModal')" class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all font-medium">
+                Close
+            </button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Reject Application Modal -->
-<div id="rejectModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="hideRejectModal()"></div>
-    
-    <!-- Modal Container -->
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale100 opacity-100 max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-2xl flex-shrink-0">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <i data-feather="x-circle" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Reject Application</h3>
-                            <p class="text-sm text-gray-500">Provide a reason for rejection</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="hideRejectModal()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                        <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Form Content -->
-            <form id="rejectForm" class="px-6 py-6 overflow-y-auto flex-1">
+<x-advanced-modal id="rejectModal" title="Reject Application" description="Provide a reason for rejection"
+    icon="x-circle" color="red" size="md">
+    <form id="rejectForm">
                 @csrf
                 <input type="hidden" id="rejectEmployeeId" name="employee_id">
                 <div class="space-y-4">
@@ -767,44 +641,25 @@
                     </div>
                 </div>
                 
-                <!-- Footer Actions -->
-                <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
-                    <button type="button" onclick="hideRejectModal()" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:from-red-700 hover:to-orange-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
-                        <i data-feather="x" class="w-4 h-4 mr-2"></i>
-                        Reject Application
-                    </button>
-                </div>
-            </form>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('rejectModal')" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
+                Cancel
+            </button>
+            <button type="submit" form="rejectForm" class="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:from-red-700 hover:to-orange-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
+                <i data-feather="x" class="w-4 h-4 mr-2"></i>
+                Reject Application
+            </button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Report Lost Modal -->
-<div id="reportLostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[9999]">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col relative z-[10000]">
-        <!-- Header -->
-        <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-pink-50 rounded-t-2xl flex-shrink-0">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <i data-feather="alert-circle" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900">Report Lost ID Card</h3>
-                        <p class="text-sm text-gray-500">Report a lost or missing personnel ID card</p>
-                    </div>
-                </div>
-                <button type="button" onclick="document.getElementById('reportLostModal').classList.add('hidden'); document.getElementById('reportLostModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center group">
-                    <i data-feather="x" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
-                </button>
-            </div>
-        </div>
-            
-        <!-- Form Content -->
-        <form id="reportLostForm" class="px-6 py-6 overflow-y-auto flex-1">
+<x-advanced-modal id="reportLostModal" title="Report Lost ID Card" description="Report a lost or missing personnel ID card"
+    icon="alert-triangle" color="red" size="md" :z-index="9999">
+    <form id="reportLostForm">
             @csrf
             <input type="hidden" id="lostEmployeeId" name="employee_id">
             <div class="space-y-4">
@@ -853,26 +708,26 @@
                 </div>
             </div>
             
-            <!-- Footer Actions -->
-            <div class="flex items-center justify-end space-x-4 pt-6 mt-6 border-t border-gray-100">
-                <button type="button" onclick="document.getElementById('reportLostModal').classList.add('hidden'); document.getElementById('reportLostModal').classList.remove('flex'); document.body.style.overflow = 'auto';"
-                        class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
-                    Cancel
-                </button>
-                <button type="submit" id="reportLostBtn"
-                        class="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
-                    <span id="reportLostBtnText">Report Lost</span>
-                    <div id="reportLostBtnLoader" class="hidden ml-2">
-                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('reportLostModal')" class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium">
+                Cancel
+            </button>
+            <button type="submit" id="reportLostBtn" form="reportLostForm"
+                    class="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all font-medium shadow-lg hover:shadow-xl flex items-center">
+                <span id="reportLostBtnText">Report Lost</span>
+                <div id="reportLostBtnLoader" class="hidden ml-2">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 @endsection
 
 @push('scripts')
@@ -1244,13 +1099,11 @@ class PersonnelIdManager {
 
 // Modal functions
 function showStatisticsModal() {
-    document.getElementById('statisticsModal').classList.remove('hidden');
-    document.getElementById('statisticsModal').classList.add('flex');
+    openModal('statisticsModal');
 }
 
 function hideStatisticsModal() {
-    document.getElementById('statisticsModal').classList.add('hidden');
-    document.getElementById('statisticsModal').classList.remove('flex');
+    closeModal('statisticsModal');
 }
 
 async function showRequiringAttentionModal() {
@@ -1277,8 +1130,7 @@ async function showRequiringAttentionModal() {
                 });
             }
             
-            document.getElementById('requiringAttentionModal').classList.remove('hidden');
-            document.getElementById('requiringAttentionModal').classList.add('flex');
+            openModal('requiringAttentionModal');
         } else {
             window.personnelIdManager.showNotification('Failed to load requiring attention applications', 'error');
         }
@@ -1289,21 +1141,18 @@ async function showRequiringAttentionModal() {
 }
 
 function hideRequiringAttentionModal() {
-    document.getElementById('requiringAttentionModal').classList.add('hidden');
-    document.getElementById('requiringAttentionModal').classList.remove('flex');
+    closeModal('requiringAttentionModal');
 }
 
 function showAddApplicationModal(employeeId = null) {
     if (employeeId) {
         document.getElementById('addEmployeeId').value = employeeId;
     }
-    document.getElementById('addApplicationModal').classList.remove('hidden');
-    document.getElementById('addApplicationModal').classList.add('flex');
+    openModal('addApplicationModal');
 }
 
 function hideAddApplicationModal() {
-    document.getElementById('addApplicationModal').classList.add('hidden');
-    document.getElementById('addApplicationModal').classList.remove('flex');
+    closeModal('addApplicationModal');
     document.getElementById('addApplicationForm').reset();
 }
 
@@ -1320,36 +1169,30 @@ function showEditApplicationModal(application, employeeId) {
     document.getElementById('editEmergencyAccess').checked = application.emergency_access;
     document.getElementById('editAfterHoursAccess').checked = application.after_hours_access;
 
-    document.getElementById('editApplicationModal').classList.remove('hidden');
-    document.getElementById('editApplicationModal').classList.add('flex');
+    openModal('editApplicationModal');
 }
 
 function hideEditApplicationModal() {
-    document.getElementById('editApplicationModal').classList.add('hidden');
-    document.getElementById('editApplicationModal').classList.remove('flex');
+    closeModal('editApplicationModal');
 }
 
 function showRejectModal(employeeId) {
     document.getElementById('rejectEmployeeId').value = employeeId;
-    document.getElementById('rejectModal').classList.remove('hidden');
-    document.getElementById('rejectModal').classList.add('flex');
+    openModal('rejectModal');
 }
 
 function hideRejectModal() {
-    document.getElementById('rejectModal').classList.add('hidden');
-    document.getElementById('rejectModal').classList.remove('flex');
+    closeModal('rejectModal');
     document.getElementById('rejectForm').reset();
 }
 
 function showReportLostModal(employeeId) {
     document.getElementById('lostEmployeeId').value = employeeId;
-    document.getElementById('reportLostModal').classList.remove('hidden');
-    document.getElementById('reportLostModal').classList.add('flex');
+    openModal('reportLostModal');
 }
 
 function hideReportLostModal() {
-    document.getElementById('reportLostModal').classList.add('hidden');
-    document.getElementById('reportLostModal').classList.remove('flex');
+    closeModal('reportLostModal');
     document.getElementById('reportLostForm').reset();
 }
 

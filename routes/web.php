@@ -215,9 +215,21 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
                 Route::get('/employees', [CompensationController::class, 'employees'])->name('compensation.employees');
                 Route::put('/employees/{employee}', [CompensationController::class, 'updateEmployee'])->name('compensation.employees.update');
                 Route::get('/salary-structures', [CompensationController::class, 'salaryStructures'])->name('compensation.salary-structures');
+                Route::post('/salary-structures', [CompensationController::class, 'storeSalaryStructure'])->name('compensation.salary-structures.store');
+                Route::put('/salary-structures/{id}', [CompensationController::class, 'updateSalaryStructure'])->name('compensation.salary-structures.update');
+                Route::delete('/salary-structures/{id}', [CompensationController::class, 'destroySalaryStructure'])->name('compensation.salary-structures.destroy');
                 Route::get('/merit-review', [CompensationController::class, 'meritReview'])->name('compensation.merit-review');
+                Route::post('/merit-review', [CompensationController::class, 'storeMeritReview'])->name('compensation.merit-review.store');
+                Route::put('/merit-review/{id}', [CompensationController::class, 'updateMeritReview'])->name('compensation.merit-review.update');
+                Route::delete('/merit-review/{id}', [CompensationController::class, 'destroyMeritReview'])->name('compensation.merit-review.destroy');
                 Route::get('/allowances', [CompensationController::class, 'allowances'])->name('compensation.allowances');
+                Route::post('/allowances', [CompensationController::class, 'storeAllowance'])->name('compensation.allowances.store');
+                Route::put('/allowances/{id}', [CompensationController::class, 'updateAllowance'])->name('compensation.allowances.update');
+                Route::delete('/allowances/{id}', [CompensationController::class, 'destroyAllowance'])->name('compensation.allowances.destroy');
                 Route::get('/loans', [CompensationController::class, 'loans'])->name('compensation.loans');
+                Route::post('/loans', [CompensationController::class, 'storeLoan'])->name('compensation.loans.store');
+                Route::put('/loans/{id}', [CompensationController::class, 'updateLoan'])->name('compensation.loans.update');
+                Route::delete('/loans/{id}', [CompensationController::class, 'destroyLoan'])->name('compensation.loans.destroy');
             });
 
     // Performance Routes
@@ -238,6 +250,9 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::put('/{case}', [App\Http\Controllers\DisciplinaryController::class, 'update'])->name('update');
         Route::delete('/{case}', [App\Http\Controllers\DisciplinaryController::class, 'destroy'])->name('destroy');
         Route::get('/investigations', [App\Http\Controllers\DisciplinaryController::class, 'investigations'])->name('investigations');
+        Route::post('/investigations/{id}/start', [App\Http\Controllers\DisciplinaryController::class, 'startInvestigation'])->name('investigations.start');
+        Route::put('/investigations/{id}/update', [App\Http\Controllers\DisciplinaryController::class, 'updateInvestigation'])->name('investigations.update');
+        Route::post('/investigations/{id}/hearing', [App\Http\Controllers\DisciplinaryController::class, 'scheduleHearing'])->name('investigations.hearing');
         Route::get('/hearings', [App\Http\Controllers\DisciplinaryController::class, 'hearings'])->name('hearings');
         Route::post('/hearings', [App\Http\Controllers\DisciplinaryController::class, 'storeHearing'])->name('hearings.store');
         Route::get('/documents', [App\Http\Controllers\DisciplinaryController::class, 'documents'])->name('documents');
@@ -248,6 +263,14 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::prefix('exit')->name('exit.')->group(function () {
         Route::get('/', [App\Http\Controllers\ExitController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\ExitController::class, 'store'])->name('store');
+        Route::put('/{id}', [App\Http\Controllers\ExitController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\ExitController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/status', [App\Http\Controllers\ExitController::class, 'updateStatus'])->name('status');
+        Route::post('/{id}/checklist', [App\Http\Controllers\ExitController::class, 'storeChecklist'])->name('checklist.store');
+        Route::patch('/{id}/checklist/{checklistId}', [App\Http\Controllers\ExitController::class, 'toggleChecklist'])->name('checklist.toggle');
+        Route::delete('/{id}/checklist/{checklistId}', [App\Http\Controllers\ExitController::class, 'destroyChecklist'])->name('checklist.destroy');
+        Route::post('/{id}/settlement', [App\Http\Controllers\ExitController::class, 'storeSettlement'])->name('settlement.store');
+        Route::post('/{id}/settlement/paid', [App\Http\Controllers\ExitController::class, 'markSettlementPaid'])->name('settlement.paid');
     });
 
     // Compliance Routes
@@ -475,9 +498,10 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/enrollment', function () {
             return view('benefits.enrollment');
         })->name('enrollment');
-        Route::get('/life-events', function () {
-            return view('benefits.life-events');
-        })->name('life-events');
+        Route::get('/life-events', [App\Http\Controllers\BenefitsController::class, 'lifeEvents'])->name('life-events');
+        Route::post('/life-events', [App\Http\Controllers\BenefitsController::class, 'storeLifeEvent'])->name('life-events.store');
+        Route::put('/life-events/{id}', [App\Http\Controllers\BenefitsController::class, 'updateLifeEvent'])->name('life-events.update');
+        Route::delete('/life-events/{id}', [App\Http\Controllers\BenefitsController::class, 'destroyLifeEvent'])->name('life-events.destroy');
         Route::get('/plans', function () {
             return view('benefits.plans');
         })->name('plans');

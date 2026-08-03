@@ -416,7 +416,6 @@ class AttendanceController extends Controller
         
         // Get employees with their positions/departments
         $employees = \App\Models\Employee::where('client_id', $clientId)
-            ->with(['department', 'position'])
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
@@ -427,7 +426,7 @@ class AttendanceController extends Controller
             ->get();
             
         // Get monthly summaries
-        $monthlySummaries = \App\Models\AttendanceMonthlySummary::with(['employee.department', 'employee.position'])
+        $monthlySummaries = \App\Models\AttendanceMonthlySummary::with(['employee'])
             ->where('client_id', $clientId)
             ->where('month', $monthStart->month)
             ->where('year', $monthStart->year)

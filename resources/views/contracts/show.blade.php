@@ -61,7 +61,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs text-gray-500">Contract Type</label>
-                                <p class="text-sm font-medium text-gray-900 capitalize">{{ str_replace('_', ' ', $contract->contract_type) }}</p>
+                                <p class="text-sm font-medium text-gray-900">{{ \App\Models\Contract::CONTRACT_TYPES[$contract->contract_type] ?? str_replace('_', ' ', $contract->contract_type) }}</p>
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500">Period</label>

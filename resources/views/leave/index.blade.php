@@ -17,7 +17,7 @@
             @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button type="button" onclick="document.getElementById('newLeaveRequestModal').classList.remove('hidden'); document.getElementById('newLeaveRequestModal').classList.add('flex'); document.body.style.overflow = 'hidden'; if(typeof feather !== 'undefined') feather.replace();" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button type="button" onclick="openModal('newLeaveRequestModal')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 New Leave Request
             </button>
@@ -155,19 +155,10 @@
 </div>
 
 <!-- New Leave Request Modal -->
-<div id="newLeaveRequestModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">New Leave Request</h3>
-                <button type="button" onclick="document.getElementById('newLeaveRequestModal').classList.add('hidden'); document.getElementById('newLeaveRequestModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-        </div>
-        <form action="{{ route('leave.store') }}" method="POST" class="p-6">
-            @csrf
-            <div class="space-y-4">
+<x-advanced-modal id="newLeaveRequestModal" title="New Leave Request" icon="plus" color="indigo" size="lg">
+    <form action="{{ route('leave.store') }}" method="POST" id="newLeaveRequestForm">
+        @csrf
+        <div class="space-y-4">
                 <div>
                     <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
                     <select id="employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
@@ -207,30 +198,22 @@
                     <textarea id="reason" name="reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                 </div>
             </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="document.getElementById('newLeaveRequestModal').classList.add('hidden'); document.getElementById('newLeaveRequestModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Submit Request</button>
-            </div>
         </form>
-    </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('newLeaveRequestModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" form="newLeaveRequestForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Submit Request</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- Update Leave Request Modal -->
-<div id="updateLeaveRequestModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Update Leave Request</h3>
-                <button type="button" onclick="document.getElementById('updateLeaveRequestModal').classList.add('hidden'); document.getElementById('updateLeaveRequestModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-        </div>
-        <form action="" method="POST" id="updateLeaveRequestForm" class="p-6">
-            @csrf
-            @method('PUT')
-            <input type="hidden" id="update_request_id" name="request_id" value="">
-            <div class="space-y-4">
+<x-advanced-modal id="updateLeaveRequestModal" title="Update Leave Request" icon="edit" color="indigo" size="lg">
+    <form action="" method="POST" id="updateLeaveRequestForm">
+        @csrf
+        @method('PUT')
+        <input type="hidden" id="update_request_id" name="request_id" value="">
+        <div class="space-y-4">
                 <div>
                     <label for="update_employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
                     <select id="update_employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
@@ -272,27 +255,18 @@
                     </select>
                 </div>
             </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="document.getElementById('updateLeaveRequestModal').classList.add('hidden'); document.getElementById('updateLeaveRequestModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Request</button>
-            </div>
         </form>
-    </div>
-</div>
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal('updateLeaveRequestModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" form="updateLeaveRequestForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update Request</button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <!-- View Leave Request Modal -->
-<div id="viewLeaveRequestModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Leave Request Details</h3>
-                <button type="button" onclick="document.getElementById('viewLeaveRequestModal').classList.add('hidden'); document.getElementById('viewLeaveRequestModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="text-gray-400 hover:text-gray-600">
-                    <i data-feather="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-        </div>
-        <div class="p-6">
-            <div class="space-y-4">
+<x-advanced-modal id="viewLeaveRequestModal" title="Leave Request Details" icon="file-text" color="blue" size="lg">
+    <div class="space-y-4">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
                         <span class="text-white text-sm font-medium" id="view_employee_initials">--</span>
@@ -347,13 +321,12 @@
                     <p class="font-medium text-gray-900" id="view_reason">--</p>
                 </div>
             </div>
-            
-            <div class="mt-6 flex justify-end">
-                <button type="button" onclick="document.getElementById('viewLeaveRequestModal').classList.add('hidden'); document.getElementById('viewLeaveRequestModal').classList.remove('flex'); document.body.style.overflow = 'auto';" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Close</button>
-            </div>
+    <x-slot:footer>
+        <div class="flex justify-end">
+            <button type="button" onclick="closeModal('viewLeaveRequestModal')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Close</button>
         </div>
-    </div>
-</div>
+    </x-slot:footer>
+</x-advanced-modal>
 
 <script>
 function viewLeaveRequest(id) {
@@ -380,9 +353,7 @@ function viewLeaveRequest(id) {
                 else if(r.status=='rejected')b.classList.add('bg-red-100','text-red-800');
                 else b.classList.add('bg-gray-100','text-gray-800');
                 b.textContent=r.status.charAt(0).toUpperCase()+r.status.slice(1);
-                document.getElementById('viewLeaveRequestModal').classList.remove('hidden');
-                document.getElementById('viewLeaveRequestModal').classList.add('flex');
-                document.body.style.overflow='hidden';
+                openModal('viewLeaveRequestModal');
                 if(typeof feather!=='undefined')feather.replace();
             }else{
                 console.error('Server error:', d.message);
@@ -395,7 +366,6 @@ function viewLeaveRequest(id) {
 }
 
 function openUpdateModal(id) {
-    const m=document.getElementById('updateLeaveRequestModal');
     const f=document.getElementById('updateLeaveRequestForm');
     f.action=`/leave/${id}`;
     fetch(`/leave/${id}`)
@@ -409,9 +379,7 @@ function openUpdateModal(id) {
                 document.getElementById('update_reason').value=d.request.reason||'';
                 document.getElementById('update_status').value=d.request.status||'pending';
                 document.getElementById('update_request_id').value=id;
-                m.classList.remove('hidden');
-                m.classList.add('flex');
-                document.body.style.overflow='hidden';
+                openModal('updateLeaveRequestModal');
                 if(typeof feather!=='undefined')feather.replace();
             }
         }).catch(e=>{console.error(e);alert('Failed to load leave request');});

@@ -40,7 +40,7 @@ class EmploymentContractsController extends Controller
         $validator = Validator::make($request->all(), [
             'employee_registration_id' => 'required|exists:employee_registrations,id',
             'contract_title' => 'required|string|max:255',
-            'contract_type' => 'required|in:permanent,temporary,probation,internship,consultant,contractor',
+            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'contract_number' => 'required|string|max:50',
             'effective_date' => 'required|date',
             'expiry_date' => 'nullable|date|after:effective_date',
@@ -152,7 +152,7 @@ class EmploymentContractsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'contract_title' => 'required|string|max:255',
-            'contract_type' => 'required|in:permanent,temporary,probation,internship,consultant,contractor',
+            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'contract_number' => 'required|string|max:50',
             'effective_date' => 'required|date',
             'expiry_date' => 'nullable|date|after:effective_date',
@@ -575,3 +575,4 @@ class EmploymentContractsController extends Controller
         return "{$prefix}{$year}{$sequence}";
     }
 }
+

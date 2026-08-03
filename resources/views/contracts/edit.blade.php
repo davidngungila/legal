@@ -45,8 +45,8 @@
                             <label for="contract_type" class="block text-sm font-medium text-gray-700 mb-1">Contract Type *</label>
                             <select name="contract_type" id="contract_type" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('contract_type') border-red-500 @enderror">
-                                @foreach($contractTypes as $type)
-                                    <option value="{{ $type }}" {{ old('contract_type', $contract->contract_type) == $type ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $type)) }}</option>
+                                @foreach($contractTypes as $key => $label)
+                                    <option value="{{ $key }}" {{ old('contract_type', $contract->contract_type) == $key ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('contract_type') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
@@ -120,8 +120,8 @@
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Contract Status *</label>
                             <select name="status" id="status" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('status') border-red-500 @enderror">
-                                @foreach($contractTypes as $type)
-                                    <option value="{{ $type }}" {{ old('status', $contract->status) == $type ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $type)) }}</option>
+                                @foreach($statuses as $key => $label)
+                                    <option value="{{ $key }}" {{ old('status', $contract->status) == $key ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('status') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror

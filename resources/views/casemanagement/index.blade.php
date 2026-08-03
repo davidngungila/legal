@@ -285,20 +285,10 @@
     </div>
 </div>
 
-<div id="caseModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div>
-                <h3 id="caseModalTitle" class="text-xl font-semibold text-gray-900">Create Case</h3>
-                <p class="text-sm text-gray-500">Capture case details and assign follow-up responsibility.</p>
-            </div>
-            <button type="button" onclick="closeCaseModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <form id="caseForm" method="POST" action="{{ route('casemanagement.store') }}" class="p-6 space-y-6">
-            @csrf
-            <input type="hidden" name="_method" id="caseFormMethod" value="POST">
+<x-advanced-modal id="caseModal" title="Create Case" title-id="caseModalTitle" description="Capture case details and assign follow-up responsibility." icon="briefcase" color="indigo" size="4xl">
+    <form id="caseForm" method="POST" action="{{ route('casemanagement.store') }}">
+        @csrf
+        <input type="hidden" name="_method" id="caseFormMethod" value="POST">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Employee</label>
@@ -368,29 +358,21 @@
                     <textarea name="resolution_notes" id="caseResolutionNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                 </div>
             </div>
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                <button type="button" onclick="closeCaseModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
+        </form>
+
+        <x-slot:footer>
+            <div class="flex items-center justify-end gap-3">
+                <button type="button" onclick="closeModal('caseModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" form="caseForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
                     <i data-feather="save" class="w-4 h-4 mr-2"></i>
                     <span id="caseSubmitLabel">Save Case</span>
                 </button>
             </div>
-        </form>
-    </div>
-</div>
+        </x-slot:footer>
+    </x-advanced-modal>
 
-<div id="viewCaseModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div>
-                <h3 class="text-xl font-semibold text-gray-900">Case Details</h3>
-                <p class="text-sm text-gray-500">Review the selected case summary and status.</p>
-            </div>
-            <button type="button" onclick="closeViewCaseModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <div class="p-6 space-y-5">
+<x-advanced-modal id="viewCaseModal" title="Case Details" description="Review the selected case summary and status." icon="eye" color="indigo" size="3xl">
+    <div class="space-y-5">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="text-xs text-gray-500 uppercase tracking-wide">Case Number</p>
@@ -437,31 +419,23 @@
                 <p class="text-xs text-gray-500 uppercase tracking-wide">Resolution Notes</p>
                 <p id="viewCaseResolutionNotes" class="text-sm text-gray-700 mt-1 whitespace-pre-line"></p>
             </div>
+        </div>
+
+        <x-slot:footer>
             <div class="flex justify-end">
                 <button type="button" id="viewEditCaseBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
                     <i data-feather="edit-2" class="w-4 h-4 mr-2"></i>
                     Edit Case
                 </button>
             </div>
-        </div>
-    </div>
-</div>
+        </x-slot:footer>
+    </x-advanced-modal>
 
-<div id="templateModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div>
-                <h3 id="templateModalTitle" class="text-xl font-semibold text-gray-900">Create Template</h3>
-                <p class="text-sm text-gray-500">Create or edit a legal document template.</p>
-            </div>
-            <button type="button" onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-feather="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <form id="templateForm" method="POST" class="p-6 space-y-4">
-            @csrf
-            <input type="hidden" id="templateId">
-            <input type="hidden" id="templateMethod" name="_method" value="POST">
+<x-advanced-modal id="templateModal" title="Create Template" title-id="templateModalTitle" description="Create or edit a legal document template." icon="file-text" color="purple" size="2xl">
+    <form id="templateForm" method="POST" class="space-y-4">
+        @csrf
+        <input type="hidden" id="templateId">
+        <input type="hidden" id="templateMethod" name="_method" value="POST">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Template Name</label>
                 <input type="text" id="templateName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
@@ -486,17 +460,19 @@
                     <option value="Inactive">Inactive</option>
                 </select>
             </div>
-            <div class="flex justify-end gap-3 pt-4">
-                <button type="button" onclick="closeTemplateModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        </form>
+
+        <x-slot:footer>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('templateModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <button type="submit" form="templateForm" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                     Save Template
                 </button>
             </div>
-        </form>
-    </div>
-</div>
+        </x-slot:footer>
+    </x-advanced-modal>
 @endsection
 
 @push('scripts')
@@ -519,12 +495,12 @@ function resetCaseForm() {
 
 function openCreateCaseModal() {
     resetCaseForm();
-    document.getElementById('caseModal').classList.remove('hidden');
+    openModal('caseModal');
     if (typeof feather !== 'undefined') feather.replace();
 }
 
 function closeCaseModal() {
-    document.getElementById('caseModal').classList.add('hidden');
+    closeModal('caseModal');
 }
 
 function openEditCaseModal(caseId) {
@@ -548,7 +524,7 @@ function openEditCaseModal(caseId) {
     document.getElementById('caseStatus').value = item.status || 'pending';
     document.getElementById('caseResolutionNotes').value = item.resolution_notes || '';
 
-    document.getElementById('caseModal').classList.remove('hidden');
+    openModal('caseModal');
     if (typeof feather !== 'undefined') feather.replace();
 }
 
@@ -572,12 +548,12 @@ function openViewCaseModal(caseId) {
         openEditCaseModal(caseId);
     };
 
-    document.getElementById('viewCaseModal').classList.remove('hidden');
+    openModal('viewCaseModal');
     if (typeof feather !== 'undefined') feather.replace();
 }
 
 function closeViewCaseModal() {
-    document.getElementById('viewCaseModal').classList.add('hidden');
+    closeModal('viewCaseModal');
 }
 
 function useTemplate(type, subject) {
@@ -590,7 +566,6 @@ function useTemplate(type, subject) {
 let templatesData = @js($templates);
 
 function openTemplateModal(templateIndex = null) {
-        const modal = document.getElementById('templateModal');
         const title = document.getElementById('templateModalTitle');
         const form = document.getElementById('templateForm');
         const methodInput = document.getElementById('templateMethod');
@@ -615,12 +590,12 @@ function openTemplateModal(templateIndex = null) {
             methodInput.value = 'POST';
         }
         
-        modal.classList.remove('hidden');
+        openModal('templateModal');
         if (typeof feather !== 'undefined') feather.replace();
     }
 
 function closeTemplateModal() {
-    document.getElementById('templateModal').classList.add('hidden');
+    closeModal('templateModal');
 }
 
 function titleCase(value) {
