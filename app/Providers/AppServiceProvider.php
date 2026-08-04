@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Auth\ClientAwareUserProvider;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +42,14 @@ class AppServiceProvider extends ServiceProvider
         Blade::if('hasRole', function (string $role) {
             $user = auth()->user();
             return $user && $user->hasRole($role);
+        });
+
+        // Share real, client-scoped notifications with the header
+        View::composer('layouts.header', function ($view) {
+            $notifications = app(NotificationService::class)->forCurrentClient();
+
+            $view->with('notifications', $notifications['items']);
+            $view->with('notificationCount', $notifications['count']);
         });
     }
 }

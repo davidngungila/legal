@@ -66,68 +66,49 @@
             <div class="relative">
                 <button onclick="toggleNotifications()" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
                     <i data-feather="bell" class="w-5 h-5 text-gray-600"></i>
-                    <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    @if($notificationCount > 0)
+                    <span id="notificationBadge" class="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1">{{ $notificationCount }}</span>
+                    @else
+                    <span id="notificationBadge" style="display:none" class="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1">0</span>
+                    @endif
                 </button>
                 
-                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                     <div class="p-4 border-b border-gray-200">
                         <div class="flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+                            @if($notificationCount > 0)
                             <button onclick="markAllAsRead()" class="text-xs text-indigo-600 hover:text-indigo-800">Mark all as read</button>
+                            @endif
                         </div>
                     </div>
                     <div class="max-h-96 overflow-y-auto">
-                        <!-- Notification Items -->
-                        <div class="notification-item p-4 hover:bg-gray-50 border-b border-gray-100" data-id="1">
+                        @forelse($notifications as $notification)
+                        <a href="{{ $notification['link'] }}" class="block notification-item p-4 hover:bg-gray-50 border-b border-gray-100" data-id="{{ $loop->iteration }}">
                             <div class="flex items-start space-x-3">
-                                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i data-feather="alert-triangle" class="w-4 h-4 text-red-600"></i>
+                                <div class="w-8 h-8 bg-{{ $notification['color'] }}-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i data-feather="{{ $notification['icon'] }}" class="w-4 h-4 text-{{ $notification['color'] }}-600"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900">Critical Case Alert</p>
-                                    <p class="text-xs text-gray-500">Disciplinary case requires immediate attention</p>
-                                    <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ $notification['title'] }}</p>
+                                    <p class="text-xs text-gray-500">{{ $notification['message'] }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ $notification['time'] }}</p>
                                 </div>
-                                <button onclick="removeNotification(1)" class="text-gray-400 hover:text-gray-600">
+                                <button onclick="event.preventDefault(); event.stopPropagation(); removeNotification({{ $loop->iteration }})" class="text-gray-400 hover:text-gray-600">
                                     <i data-feather="x" class="w-4 h-4"></i>
                                 </button>
                             </div>
+                        </a>
+                        @empty
+                        <div class="p-8 text-center">
+                            <i data-feather="bell-off" class="w-10 h-10 text-gray-300 mx-auto mb-3"></i>
+                            <p class="text-sm font-medium text-gray-900">You're all caught up</p>
+                            <p class="text-xs text-gray-500 mt-1">No notifications for the selected client.</p>
                         </div>
-                        
-                        <div class="notification-item p-4 hover:bg-gray-50 border-b border-gray-100" data-id="2">
-                            <div class="flex items-start space-x-3">
-                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i data-feather="alert-circle" class="w-4 h-4 text-yellow-600"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900">Pending Approval</p>
-                                    <p class="text-xs text-gray-500">Termination case requires HR Admin approval</p>
-                                    <p class="text-xs text-gray-400 mt-1">5 hours ago</p>
-                                </div>
-                                <button onclick="removeNotification(2)" class="text-gray-400 hover:text-gray-600">
-                                    <i data-feather="x" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="notification-item p-4 hover:bg-gray-50 border-b border-gray-100" data-id="3">
-                            <div class="flex items-start space-x-3">
-                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i data-feather="check-circle" class="w-4 h-4 text-green-600"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900">Payroll Processed</p>
-                                    <p class="text-xs text-gray-500">November 2024 payroll completed successfully</p>
-                                    <p class="text-xs text-gray-400 mt-1">1 day ago</p>
-                                </div>
-                                <button onclick="removeNotification(3)" class="text-gray-400 hover:text-gray-600">
-                                    <i data-feather="x" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
+                        @endforelse
                     </div>
                     <div class="p-3 border-t border-gray-200">
-                        <a href="#" class="text-sm text-indigo-600 hover:text-indigo-800">View all notifications</a>
+                        <a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 hover:text-indigo-800">View all notifications</a>
                     </div>
                 </div>
             </div>
@@ -170,7 +151,7 @@
                                 <p class="text-sm text-gray-600">{{ is_object($currentUser) ? $currentUser->email : $currentUser['email'] }}</p>
                                 <div class="flex items-center mt-1">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                        {{ ucfirst(str_replace('_', ' ', is_object($currentUser) ? $currentUser->role : $currentUser['role'])) }}
+                                        {{ ucfirst(str_replace('_', ' ', is_object($currentUser) ? (string) ($currentUser->roles->first()->name ?? '') : (string) ($currentUser['role'] ?? ''))) }}
                                     </span>
                                 </div>
                             </div>
