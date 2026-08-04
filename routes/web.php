@@ -564,6 +564,17 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/{id}', [\App\Http\Controllers\AuditController::class, 'show'])->name('show');
     });
 
+    // Data Backup Routes
+    Route::prefix('backups')->name('backups.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index')->middleware('permission:backups.view');
+        Route::post('/', [\App\Http\Controllers\BackupController::class, 'create'])->name('create')->middleware('permission:backups.manage');
+        Route::post('/upload', [\App\Http\Controllers\BackupController::class, 'upload'])->name('upload')->middleware('permission:backups.manage');
+        Route::post('/clean', [\App\Http\Controllers\BackupController::class, 'clean'])->name('clean')->middleware('permission:backups.manage');
+        Route::post('/{filename}/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore')->middleware('permission:backups.manage');
+        Route::get('/{filename}/download', [\App\Http\Controllers\BackupController::class, 'download'])->name('download')->middleware('permission:backups.view');
+        Route::delete('/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy')->middleware('permission:backups.manage');
+    });
+
     // Analytics Routes
     Route::prefix('analytics')->group(function () {
         Route::get('/', function () {

@@ -22,6 +22,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     // Full system access
                     'system.manage', 'system.monitoring', 'system.backup', 'system.maintenance', 'system.integration',
+                    'backups.view', 'backups.manage',
                     'audit.view', 'audit.trail', 'audit.compliance', 'audit.export',
                     'security.manage', 'security.encryption', 'security.audit', 'security.access', 'security.consent', 'security.backup', 'security.roles', 'security.masking', 'security.activity', 'security.mfa', 'security.incident',
                     'notifications.manage', 'notifications.alerts', 'notifications.automated',
@@ -92,6 +93,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     // Full system access
                     'system.manage', 'system.monitoring', 'system.backup', 'system.maintenance', 'system.integration',
+                    'backups.view', 'backups.manage',
                     'audit.view', 'audit.trail', 'audit.compliance', 'audit.export',
                     'security.manage', 'security.encryption', 'security.audit', 'security.access', 'security.consent', 'security.backup', 'security.roles', 'security.masking', 'security.activity', 'security.mfa', 'security.incident',
                     'notifications.manage', 'notifications.alerts', 'notifications.automated',

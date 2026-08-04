@@ -251,6 +251,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'system.view', 'display_name' => 'View System Admin', 'group' => 'System', 'description' => 'View system administration'],
             ['name' => 'system.manage', 'display_name' => 'System Administration', 'group' => 'System', 'description' => 'Full system administration'],
             ['name' => 'system.backup', 'display_name' => 'System Backups', 'group' => 'System', 'description' => 'System backup management'],
+            ['name' => 'backups.view', 'display_name' => 'View Backups', 'group' => 'System', 'description' => 'View backups and storage summary'],
+            ['name' => 'backups.manage', 'display_name' => 'Manage Backups', 'group' => 'System', 'description' => 'Create, restore, upload and delete backups'],
             ['name' => 'system.maintenance', 'display_name' => 'System Maintenance', 'group' => 'System', 'description' => 'System maintenance mode'],
             ['name' => 'system.monitoring', 'display_name' => 'System Monitoring', 'group' => 'System', 'description' => 'System performance monitoring'],
             ['name' => 'system.integration', 'display_name' => 'Manage Integrations', 'group' => 'System', 'description' => 'API and system integrations'],
