@@ -304,7 +304,7 @@ class LeaveController extends Controller
         return view('leave.balances', compact('currentClient', 'employees', 'selectedEmployee', 'employee', 'leaveEntitlements', 'leaveTypes'));
     }
 
-    public function calendar()
+    public function calendar(Request $request)
     {
         $clientId = session('current_client_id');
         if (!$clientId) {
@@ -312,10 +312,49 @@ class LeaveController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        return view('leave.calendar', ['currentClient' => $currentClient]);
+
+        $query = LeaveRequest::with(['employee', 'leaveType'])
+            ->where('client_id', $clientId);
+
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->input('employee_id'));
+        }
+
+        if ($request->filled('leave_type_id')) {
+            $query->where('leave_type_id', $request->input('leave_type_id'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $leaveRequests = $query->orderBy('start_date')->get();
+
+        $employees = Employee::where('client_id', $clientId)->where('status', 'active')->orderBy('first_name')->get();
+        $leaveTypes = LeaveType::where('client_id', $clientId)->orderBy('type_name')->get();
+
+        $events = $leaveRequests->map(function ($leaveRequest) {
+            return [
+                'id' => $leaveRequest->id,
+                'employee_name' => trim(($leaveRequest->employee->first_name ?? '') . ' ' . ($leaveRequest->employee->last_name ?? '')),
+                'employee_id' => $leaveRequest->employee->employee_id ?? '',
+                'employee_code' => $leaveRequest->employee_id,
+                'department' => $leaveRequest->employee->department ?? '',
+                'leave_type' => $leaveRequest->leave_type ?? ($leaveRequest->leaveType->type_name ?? 'Leave'),
+                'leave_type_id' => $leaveRequest->leave_type_id,
+                'start' => $leaveRequest->start_date->format('Y-m-d'),
+                'end' => $leaveRequest->end_date->format('Y-m-d'),
+                'days' => $leaveRequest->days,
+                'status' => $leaveRequest->status,
+                'reason' => $leaveRequest->reason,
+                'applied_at' => $leaveRequest->applied_at ? $leaveRequest->applied_at->format('Y-m-d') : null,
+            ];
+        })->values();
+
+        return view('leave.calendar', compact('currentClient', 'employees', 'leaveTypes', 'events', 'leaveRequests'));
     }
 
-    public function reports()
+    public function reports(Request $request)
     {
         $clientId = session('current_client_id');
         if (!$clientId) {
@@ -323,6 +362,141 @@ class LeaveController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        return view('leave.reports', ['currentClient' => $currentClient]);
+
+        $from = $request->filled('from') ? Carbon::parse($request->input('from')) : Carbon::now()->startOfYear();
+        $to = $request->filled('to') ? Carbon::parse($request->input('to'))->endOfDay() : Carbon::now()->endOfYear();
+
+        if ($from->gt($to)) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $query = LeaveRequest::with(['employee', 'leaveType'])
+            ->where('client_id', $clientId)
+            ->whereBetween('start_date', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
+
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->input('employee_id'));
+        }
+
+        if ($request->filled('leave_type_id')) {
+            $query->where('leave_type_id', $request->input('leave_type_id'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $requests = $query->orderBy('start_date')->get();
+
+        $summary = [
+            'total' => $requests->count(),
+            'approved' => $requests->where('status', 'approved')->count(),
+            'pending' => $requests->where('status', 'pending')->count(),
+            'rejected' => $requests->where('status', 'rejected')->count(),
+            'total_days' => (float) $requests->sum('days'),
+            'approved_days' => (float) $requests->where('status', 'approved')->sum('days'),
+        ];
+
+        $byType = $requests
+            ->groupBy(fn ($r) => $r->leave_type ?: ($r->leaveType->type_name ?? 'Unknown'))
+            ->map(fn ($group) => [
+                'count' => $group->count(),
+                'days' => (float) $group->sum('days'),
+                'approved_days' => (float) $group->where('status', 'approved')->sum('days'),
+            ])
+            ->sortByDesc('count');
+
+        $monthly = [];
+        $cursor = Carbon::parse($from)->startOfMonth();
+        $endMonth = Carbon::parse($to)->startOfMonth();
+
+        while ($cursor->lte($endMonth)) {
+            $label = $cursor->format('M Y');
+            $monthly[$label] = [
+                'total' => 0,
+                'approved' => 0,
+                'pending' => 0,
+                'rejected' => 0,
+                'days' => 0,
+            ];
+            $cursor->addMonth();
+        }
+
+        foreach ($requests as $r) {
+            $label = $r->start_date->format('M Y');
+            if (isset($monthly[$label])) {
+                $monthly[$label]['total']++;
+                $monthly[$label]['days'] += (float) $r->days;
+                if (isset($monthly[$label][$r->status])) {
+                    $monthly[$label][$r->status]++;
+                }
+            }
+        }
+
+        $byDepartment = $requests
+            ->groupBy(fn ($r) => $r->employee->department ?? 'Unassigned')
+            ->map(fn ($group) => [
+                'count' => $group->count(),
+                'days' => (float) $group->sum('days'),
+                'approved_days' => (float) $group->where('status', 'approved')->sum('days'),
+            ])
+            ->sortByDesc('count');
+
+        $employeeSummary = $requests
+            ->groupBy('employee_id')
+            ->map(function ($group) {
+                $employee = $group->first()->employee;
+
+                $byType = $group
+                    ->groupBy(fn ($r) => $r->leave_type ?: ($r->leaveType->type_name ?? 'Unknown'))
+                    ->map(fn ($g) => [
+                        'count' => $g->count(),
+                        'days' => (float) $g->sum('days'),
+                        'approved_days' => (float) $g->where('status', 'approved')->sum('days'),
+                    ]);
+
+                return [
+                    'employee_code' => $employee->employee_id ?? '',
+                    'name' => trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')),
+                    'department' => $employee->department ?? '',
+                    'total_requests' => $group->count(),
+                    'total_days' => (float) $group->sum('days'),
+                    'approved_requests' => $group->where('status', 'approved')->count(),
+                    'approved_days' => (float) $group->where('status', 'approved')->sum('days'),
+                    'pending_requests' => $group->where('status', 'pending')->count(),
+                    'by_type' => $byType,
+                ];
+            })
+            ->sortByDesc('total_days');
+
+        $requestsData = $requests->map(function ($r) {
+            return [
+                'employee' => trim(($r->employee->first_name ?? '') . ' ' . ($r->employee->last_name ?? '')),
+                'leave_type' => $r->leave_type,
+                'start' => $r->start_date->format('Y-m-d'),
+                'end' => $r->end_date->format('Y-m-d'),
+                'days' => $r->days,
+                'status' => $r->status,
+                'reason' => $r->reason,
+            ];
+        })->values();
+
+        $employees = Employee::where('client_id', $clientId)->where('status', 'active')->orderBy('first_name')->get();
+        $leaveTypes = LeaveType::where('client_id', $clientId)->orderBy('type_name')->get();
+
+        return view('leave.reports', compact(
+            'currentClient',
+            'employees',
+            'leaveTypes',
+            'requests',
+            'requestsData',
+            'from',
+            'to',
+            'summary',
+            'byType',
+            'monthly',
+            'byDepartment',
+            'employeeSummary'
+        ));
     }
 }
