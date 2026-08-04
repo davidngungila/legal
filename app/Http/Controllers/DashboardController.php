@@ -8,6 +8,12 @@ use App\Models\Payroll;
 use App\Models\Attendance;
 use App\Models\SelfService;
 use App\Models\Client;
+use App\Models\Contract;
+use App\Models\Department;
+use App\Models\DisciplinaryCase;
+use App\Models\ExitCase;
+use App\Models\InductionTraining;
+use App\Models\SocialRecord;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -42,18 +48,19 @@ class DashboardController extends Controller
         // Share with views to ensure consistency
         view()->share('currentClient', $currentClient);
 
-        // Get statistics for current client
+        // All numbers are computed strictly for the selected client
         $stats = $this->getClientStats($currentClient->id);
-        
-        // Get recent activities for current client
+        $charts = $this->getChartData($currentClient->id);
+        $compliance = $this->getComplianceStats($currentClient->id, $stats['employees'], $currentClient);
+        $events = $this->getUpcomingEvents($currentClient->id, $stats['employees']);
         $recentActivities = $this->getRecentActivities($currentClient->id);
-        
-        // Get alerts for current client
         $alerts = $this->getAlerts($currentClient->id);
-        
         $quickActions = $this->getQuickActions($currentClient->id, $stats);
 
-        return view('dashboard', compact('stats', 'recentActivities', 'alerts', 'quickActions', 'currentClient'));
+        return view('dashboard', compact(
+            'stats', 'charts', 'compliance', 'events',
+            'recentActivities', 'alerts', 'quickActions', 'currentClient'
+        ));
     }
 
     /**
@@ -113,47 +120,295 @@ class DashboardController extends Controller
      */
     private function getClientStats($clientId)
     {
-        $employees = Employee::where('client_id', $clientId);
+        $today = now();
+        $employees = Employee::where('client_id', $clientId)->get();
         $totalEmployees = $employees->count();
-        
+
         // Employee breakdown
         $activeEmployees = $employees->where('status', 'active')->count();
         $onLeaveEmployees = $employees->where('status', 'on_leave')->count();
-        $probationEmployees = $employees->where('status', 'probation')->count();
-        $newHires = $employees->where('hire_date', '>=', now()->subMonth())->count();
-        
+        $probationEmployees = $employees->filter(fn ($e) => $e->status === 'probation' || $e->isOnProbation())->count();
+        $terminatedEmployees = $employees->where('status', 'terminated')->count();
+        $newHires = $employees->where('hire_date', '>=', $today->copy()->subMonth())->count();
+
         // Attendance stats
         $todayAttendance = Attendance::where('client_id', $clientId)
-            ->where('attendance_date', now()->format('Y-m-d'))
+            ->where('attendance_date', $today->toDateString())
             ->get();
         $presentToday = $todayAttendance->where('status', 'present')->count();
         $absentToday = $todayAttendance->where('status', 'absent')->count();
         $lateToday = $todayAttendance->where('status', 'late')->count();
         $attendanceRate = $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0;
-        
+
+        // Monthly attendance volume
+        $monthStart = $today->copy()->startOfMonth()->toDateString();
+        $monthAttendance = Attendance::where('client_id', $clientId)
+            ->where('attendance_date', '>=', $monthStart)
+            ->get();
+        $monthlyOvertimeHours = round((float) $monthAttendance->sum('overtime_hours'), 1);
+        $monthlyTotalHours = round((float) $monthAttendance->sum('total_hours'), 1);
+
         // Payroll stats
+        $payrollPeriod = $today->format('Y-m');
         $currentMonthPayroll = Payroll::where('client_id', $clientId)
-            ->where('payroll_period', now()->format('Y-m'))
+            ->where('payroll_period', $payrollPeriod)
             ->sum('net_pay');
-        
-        // Self-service requests
-        $activeCases = SelfService::where('client_id', $clientId)
+        $monthlyPayrollCount = Payroll::where('client_id', $clientId)
+            ->where('payroll_period', $payrollPeriod)
+            ->count();
+
+        // Active disciplinary cases (any status other than resolved)
+        $activeCases = DisciplinaryCase::where('client_id', $clientId)
+            ->whereNotIn('status', ['resolved'])
+            ->count();
+
+        // Pending self-service requests
+        $pendingRequests = SelfService::where('client_id', $clientId)
             ->where('status', 'pending')
             ->count();
 
+        // Turnover: exits in the last 12 months relative to total headcount
+        $yearAgo = $today->copy()->subMonths(12);
+        $exitCases = ExitCase::where('client_id', $clientId)
+            ->where('status', 'completed')
+            ->where('exit_date', '>=', $yearAgo->toDateString())
+            ->count();
+        $terminatedYear = $employees->where('status', 'terminated')
+            ->filter(fn ($e) => $e->termination_date && $e->termination_date >= $yearAgo)
+            ->count();
+        $exitsLastYear = max($exitCases, $terminatedYear);
+        $turnoverRate = ($totalEmployees + $exitsLastYear) > 0
+            ? round(($exitsLastYear / ($totalEmployees + $exitsLastYear)) * 100, 1)
+            : 0;
+
+        // Organization structure
+        $departmentsCount = Department::where('client_id', $clientId)
+            ->where('is_active', true)
+            ->count();
+        if ($departmentsCount === 0) {
+            $departmentsCount = $employees->pluck('department')->filter()->unique()->count();
+        }
+
+        $locations = $employees->pluck('city')->filter()->unique()->values();
+        $locationsCount = $locations->count();
+
         return [
+            'employees' => $employees,
             'total_employees' => $totalEmployees,
             'active_employees' => $activeEmployees,
             'on_leave_employees' => $onLeaveEmployees,
             'probation_employees' => $probationEmployees,
+            'terminated_employees' => $terminatedEmployees,
             'new_hires' => $newHires,
             'present_today' => $presentToday,
             'absent_today' => $absentToday,
             'late_today' => $lateToday,
             'attendance_rate' => $attendanceRate,
+            'monthly_overtime_hours' => $monthlyOvertimeHours,
+            'monthly_total_hours' => $monthlyTotalHours,
             'monthly_payroll' => $currentMonthPayroll,
+            'monthly_payroll_count' => $monthlyPayrollCount,
+            'monthly_payroll_formatted' => $this->formatMoney($currentMonthPayroll),
             'active_cases' => $activeCases,
+            'pending_requests' => $pendingRequests,
+            'turnover_rate' => $turnoverRate,
+            'departments_count' => $departmentsCount,
+            'locations_count' => $locationsCount,
         ];
+    }
+
+    /**
+     * Chart data computed from real client records.
+     */
+    private function getChartData($clientId): array
+    {
+        // Employee distribution by employment type
+        $employees = Employee::where('client_id', $clientId)->get();
+        $types = [
+            'full_time' => ['label' => 'Full Time', 'color' => '#6366f1'],
+            'part_time' => ['label' => 'Part Time', 'color' => '#10b981'],
+            'contract' => ['label' => 'Contract', 'color' => '#f59e0b'],
+            'intern' => ['label' => 'Intern', 'color' => '#8b5cf6'],
+        ];
+        $distributionLabels = [];
+        $distributionData = [];
+        $distributionColors = [];
+
+        foreach ($types as $key => $meta) {
+            $count = $employees->where('employment_type', $key)->count();
+            if ($count > 0) {
+                $distributionLabels[] = $meta['label'];
+                $distributionData[] = $count;
+                $distributionColors[] = $meta['color'];
+            }
+        }
+
+        // Last 6 months attendance trend
+        $attendanceLabels = [];
+        $attendanceRates = [];
+        $attendancePresent = [];
+        $attendanceAbsent = [];
+        $attendanceLate = [];
+
+        // Last 6 months payroll trend
+        $payrollLabels = [];
+        $payrollTotals = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonthsNoOverflow($i);
+            $label = $month->format('M Y');
+
+            $attendanceLabels[] = $label;
+            $rows = Attendance::where('client_id', $clientId)
+                ->whereBetween('attendance_date', [
+                    $month->copy()->startOfMonth()->toDateString(),
+                    $month->copy()->endOfMonth()->toDateString(),
+                ])
+                ->get();
+            $present = $rows->where('status', 'present')->count();
+            $absent = $rows->where('status', 'absent')->count();
+            $late = $rows->where('status', 'late')->count();
+            $tracked = $present + $absent + $late;
+
+            $attendancePresent[] = $present;
+            $attendanceAbsent[] = $absent;
+            $attendanceLate[] = $late;
+            $attendanceRates[] = $tracked > 0 ? round((($present + $late) / $tracked) * 100, 1) : 0;
+
+            $payrollLabels[] = $label;
+            $payrollTotals[] = (float) Payroll::where('client_id', $clientId)
+                ->where('payroll_period', $month->format('Y-m'))
+                ->sum('net_pay');
+        }
+
+        return [
+            'distribution' => [
+                'labels' => $distributionLabels,
+                'data' => $distributionData,
+                'colors' => $distributionColors,
+            ],
+            'attendance' => [
+                'labels' => $attendanceLabels,
+                'rates' => $attendanceRates,
+                'present' => $attendancePresent,
+                'absent' => $attendanceAbsent,
+                'late' => $attendanceLate,
+            ],
+            'payroll' => [
+                'labels' => $payrollLabels,
+                'totals' => $payrollTotals,
+            ],
+        ];
+    }
+
+    /**
+     * Compliance percentages derived from real records for the client.
+     */
+    private function getComplianceStats($clientId, $employees, $client): array
+    {
+        $active = $employees->where('status', 'active');
+        $count = $active->count();
+
+        $labour = $count
+            ? round($active->filter(fn ($e) => $e->tin_number && $e->nhif_number)->count() / $count * 100)
+            : 100;
+
+        $nssf = $count
+            ? round($active->filter(fn ($e) => $e->nssf_number)->count() / $count * 100)
+            : 100;
+
+        if (!empty($client->wcf_employer_number)) {
+            $wcf = 100;
+        } else {
+            $wcfRecords = SocialRecord::where('client_id', $clientId)
+                ->whereNotNull('wcf_number')
+                ->where('wcf_number', '!=', '')
+                ->count();
+            $wcf = $count ? round(min($wcfRecords, $count) / $count * 100) : 100;
+        }
+
+        $data = $count
+            ? round($active->filter(fn ($e) => $e->email && $e->phone)->count() / $count * 100)
+            : 100;
+
+        $avg = (int) round(($labour + $nssf + $wcf + $data) / 4);
+        $status = $avg >= 90 ? 'Compliant' : ($avg >= 70 ? 'Partially Compliant' : 'Needs Attention');
+
+        $lastAudit = \App\Models\Audit::where('module', 'like', '%ompliance%')
+            ->latest('created_at')
+            ->value('created_at')
+            ?? $client->updated_at
+            ?? $client->created_at;
+
+        return [
+            'labour' => $labour,
+            'nssf' => $nssf,
+            'wcf' => $wcf,
+            'data' => $data,
+            'average' => $avg,
+            'status' => $status,
+            'last_audit' => $lastAudit ? \Carbon\Carbon::parse($lastAudit)->format('d M Y') : null,
+        ];
+    }
+
+    /**
+     * Upcoming deadlines derived from real records for the client.
+     */
+    private function getUpcomingEvents($clientId, $employees): array
+    {
+        $today = now();
+
+        $contractRenewals = Contract::where('client_id', $clientId)
+            ->where('status', 'active')
+            ->whereNotNull('end_date')
+            ->whereBetween('end_date', [
+                $today->toDateString(),
+                $today->copy()->addDays(30)->toDateString(),
+            ])
+            ->count();
+
+        $trainings = InductionTraining::where('client_id', $clientId)
+            ->where('status', 'scheduled')
+            ->whereBetween('training_date', [
+                $today->toDateString(),
+                $today->copy()->addDays(30)->toDateString(),
+            ])
+            ->count();
+
+        $activeEmployees = $employees->where('status', 'active');
+        $statutoryGaps = $activeEmployees->filter(function ($e) {
+            return empty($e->nssf_number) || empty($e->tin_number) || empty($e->nhif_number);
+        })->count();
+
+        $probationEnding = $activeEmployees->filter(fn ($e) => $e->isOnProbation())
+            ->filter(fn ($e) => $e->probation_end_date >= $today && $e->probation_end_date <= $today->copy()->addDays(30))
+            ->count();
+
+        return [
+            'contract_renewals' => $contractRenewals,
+            'trainings' => $trainings,
+            'statutory_gaps' => $statutoryGaps,
+            'probation_ending' => $probationEnding,
+        ];
+    }
+
+    private function formatMoney($amount): string
+    {
+        $amount = (float) $amount;
+
+        if ($amount >= 1000000000) {
+            return 'TZS ' . number_format($amount / 1000000000, 2) . 'B';
+        }
+
+        if ($amount >= 1000000) {
+            return 'TZS ' . number_format($amount / 1000000, 2) . 'M';
+        }
+
+        if ($amount >= 1000) {
+            return 'TZS ' . number_format($amount / 1000, 1) . 'K';
+        }
+
+        return 'TZS ' . number_format($amount, 0);
     }
 
     /**
@@ -294,23 +549,26 @@ class DashboardController extends Controller
             ];
         }
         
-        // Get employees with contracts expiring soon
-        $expiringContracts = Employee::where('client_id', $clientId)
-            ->where('termination_date', '<=', now()->addDays(30))
-            ->where('termination_date', '>=', now())
+        // Get active contracts expiring soon
+        $expiringContracts = Contract::where('client_id', $clientId)
+            ->where('status', 'active')
+            ->whereNotNull('end_date')
+            ->whereBetween('end_date', [now()->toDateString(), now()->addDays(30)->toDateString()])
+            ->with('employee')
             ->get();
 
-        foreach ($expiringContracts as $employee) {
-            $daysLeft = now()->diffInDays($employee->termination_date);
+        foreach ($expiringContracts as $contract) {
+            $daysLeft = (int) $contract->end_date->diffInDays(now());
+            $employeeName = trim(($contract->employee->first_name ?? '') . ' ' . ($contract->employee->last_name ?? ''));
             $alerts[] = [
                 'type' => 'contract_expiry',
                 'title' => 'Contract Expiring',
-                'description' => $employee->first_name . ' ' . $employee->last_name . ' - ' . $daysLeft . ' days remaining',
+                'description' => ($employeeName ?: 'Employee') . ' - ' . $contract->formatted_contract_number . ' (' . $daysLeft . ' days remaining)',
                 'severity' => $daysLeft <= 7 ? 'critical' : 'warning',
                 'icon' => 'alert-circle',
                 'color' => $daysLeft <= 7 ? 'red' : 'yellow',
-                'link' => route('employees.index'),
-                'action_label' => 'Review Employee',
+                'link' => route('contracts.index'),
+                'action_label' => 'Review Contract',
             ];
         }
 

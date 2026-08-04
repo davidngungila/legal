@@ -59,8 +59,13 @@
                 </div>
                 <span class="text-sm text-gray-600 font-medium">{{ now()->format('M Y') }}</span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">TZS {{ number_format($stats['monthly_payroll'], 1) }}M</h3>
-            <p class="text-gray-600 text-sm">Monthly Payroll</p>
+            @if($stats['monthly_payroll'] > 0)
+            <h3 class="text-2xl font-bold text-gray-900">{{ $stats['monthly_payroll_formatted'] }}</h3>
+            <p class="text-gray-600 text-sm">Monthly Payroll{{ $stats['monthly_payroll_count'] ? ' · ' . $stats['monthly_payroll_count'] . ' records' : '' }}</p>
+            @else
+            <h3 class="text-2xl font-bold text-gray-400">—</h3>
+            <p class="text-gray-600 text-sm">No payroll for {{ now()->format('M Y') }}</p>
+            @endif
         </div>
 
         <!-- Attendance Rate -->
@@ -84,19 +89,23 @@
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Industry:</span>
-                    <span class="text-sm font-medium">{{ $currentClient?->industry ?? 'Not specified' }}</span>
+                    <span class="text-sm font-medium">{{ $currentClient?->industry ?: 'Not specified' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Departments:</span>
-                    <span class="text-sm font-medium">{{ $currentClient?->departments_count ?? 8 }}</span>
+                    <span class="text-sm font-medium">{{ $stats['departments_count'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Locations:</span>
-                    <span class="text-sm font-medium">{{ $currentClient?->locations_count ?? 3 }}</span>
+                    <span class="text-sm font-medium">{{ $stats['locations_count'] }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Founded:</span>
-                    <span class="text-sm font-medium">{{ $currentClient?->founded_year ?? '2015' }}</span>
+                    <span class="text-sm font-medium">{{ $currentClient?->created_at?->format('Y') ?: '—' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Status:</span>
+                    <span class="text-sm font-medium capitalize">{{ $currentClient?->status ?: '—' }}</span>
                 </div>
             </div>
         </div>
@@ -118,8 +127,12 @@
                     <span class="text-sm font-medium text-blue-600">{{ $stats['probation_employees'] }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-sm text-gray-600">Turnover:</span>
-                    <span class="text-sm font-medium text-red-600">3.2%</span>
+                    <span class="text-sm text-gray-600">Terminated:</span>
+                    <span class="text-sm font-medium text-gray-600">{{ $stats['terminated_employees'] }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Turnover (12 mo):</span>
+                    <span class="text-sm font-medium text-red-600">{{ $stats['turnover_rate'] }}%</span>
                 </div>
             </div>
         </div>
@@ -137,19 +150,19 @@
                     <span class="text-sm font-medium text-yellow-600">{{ $stats['late_today'] }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-sm text-gray-600">Weekly Hours:</span>
-                    <span class="text-sm font-medium">{{ $stats['present_today'] * 40 }}</span>
+                    <span class="text-sm text-gray-600">Hours This Month:</span>
+                    <span class="text-sm font-medium">{{ number_format($stats['monthly_total_hours'], 1) }} hrs</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-sm text-gray-600">Overtime:</span>
-                    <span class="text-sm font-medium text-blue-600">120</span>
+                    <span class="text-sm text-gray-600">Overtime This Month:</span>
+                    <span class="text-sm font-medium text-blue-600">{{ number_format($stats['monthly_overtime_hours'], 1) }} hrs</span>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         <!-- Employee Distribution Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Employee Distribution</h3>
@@ -163,6 +176,14 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Attendance Trend</h3>
             <div class="relative" style="height: 300px;">
                 <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Payroll Trend Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Payroll Trend</h3>
+            <div class="relative" style="height: 300px;">
+                <canvas id="payrollChart"></canvas>
             </div>
         </div>
     </div>
@@ -271,34 +292,40 @@
     <div class="bg-gradient-to-r from-indigo-900 to-purple-900 rounded-xl p-6 text-white mb-8">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold">Legal Compliance Status</h3>
+            @if($compliance['status'] === 'Compliant')
             <span class="px-3 py-1 bg-green-500 rounded-full text-sm font-medium">Compliant</span>
+            @elseif($compliance['status'] === 'Partially Compliant')
+            <span class="px-3 py-1 bg-yellow-500 rounded-full text-sm font-medium">Partially Compliant</span>
+            @else
+            <span class="px-3 py-1 bg-red-500 rounded-full text-sm font-medium">Needs Attention</span>
+            @endif
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="text-center">
-                <div class="text-3xl font-bold mb-2">100%</div>
+                <div class="text-3xl font-bold mb-2">{{ $compliance['labour'] }}%</div>
                 <p class="text-indigo-200 text-sm">LABOUR ACT COMPLIANCE</p>
             </div>
             <div class="text-center">
-                <div class="text-3xl font-bold mb-2">100%</div>
+                <div class="text-3xl font-bold mb-2">{{ $compliance['nssf'] }}%</div>
                 <p class="text-indigo-200 text-sm">NSSF CONTRIBUTIONS</p>
             </div>
             <div class="text-center">
-                <div class="text-3xl font-bold mb-2">100%</div>
+                <div class="text-3xl font-bold mb-2">{{ $compliance['wcf'] }}%</div>
                 <p class="text-indigo-200 text-sm">WCF COMPLIANCE</p>
             </div>
             <div class="text-center">
-                <div class="text-3xl font-bold mb-2">98%</div>
+                <div class="text-3xl font-bold mb-2">{{ $compliance['data'] }}%</div>
                 <p class="text-indigo-200 text-sm">DATA PROTECTION</p>
             </div>
         </div>
         
         <div class="mt-6 pt-6 border-t border-indigo-700">
             <div class="flex items-center justify-between">
-                <p class="text-indigo-200 text-sm">Last compliance audit: {{ now()->subDays(15)->format('d M Y') }}</p>
-                <button class="px-4 py-2 bg-white text-indigo-900 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
+                <p class="text-indigo-200 text-sm">Overall compliance: {{ $compliance['average'] }}% · Last audit: {{ $compliance['last_audit'] ?? 'N/A' }}</p>
+                <a href="{{ route('compliance.index') }}" class="px-4 py-2 bg-white text-indigo-900 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
                     View Full Report
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -306,30 +333,38 @@
     <!-- Upcoming Events -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Upcoming Events & Deadlines</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="p-4 border border-gray-200 rounded-lg">
                 <div class="flex items-center space-x-3 mb-2">
                     <i data-feather="calendar" class="w-5 h-5 text-blue-600"></i>
                     <span class="text-sm font-medium text-gray-900">Contract Renewals</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">3</p>
-                <p class="text-sm text-gray-600">Due this month</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $events['contract_renewals'] }}</p>
+                <p class="text-sm text-gray-600">Due in the next 30 days</p>
             </div>
             <div class="p-4 border border-gray-200 rounded-lg">
                 <div class="flex items-center space-x-3 mb-2">
                     <i data-feather="users" class="w-5 h-5 text-green-600"></i>
                     <span class="text-sm font-medium text-gray-900">Training Sessions</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">2</p>
-                <p class="text-sm text-gray-600">Scheduled this week</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $events['trainings'] }}</p>
+                <p class="text-sm text-gray-600">Scheduled in the next 30 days</p>
             </div>
             <div class="p-4 border border-gray-200 rounded-lg">
                 <div class="flex items-center space-x-3 mb-2">
                     <i data-feather="file-text" class="w-5 h-5 text-purple-600"></i>
-                    <span class="text-sm font-medium text-gray-900">Statutory Filings</span>
+                    <span class="text-sm font-medium text-gray-900">Statutory IDs Missing</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">5</p>
-                <p class="text-sm text-gray-600">Due next month</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $events['statutory_gaps'] }}</p>
+                <p class="text-sm text-gray-600">Active employees lacking NSSF/TIN/NHIF</p>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-lg">
+                <div class="flex items-center space-x-3 mb-2">
+                    <i data-feather="award" class="w-5 h-5 text-amber-600"></i>
+                    <span class="text-sm font-medium text-gray-900">Probation Reviews</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $events['probation_ending'] }}</p>
+                <p class="text-sm text-gray-600">Probation ending in the next 30 days</p>
             </div>
         </div>
     </div>
@@ -402,18 +437,15 @@
         // Employee Distribution Chart
         const employeeCtx = document.getElementById('employeeChart');
         if (employeeCtx) {
+            const dist = @json($charts['distribution']);
+            const hasData = (dist.data || []).length > 0;
             new Chart(employeeCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Permanent', 'Contract', 'Probation', 'Intern'],
+                    labels: hasData ? dist.labels : ['No Data'],
                     datasets: [{
-                        data: [180, 45, 18, 5],
-                        backgroundColor: [
-                            '#6366f1',
-                            '#10b981',
-                            '#f59e0b',
-                            '#8b5cf6'
-                        ],
+                        data: hasData ? dist.data : [1],
+                        backgroundColor: hasData ? dist.colors : ['#e5e7eb'],
                         borderWidth: 0
                     }]
                 },
@@ -423,6 +455,11 @@
                     plugins: {
                         legend: {
                             position: 'bottom'
+                        },
+                        tooltip: hasData ? undefined : {
+                            callbacks: {
+                                label: () => 'No employees yet'
+                            }
                         }
                     },
                     animation: {
@@ -435,13 +472,14 @@
         // Attendance Trend Chart
         const attendanceCtx = document.getElementById('attendanceChart');
         if (attendanceCtx) {
+            const att = @json($charts['attendance']);
             new Chart(attendanceCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+                    labels: att.labels,
                     datasets: [{
                         label: 'Attendance Rate %',
-                        data: [95, 94, 96, 93, 95, 97, 96, 94, 95, 93, 94],
+                        data: att.rates,
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         tension: 0.4,
@@ -458,9 +496,48 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: false,
-                            min: 85,
+                            beginAtZero: true,
                             max: 100
+                        }
+                    },
+                    animation: {
+                        duration: 0 // Disable animation to prevent continuous updates
+                    }
+                }
+            });
+        }
+
+        // Payroll Trend Chart
+        const payrollCtx = document.getElementById('payrollChart');
+        if (payrollCtx) {
+            const pay = @json($charts['payroll']);
+            new Chart(payrollCtx, {
+                type: 'bar',
+                data: {
+                    labels: pay.labels,
+                    datasets: [{
+                        label: 'Net Pay',
+                        data: pay.totals,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('en', { notation: 'compact' }).format(value);
+                                }
+                            }
                         }
                     },
                     animation: {
