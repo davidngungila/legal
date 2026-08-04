@@ -134,14 +134,6 @@ class Contract extends Model
     }
 
     /**
-     * Get the amendments for the contract.
-     */
-    public function amendments(): HasMany
-    {
-        return $this->hasMany(ContractAmendment::class);
-    }
-
-    /**
      * Get the formatted contract number.
      */
     public function getFormattedContractNumberAttribute(): string

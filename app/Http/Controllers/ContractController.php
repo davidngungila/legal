@@ -93,7 +93,7 @@ class ContractController extends Controller
             abort(403, 'Unauthorized access to contract record.');
         }
 
-        $contract->load(['employee', 'client', 'amendments']);
+        $contract->load(['employee', 'client']);
 
         return view('contracts.show', compact('contract', 'currentClient'));
     }
