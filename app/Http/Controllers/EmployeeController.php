@@ -535,11 +535,11 @@ class EmployeeController extends Controller
     /**
      * Generate contract for the specified employee.
      */
-    public function generateContract(Employee $employee)
+    public function generateContract(Request $request, Employee $employee)
     {
         // Verify employee belongs to current client
         $currentClient = session('current_client');
-        if ($employee->client_id != $currentClient->id) {
+        if (!$currentClient || $employee->client_id != $currentClient->id) {
             abort(403, 'Unauthorized access to employee record.');
         }
 
@@ -547,8 +547,12 @@ class EmployeeController extends Controller
         $activeContract = $employee->activeContract()->first();
         
         if ($activeContract) {
-            return redirect()->route('employees.show', $employee->id)
-                ->with('warning', 'Employee already has an active contract!');
+            return $this->contractResponse(
+                $request,
+                false,
+                'Employee already has an active contract!',
+                route('employees.show', $employee->id)
+            );
         }
 
         // Create new contract
@@ -567,8 +571,27 @@ class EmployeeController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        return redirect()->route('contracts.show', $contract->id)
-                     ->with('success', 'Contract has been generated for "' . $employee->full_name . '" and is pending signature.');
+        return $this->contractResponse(
+            $request,
+            true,
+            'Contract has been generated for "' . $employee->full_name . '" and is pending signature.',
+            route('contracts.show', $contract->id)
+        );
+    }
+
+    private function contractResponse(Request $request, bool $success, string $message, string $url)
+    {
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => $success,
+                'message' => $message,
+                'redirect_url' => $url,
+            ]);
+        }
+
+        return $success
+            ? redirect()->to($url)->with('success', $message)
+            : redirect()->to($url)->with('warning', $message);
     }
 
     /**

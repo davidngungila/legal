@@ -264,6 +264,7 @@ function generateContract(employeeId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         })
@@ -278,7 +279,7 @@ function generateContract(employeeId) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while generating the contract.');
+            alert('An error occurred while generating the contract. Please try again.');
         });
     }
 }

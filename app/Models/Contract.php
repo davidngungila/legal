@@ -614,9 +614,15 @@ Employee: {{employee_name}} _____________________ Date: _________
     {
         $prefix = 'CTR';
         $year = date('Y');
-        $sequence = self::whereYear('created_at', $year)->count() + 1;
-        
-        return "{$prefix}-{$year}-" . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        $base = "{$prefix}-{$year}-" . str_pad(self::whereYear('created_at', $year)->count() + 1, 4, '0', STR_PAD_LEFT);
+
+        $number = $base;
+        $suffix = 1;
+        while (self::where('contract_number', $number)->exists()) {
+            $number = $base . '-' . ++$suffix;
+        }
+
+        return $number;
     }
 
     /**
