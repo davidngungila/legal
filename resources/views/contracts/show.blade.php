@@ -114,12 +114,12 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Actions</h3>
                 <div class="space-y-3">
-                    <button class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <a href="{{ route('contracts.download-pdf', $contract->id) }}" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                         <i data-feather="download" class="w-4 h-4 mr-2"></i> Download PDF
-                    </button>
-                    <button class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    </a>
+                    <a href="{{ route('contracts.print-pdf', $contract->id) }}" target="_blank" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                         <i data-feather="printer" class="w-4 h-4 mr-2"></i> Print Contract
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

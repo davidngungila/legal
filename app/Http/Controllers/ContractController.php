@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Contract;
 use App\Models\Employee;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -274,6 +275,51 @@ class ContractController extends Controller
         return response()->streamDownload(function() use ($content) {
             echo $content;
         }, $filename);
+    }
+
+    /**
+     * Build the contract PDF document.
+     */
+    private function buildPdf(Contract $contract, $currentClient)
+    {
+        return Pdf::loadView('contracts.pdf', compact('contract', 'currentClient'))
+            ->setPaper('a4')
+            ->setOption('margin-top', '18mm')
+            ->setOption('margin-bottom', '20mm')
+            ->setOption('margin-left', '15mm')
+            ->setOption('margin-right', '15mm');
+    }
+
+    /**
+     * Download the specified contract as a PDF.
+     */
+    public function downloadPdf(Contract $contract)
+    {
+        $currentClient = session('current_client');
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
+            abort(403, 'Unauthorized access to contract record.');
+        }
+
+        $contract->load(['employee', 'client']);
+        $pdf = $this->buildPdf($contract, $currentClient);
+
+        return $pdf->download('employment-contract-' . $contract->contract_number . '.pdf');
+    }
+
+    /**
+     * Stream the contract PDF inline for printing.
+     */
+    public function printPdf(Contract $contract)
+    {
+        $currentClient = session('current_client');
+        if (!$currentClient || $contract->client_id != $currentClient->id) {
+            abort(403, 'Unauthorized access to contract record.');
+        }
+
+        $contract->load(['employee', 'client']);
+        $pdf = $this->buildPdf($contract, $currentClient);
+
+        return $pdf->stream('employment-contract-' . $contract->contract_number . '.pdf');
     }
 
     /**
