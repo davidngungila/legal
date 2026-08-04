@@ -33,6 +33,8 @@ class LeaveRequest extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'applied_at' => 'datetime',
+        'approved_at' => 'datetime',
         'days' => 'integer',
     ];
 

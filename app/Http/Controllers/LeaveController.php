@@ -347,7 +347,7 @@ class LeaveController extends Controller
                 'days' => $leaveRequest->days,
                 'status' => $leaveRequest->status,
                 'reason' => $leaveRequest->reason,
-                'applied_at' => $leaveRequest->applied_at ? $leaveRequest->applied_at->format('Y-m-d') : null,
+                'applied_at' => $leaveRequest->applied_at ? Carbon::parse($leaveRequest->applied_at)->format('Y-m-d') : null,
             ];
         })->values();
 
