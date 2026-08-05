@@ -8,210 +8,348 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-manrope">Contract Management</h1>
-            <p class="text-gray-600 mt-2">Manage employee contracts and employment agreements</p>
+            <p class="text-gray-600 mt-2">Overview, analytics and lifecycle management of employment contracts</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button onclick="showStatisticsModal()" 
-                    class="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors flex items-center">
-                <i data-feather="bar-chart-2" class="w-4 h-4 mr-2"></i>
-                Statistics
-            </button>
-            <button onclick="showRequiringAttentionModal()" 
-                    class="px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors flex items-center">
-                <i data-feather="alert-triangle" class="w-4 h-4 mr-2"></i>
-                Requiring Attention
-            </button>
-            <button onclick="showCalendarModal()" 
-                    class="px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors flex items-center">
-                <i data-feather="calendar" class="w-4 h-4 mr-2"></i>
-                Calendar
-            </button>
+            <a href="{{ route('employment-contracts.index') }}"
+               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
+                <i data-feather="file-text" class="w-4 h-4 mr-2"></i>
+                Contracts Dashboard
+            </a>
+            <form method="POST" action="{{ route('contract-management.generate-report') }}" class="flex items-center space-x-2">
+                @csrf
+                <input type="hidden" name="format" value="pdf">
+                <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="all">All Statuses</option>
+                    @foreach(\App\Models\EmploymentContract::STATUSES as $statusKey => $statusLabel)
+                        <option value="{{ $statusKey }}">{{ $statusLabel }}</option>
+                    @endforeach
+                </select>
+                <button type="submit"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+                    <i data-feather="download" class="w-4 h-4 mr-2"></i>
+                    Report
+                </button>
+            </form>
         </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
-                    <i data-feather="file-text" class="w-6 h-6 text-blue-600"></i>
+                <div class="flex-shrink-0 bg-blue-100 rounded-lg p-2.5">
+                    <i data-feather="file-text" class="w-5 h-5 text-blue-600"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Total Contracts</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="totalContracts">-</p>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Total</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ $stats['total'] }}</p>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
-                    <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
+                <div class="flex-shrink-0 bg-green-100 rounded-lg p-2.5">
+                    <i data-feather="check-circle" class="w-5 h-5 text-green-600"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Active</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="activeContracts">-</p>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Active</p>
+                    <p class="text-xl font-semibold text-green-600">{{ $stats['active'] }}</p>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3">
-                    <i data-feather="clock" class="w-6 h-6 text-yellow-600"></i>
+                <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-2.5">
+                    <i data-feather="clock" class="w-5 h-5 text-yellow-600"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Expiring Soon</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="expiringSoon">-</p>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Expiring 60d</p>
+                    <p class="text-xl font-semibold text-yellow-600">{{ $stats['expiring_soon'] }}</p>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-red-100 rounded-lg p-3">
-                    <i data-feather="x-circle" class="w-6 h-6 text-red-600"></i>
+                <div class="flex-shrink-0 bg-red-100 rounded-lg p-2.5">
+                    <i data-feather="x-circle" class="w-5 h-5 text-red-600"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Terminated</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="terminatedContracts">-</p>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Expired</p>
+                    <p class="text-xl font-semibold text-red-600">{{ $stats['expired'] }}</p>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
-                    <i data-feather="trending-up" class="w-6 h-6 text-purple-600"></i>
+                <div class="flex-shrink-0 bg-purple-100 rounded-lg p-2.5">
+                    <i data-feather="repeat" class="w-5 h-5 text-purple-600"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Renewal Rate</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="renewalRate">-</p>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Renewed</p>
+                    <p class="text-xl font-semibold text-purple-600">{{ $stats['renewed'] }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-indigo-100 rounded-lg p-2.5">
+                    <i data-feather="trending-up" class="w-5 h-5 text-indigo-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Renewal</p>
+                    <p class="text-xl font-semibold text-indigo-600">{{ $stats['renewal_rate'] }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-red-100 rounded-lg p-2.5">
+                    <i data-feather="trending-down" class="w-5 h-5 text-red-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Termination</p>
+                    <p class="text-xl font-semibold text-red-600">{{ $stats['termination_rate'] }}%</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Search and Filters -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+    <!-- Analytics Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Contract Type Distribution -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-1">
+            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Contract Distribution</h3>
+            <canvas id="contractTypeChart" height="200"></canvas>
+            <div class="mt-4 space-y-2">
+                @foreach(\App\Models\EmploymentContract::CONTRACT_TYPES as $typeKey => $typeLabel)
+                    @php $count = $stats['by_type']->get($typeKey, 0); @endphp
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ $typeLabel }}</span>
+                        <span class="text-sm font-medium text-gray-900">{{ $count }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- Requiring Attention -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-1">
+            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 flex items-center">
+                <i data-feather="alert-triangle" class="w-4 h-4 text-orange-500 mr-2"></i>
+                Requiring Attention
+            </h3>
+            <div class="space-y-4 max-h-80 overflow-y-auto">
+                @if($attention['total'] === 0)
+                    <p class="text-sm text-gray-500">No contracts require attention at this time.</p>
+                @else
+                    @foreach($attention['expiring_soon'] as $contract)
+                        <div class="flex items-start justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $contract->employee?->full_name ?? 'Unknown' }}</p>
+                                <p class="text-xs text-gray-500">{{ $contract->formatted_contract_number }} &middot; expires {{ $contract->expiry_date?->format('d M, Y') }}</p>
+                            </div>
+                            <span class="text-xs font-medium text-yellow-700">{{ $contract->remaining_days }}d left</span>
+                        </div>
+                    @endforeach
+                    @foreach($attention['expired'] as $contract)
+                        <div class="flex items-start justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $contract->employee?->full_name ?? 'Unknown' }}</p>
+                                <p class="text-xs text-gray-500">{{ $contract->formatted_contract_number }} &middot; expired {{ $contract->expiry_date?->format('d M, Y') }}</p>
+                            </div>
+                            <span class="text-xs font-medium text-red-700">Expired</span>
+                        </div>
+                    @endforeach
+                    @foreach($attention['pending_signature'] as $contract)
+                        <div class="flex items-start justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $contract->employee?->full_name ?? 'Unknown' }}</p>
+                                <p class="text-xs text-gray-500">{{ $contract->formatted_contract_number }} &middot; awaiting signature</p>
+                            </div>
+                            <span class="text-xs font-medium text-gray-600">Draft</span>
+                        </div>
+                    @endforeach
+                    @foreach($attention['probation_ending'] as $contract)
+                        <div class="flex items-start justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $contract->employee?->full_name ?? 'Unknown' }}</p>
+                                <p class="text-xs text-gray-500">{{ $contract->formatted_contract_number }} &middot; probation ends {{ $contract->probation_end_date?->format('d M, Y') }}</p>
+                            </div>
+                            <span class="text-xs font-medium text-purple-700">Probation</span>
+                        </div>
+                    @endforeach
+                @endif
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-1">
+            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 flex items-center">
+                <i data-feather="calendar" class="w-4 h-4 text-purple-500 mr-2"></i>
+                Upcoming Events
+            </h3>
+            <div class="space-y-3 max-h-80 overflow-y-auto">
+                @php
+                    $upcoming = collect($events)
+                        ->filter(fn ($e) => $e['start'] >= now()->toDateString())
+                        ->sortBy('start')
+                        ->take(10);
+                @endphp
+                @if($upcoming->isEmpty())
+                    <p class="text-sm text-gray-500">No upcoming events.</p>
+                @else
+                    @foreach($upcoming as $event)
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0 w-12 text-center mr-3">
+                                <p class="text-sm font-bold text-indigo-600">{{ \Illuminate\Support\Carbon::parse($event['start'])->format('d') }}</p>
+                                <p class="text-xs text-gray-500">{{ \Illuminate\Support\Carbon::parse($event['start'])->format('M') }}</p>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ $event['title'] }}</p>
+                                <p class="text-xs text-gray-500">{{ $event['contract'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" action="{{ route('contract-management.index') }}"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <input type="text" id="searchInput" placeholder="Search employees..." 
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search employee, contract #, title..."
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div>
-                <select id="workStationFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">All Work Stations</option>
-                    @foreach($employees->pluck('work_station')->unique() as $workStation)
-                        <option value="{{ $workStation }}">{{ $workStation }}</option>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="all" @if(! request('status') || request('status') === 'all') selected @endif>All Status</option>
+                    @foreach(\App\Models\EmploymentContract::STATUSES as $statusKey => $statusLabel)
+                        <option value="{{ $statusKey }}" @if(request('status') === $statusKey) selected @endif>{{ $statusLabel }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
-                <select id="contractTypeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">All Contract Types</option>
-                    <option value="unspecified">Unspecified (Permanent)</option>
-                    <option value="fixed_term">Fixed Term</option>
-                    <option value="specific_task">Specific Task</option>
-                    <option value="commission">Commission</option>
-                    <option value="internship">Internship</option>
+                <select name="contract_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="all" @if(! request('contract_type') || request('contract_type') === 'all') selected @endif>All Contract Types</option>
+                    @foreach(\App\Models\EmploymentContract::CONTRACT_TYPES as $typeKey => $typeLabel)
+                        <option value="{{ $typeKey }}" @if(request('contract_type') === $typeKey) selected @endif>{{ $typeLabel }}</option>
+                    @endforeach
                 </select>
             </div>
-            <div>
-                <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">All Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="expired">Expired</option>
-                    <option value="terminated">Terminated</option>
-                    <option value="renewed">Renewed</option>
+            <div class="flex space-x-2">
+                <select name="sort" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="expiry_date" @if(request('sort') === 'expiry_date' || ! request('sort')) selected @endif>Expiry Date</option>
+                    <option value="created_at" @if(request('sort') === 'created_at') selected @endif>Newest First</option>
+                    <option value="effective_date" @if(request('sort') === 'effective_date') selected @endif>Start Date</option>
                 </select>
+                <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap">
+                    <i data-feather="search" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
-    </div>
+    </form>
 
-    <!-- Employees Table -->
+    <!-- Contracts Table -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Employee Details
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Contract Information
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Contract Period
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Salary & Benefits
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contract</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Compensation</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="employeesTableBody">
-                    @forelse($employees as $employee)
-                        <tr class="hover:bg-gray-50 transition-colors employee-row" 
-                            data-name="{{ $employee->first_name . ' ' . $employee->surname }}"
-                            data-workstation="{{ $employee->work_station }}">
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($contracts as $contract)
+                        @php $status = $contract->effective_status; @endphp
+                        <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                                            <span class="text-indigo-600 font-bold text-sm">
-                                                {{ strtoupper(substr($employee->first_name, 0, 1) . substr($employee->surname, 0, 1)) }}
-                                            </span>
-                                        </div>
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                        <span class="text-indigo-600 font-bold text-sm">
+                                            {{ strtoupper(substr($contract->employee?->first_name ?? '?', 0, 1) . substr($contract->employee?->last_name ?? '?', 0, 1)) }}
+                                        </span>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $employee->first_name }} {{ $employee->surname }}</div>
-                                        <div class="text-sm text-gray-500">{{ $employee->employee_number }}</div>
-                                        <div class="text-sm text-gray-500">{{ $employee->work_station }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $contract->employee?->full_name ?? 'Unknown Employee' }}</div>
+                                        <div class="text-xs text-gray-500">{{ $contract->employee?->employee_id ?? 'N/A' }}</div>
+                                        <div class="text-xs text-gray-400">{{ $contract->department }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">PERM20240001</div>
-                                <div class="text-sm text-gray-500">Permanent</div>
-                                <div class="text-xs text-gray-400">Senior Developer</div>
+                                <div class="text-sm font-medium text-indigo-600">{{ $contract->formatted_contract_number }}</div>
+                                <div class="text-xs text-gray-500">{{ \App\Models\EmploymentContract::CONTRACT_TYPES[$contract->contract_type] ?? $contract->contract_type }}</div>
+                                <div class="text-xs text-gray-400">{{ $contract->job_title }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">2024-01-15 to 2025-01-15</div>
-                                <div class="text-sm text-gray-500">365 days</div>
-                                <div class="text-xs text-green-600">11 months remaining</div>
+                                <div class="text-sm text-gray-900">
+                                    {{ $contract->effective_date?->format('M d, Y') }} @if($contract->expiry_date) - {{ $contract->expiry_date->format('M d, Y') }} @endif
+                                </div>
+                                <div class="text-xs text-gray-500">{{ $contract->duration_months }} months</div>
+                                @if(in_array($status, ['active', 'renewed']) && $contract->expiry_date)
+                                    <div class="text-xs {{ $contract->isExpiringSoon(60) ? 'text-yellow-600' : 'text-green-600' }}">
+                                        {{ $contract->remaining_days }} days remaining
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">$5,000/month</div>
-                                <div class="text-sm text-gray-500">Health, Transport</div>
-                                <div class="text-xs text-blue-600">21 days leave</div>
+                                <div class="text-sm text-gray-900">{{ $contract->formatted_basic_salary }}</div>
+                                <div class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', $contract->payment_frequency)) }}</div>
+                                <div class="text-xs text-indigo-600">Total: {{ $contract->formatted_total_compensation }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Active
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $contract->status_badge_color }}-100 text-{{ $contract->status_badge_color }}-700 uppercase">
+                                    {{ $status }}
                                 </span>
-                                <div class="text-xs text-gray-500 mt-1">Probation: Completed</div>
+                                @if($contract->renewal_count > 0)
+                                    <div class="text-xs text-gray-500 mt-1">{{ $contract->renewal_count }} renewal(s)</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <button onclick="showEmployeeContracts({{ $employee->id }})" 
-                                            class="text-indigo-600 hover:text-indigo-900">
+                                <div class="flex space-x-3 items-center">
+                                    <a href="{{ route('employment-contracts.employee-contracts', $contract->employee_id) }}"
+                                       class="text-indigo-600 hover:text-indigo-900" title="Employee contracts">
                                         <i data-feather="eye" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="renewContract({{ $employee->id }})" 
-                                            class="text-green-600 hover:text-green-900">
-                                        <i data-feather="refresh-cw" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="terminateContract({{ $employee->id }})" 
-                                            class="text-red-600 hover:text-red-900">
-                                        <i data-feather="x-circle" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="generateReport({{ $employee->id }})" 
-                                            class="text-purple-600 hover:text-purple-900">
-                                        <i data-feather="download" class="w-4 h-4"></i>
-                                    </button>
+                                    </a>
+                                    <a href="{{ route('employment-contracts.edit', $contract->id) }}"
+                                       class="text-blue-600 hover:text-blue-900" title="Edit">
+                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                    </a>
+                                    <form method="POST" action="{{ route('employment-contracts.generate-pdf', $contract->id) }}" class="inline">
+                                        @csrf
+                                        <button type="submit" class="text-purple-600 hover:text-purple-900" title="Download PDF">
+                                            <i data-feather="download" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                    @if($status === 'draft')
+                                        <form method="POST" action="{{ route('contract-management.activate', $contract->id) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-green-600 hover:text-green-900" title="Activate">
+                                                <i data-feather="check-circle" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    @if(in_array($status, ['active', 'renewed', 'expired']))
+                                        <button onclick="openRenewModal({{ $contract->id }}, '{{ $contract->formatted_contract_number }}', '{{ route('contract-management.renew', $contract->id) }}')"
+                                                class="text-green-600 hover:text-green-900" title="Renew">
+                                            <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                                        </button>
+                                    @endif
+                                    @if(! in_array($status, ['terminated']))
+                                        <button onclick="openTerminateModal({{ $contract->id }}, '{{ $contract->formatted_contract_number }}', '{{ route('contract-management.terminate', $contract->id) }}')"
+                                                class="text-red-600 hover:text-red-900" title="Terminate">
+                                            <i data-feather="x-circle" class="w-4 h-4"></i>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -220,8 +358,8 @@
                             <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                                 <div class="py-8">
                                     <i data-feather="file-text" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
-                                    <p class="text-lg font-medium">No employees found</p>
-                                    <p class="text-sm">No approved employees to manage contracts for.</p>
+                                    <p class="text-lg font-medium">No contracts found</p>
+                                    <p class="text-sm">No employment contracts match your filters.</p>
                                 </div>
                             </td>
                         </tr>
@@ -230,115 +368,61 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        @if($employees->hasPages())
-            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                <div class="flex-1 flex justify-between sm:hidden">
-                    {{ $employees->links() }}
-                </div>
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Showing <span class="font-medium">{{ $employees->firstItem() }}</span> to 
-                            <span class="font-medium">{{ $employees->lastItem() }}</span> of 
-                            <span class="font-medium">{{ $employees->total() }}</span> results
-                        </p>
-                    </div>
-                    <div>
-                        {{ $employees->links() }}
-                    </div>
-                </div>
+        @if($contracts->hasPages())
+            <div class="bg-gray-50 px-4 py-3 border-t border-gray-200">
+                {{ $contracts->links() }}
             </div>
         @endif
     </div>
 </div>
 
-<!-- Statistics Modal -->
-<x-advanced-modal id="statisticsModal" title="Contract Statistics"
-    icon="bar-chart-2" color="indigo" size="md">
-    <div class="space-y-4">
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Total Contracts:</span>
-            <span class="text-sm font-medium" id="modalTotalContracts">-</span>
+<!-- Renew Contract Modal -->
+<x-advanced-modal id="renewContractModal" title="Renew Employment Contract"
+    icon="refresh-cw" color="green" size="lg">
+    <form id="renewContractForm" method="POST" class="space-y-4">
+        @csrf
+        <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <p class="text-sm text-green-800" id="renewContractLabel">Renewing contract</p>
         </div>
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Active Contracts:</span>
-            <span class="text-sm font-medium" id="modalActiveContracts">-</span>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">New Effective Date <span class="text-red-500">*</span></label>
+            <input type="date" name="new_effective_date" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
         </div>
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Expired Contracts:</span>
-            <span class="text-sm font-medium" id="modalExpiredContracts">-</span>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">New Expiry Date</label>
+            <input type="date" name="new_expiry_date"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
         </div>
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Terminated Contracts:</span>
-            <span class="text-sm font-medium" id="modalTerminatedContracts">-</span>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Renewal Reason <span class="text-red-500">*</span></label>
+            <textarea name="renewal_reason" rows="3" required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Expiring Soon:</span>
-            <span class="text-sm font-medium" id="modalExpiringSoon">-</span>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Average Duration:</span>
-            <span class="text-sm font-medium" id="modalAvgDuration">-</span>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Renewal Rate:</span>
-            <span class="text-sm font-medium" id="modalRenewalRate">-</span>
-        </div>
-    </div>
-    <div class="border-t pt-4 mt-4">
-        <h4 class="text-sm font-medium text-gray-900 mb-2">By Contract Type</h4>
-        <div class="space-y-2" id="contractTypeStats">
-            <!-- Will be populated dynamically -->
-        </div>
-    </div>
+    </form>
     <x-slot:footer>
         <div class="flex justify-end space-x-3">
-            <button onclick="hideStatisticsModal()"
-                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                Close
+            <button type="button" onclick="closeModal('renewContractModal')"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
             </button>
-        </div>
-    </x-slot:footer>
-</x-advanced-modal>
-
-<!-- Requiring Attention Modal -->
-<x-advanced-modal id="requiringAttentionModal" title="Contracts Requiring Attention"
-    icon="alert-triangle" color="orange" size="md">
-    <div id="requiringAttentionList" class="space-y-2 max-h-64 overflow-y-auto">
-        <!-- Will be populated dynamically -->
-    </div>
-    <x-slot:footer>
-        <div class="flex justify-end space-x-3">
-            <button onclick="hideRequiringAttentionModal()"
-                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                Close
-            </button>
-        </div>
-    </x-slot:footer>
-</x-advanced-modal>
-
-<!-- Calendar Modal -->
-<x-advanced-modal id="calendarModal" title="Contract Calendar"
-    icon="calendar" color="purple" size="md">
-    <div class="space-y-2" id="calendarEvents">
-        <!-- Will be populated dynamically -->
-    </div>
-    <x-slot:footer>
-        <div class="flex justify-end space-x-3">
-            <button onclick="hideCalendarModal()"
-                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                Close
+            <button type="submit" form="renewContractForm"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <i data-feather="refresh-cw" class="w-4 h-4 inline mr-2"></i>
+                Renew Contract
             </button>
         </div>
     </x-slot:footer>
 </x-advanced-modal>
 
 <!-- Terminate Contract Modal -->
-<x-advanced-modal id="terminateModal" title="Terminate Contract"
-    icon="alert-triangle" color="red" size="md">
-    <form id="terminateForm" class="space-y-4">
-        <input type="hidden" name="employee_id" id="terminateEmployeeId">
+<x-advanced-modal id="terminateContractModal" title="Terminate Employment Contract"
+    icon="alert-triangle" color="red" size="lg">
+    <form id="terminateContractForm" method="POST" class="space-y-4">
+        @csrf
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <p class="text-sm text-red-800" id="terminateContractLabel">Terminating contract</p>
+        </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date <span class="text-red-500">*</span></label>
             <input type="date" name="termination_date" required
@@ -349,62 +433,17 @@
             <textarea name="termination_reason" rows="3" required
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Termination Type <span class="text-red-500">*</span></label>
-            <select name="termination_type" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="">Select Type</option>
-                <option value="resignation">Resignation</option>
-                <option value="dismissal">Dismissal</option>
-                <option value="retirement">Retirement</option>
-                <option value="contract_expiry">Contract Expiry</option>
-                <option value="mutual_agreement">Mutual Agreement</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Final Settlement Amount</label>
-            <input type="number" name="final_settlement_amount" min="0" step="0.01"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
-        <div class="space-y-2">
-            <div class="flex items-center">
-                <input type="checkbox" name="handover_completed" id="handover_completed"
-                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label for="handover_completed" class="ml-2 block text-sm text-gray-900">
-                    Handover Completed
-                </label>
-            </div>
-            <div class="flex items-center">
-                <input type="checkbox" name="clearance_completed" id="clearance_completed"
-                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label for="clearance_completed" class="ml-2 block text-sm text-gray-900">
-                    Clearance Completed
-                </label>
-            </div>
-            <div class="flex items-center">
-                <input type="checkbox" name="exit_interview_completed" id="exit_interview_completed"
-                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label for="exit_interview_completed" class="ml-2 block text-sm text-gray-900">
-                    Exit Interview Completed
-                </label>
-            </div>
-        </div>
     </form>
     <x-slot:footer>
         <div class="flex justify-end space-x-3">
-            <button type="button" onclick="hideTerminateModal()"
+            <button type="button" onclick="closeModal('terminateContractModal')"
                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                 Cancel
             </button>
-            <button type="submit" form="terminateForm" id="terminateBtn"
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
-                <span id="terminateBtnText">Terminate</span>
-                <div id="terminateBtnLoader" class="hidden ml-2">
-                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </div>
+            <button type="submit" form="terminateContractForm"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <i data-feather="x-circle" class="w-4 h-4 inline mr-2"></i>
+                Terminate Contract
             </button>
         </div>
     </x-slot:footer>
@@ -412,307 +451,52 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Contract Management System
-class ContractManagementManager {
-    constructor() {
-        this.init();
-    }
+function openRenewModal(contractId, contractNumber, action) {
+    document.getElementById('renewContractForm').action = action;
+    document.getElementById('renewContractLabel').textContent = 'Renewing contract ' + contractNumber;
+    openModal('renewContractModal');
+}
 
-    init() {
-        this.setupEventListeners();
-        this.initializeFeather();
-        this.loadStatistics();
-    }
+function openTerminateModal(contractId, contractNumber, action) {
+    document.getElementById('terminateContractForm').action = action;
+    document.getElementById('terminateContractLabel').textContent = 'Terminating contract ' + contractNumber;
+    openModal('terminateContractModal');
+}
 
-    initializeFeather() {
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-    }
+document.addEventListener('DOMContentLoaded', function () {
+    const chartLabels = [];
+    const chartData = [];
+    @foreach(\App\Models\EmploymentContract::CONTRACT_TYPES as $typeKey => $typeLabel)
+        chartLabels.push('{{ $typeLabel }}');
+        chartData.push({{ $stats['by_type']->get($typeKey, 0) }});
+    @endforeach
 
-    setupEventListeners() {
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', () => this.filterEmployees());
-
-        // Filter functionality
-        const filters = ['workStationFilter', 'contractTypeFilter', 'statusFilter'];
-        filters.forEach(filterId => {
-            const filter = document.getElementById(filterId);
-            filter.addEventListener('change', () => this.filterEmployees());
-        });
-
-        // Terminate form
-        const terminateForm = document.getElementById('terminateForm');
-        terminateForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.terminateContract();
-        });
-    }
-
-    async loadStatistics() {
-        try {
-            const response = await fetch('/contract-management/statistics');
-            const result = await response.json();
-
-            if (result.success) {
-                const stats = result.statistics;
-                
-                // Update main page statistics
-                document.getElementById('totalContracts').textContent = stats.total_contracts;
-                document.getElementById('activeContracts').textContent = stats.active_contracts;
-                document.getElementById('expiringSoon').textContent = stats.expiring_soon;
-                document.getElementById('terminatedContracts').textContent = stats.terminated_contracts;
-                document.getElementById('renewalRate').textContent = stats.renewal_rate + '%';
-
-                // Update modal statistics
-                document.getElementById('modalTotalContracts').textContent = stats.total_contracts;
-                document.getElementById('modalActiveContracts').textContent = stats.active_contracts;
-                document.getElementById('modalExpiredContracts').textContent = stats.expired_contracts;
-                document.getElementById('modalTerminatedContracts').textContent = stats.terminated_contracts;
-                document.getElementById('modalExpiringSoon').textContent = stats.expiring_soon;
-                document.getElementById('modalAvgDuration').textContent = stats.average_duration_months + ' months';
-                document.getElementById('modalRenewalRate').textContent = stats.renewal_rate + '%';
-
-                // Update contract types
-                const typesContainer = document.getElementById('contractTypeStats');
-                typesContainer.innerHTML = '';
-                Object.entries(stats.by_type).forEach(([type, count]) => {
-                    const typeLabel = this.getContractTypeLabel(type);
-                    typesContainer.innerHTML += `
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">${typeLabel}:</span>
-                            <span class="text-sm font-medium">${count}</span>
-                        </div>
-                    `;
-                });
-            }
-        } catch (error) {
-            console.error('Failed to load statistics:', error);
-        }
-    }
-
-    getContractTypeLabel(type) {
-        const labels = {
-            'unspecified' => 'Unspecified (Permanent)',
-            'fixed_term' => 'Fixed Term',
-            'specific_task' => 'Specific Task',
-            'commission' => 'Commission',
-            'internship' => 'Internship'
-        };
-        return labels[type] || type;
-    }
-
-    filterEmployees() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const workStationFilter = document.getElementById('workStationFilter').value;
-        const contractTypeFilter = document.getElementById('contractTypeFilter').value;
-        const statusFilter = document.getElementById('statusFilter').value;
-        const employeeRows = document.querySelectorAll('.employee-row');
-
-        employeeRows.forEach(row => {
-            const name = row.dataset.name.toLowerCase();
-            const workStation = row.dataset.workstation;
-
-            const matchesSearch = !searchTerm || name.includes(searchTerm);
-            const matchesWorkStation = !workStationFilter || workStation === workStationFilter;
-            const matchesContractType = !contractTypeFilter; // Placeholder
-            const matchesStatus = !statusFilter; // Placeholder
-
-            if (matchesSearch && matchesWorkStation && matchesContractType && matchesStatus) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
+    const ctx = document.getElementById('contractTypeChart');
+    if (ctx && typeof Chart !== 'undefined') {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Contracts',
+                    data: chartData,
+                    backgroundColor: ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { font: { size: 9 } } }
+                }
             }
         });
     }
-
-    async terminateContract() {
-        const form = document.getElementById('terminateForm');
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        // Convert checkboxes to boolean
-        data.handover_completed = form.querySelector('#handover_completed').checked;
-        data.clearance_completed = form.querySelector('#clearance_completed').checked;
-        data.exit_interview_completed = form.querySelector('#exit_interview_completed').checked;
-
-        this.setTerminateLoadingState(true);
-
-        try {
-            const response = await fetch(`/contract-management/${data.employee_id}/terminate`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.showNotification(result.message, 'success');
-                hideTerminateModal();
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                this.showNotification(result.message || 'Termination failed', 'error');
-            }
-        } catch (error) {
-            console.error('Contract termination error:', error);
-            this.showNotification('An error occurred during termination', 'error');
-        } finally {
-            this.setTerminateLoadingState(false);
-        }
-    }
-
-    setTerminateLoadingState(loading) {
-        const btnText = document.getElementById('terminateBtnText');
-        const btnLoader = document.getElementById('terminateBtnLoader');
-        const terminateBtn = document.getElementById('terminateBtn');
-
-        if (loading) {
-            btnText.textContent = 'Terminating...';
-            btnLoader.classList.remove('hidden');
-            terminateBtn.disabled = true;
-        } else {
-            btnText.textContent = 'Terminate';
-            btnLoader.classList.add('hidden');
-            terminateBtn.disabled = false;
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-            type === 'success' ? 'bg-green-500 text-white' :
-            type === 'error' ? 'bg-red-500 text-white' :
-            'bg-blue-500 text-white'
-        }`;
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-}
-
-// Modal functions
-function showStatisticsModal() {
-    openModal('statisticsModal');
-}
-
-function hideStatisticsModal() {
-    closeModal('statisticsModal');
-}
-
-async function showRequiringAttentionModal() {
-    try {
-        const response = await fetch('/contract-management/requiring-attention');
-        const result = await response.json();
-
-        if (result.success) {
-            const list = document.getElementById('requiringAttentionList');
-            list.innerHTML = '';
-            
-            if (result.employees.length === 0) {
-                list.innerHTML = '<p class="text-sm text-gray-500">No contracts require attention at this time.</p>';
-            } else {
-                result.employees.forEach(employee => {
-                    const item = document.createElement('div');
-                    item.className = 'p-2 bg-gray-50 rounded';
-                    item.innerHTML = `
-                        <div class="text-sm font-medium">${employee.first_name} ${employee.surname}</div>
-                        <div class="text-xs text-gray-500">${employee.employee_number}</div>
-                        <div class="text-xs text-orange-600">Requires attention</div>
-                    `;
-                    list.appendChild(item);
-                });
-            }
-            
-            openModal('requiringAttentionModal');
-        } else {
-            window.contractManagementManager.showNotification('Failed to load requiring attention contracts', 'error');
-        }
-    } catch (error) {
-        console.error('Failed to load requiring attention contracts:', error);
-        window.contractManagementManager.showNotification('An error occurred', 'error');
-    }
-}
-
-function hideRequiringAttentionModal() {
-    closeModal('requiringAttentionModal');
-}
-
-async function showCalendarModal() {
-    try {
-        const response = await fetch('/contract-management/calendar');
-        const result = await response.json();
-
-        if (result.success) {
-            const container = document.getElementById('calendarEvents');
-            container.innerHTML = '';
-            
-            result.events.forEach(event => {
-                const eventDiv = document.createElement('div');
-                eventDiv.className = 'p-3 bg-gray-50 rounded';
-                eventDiv.innerHTML = `
-                    <div class="text-sm font-medium">${event.title}</div>
-                    <div class="text-xs text-gray-500">${event.start}</div>
-                    <div class="text-xs text-gray-400">${event.employee}</div>
-                    <div class="text-xs text-blue-600">${event.type}</div>
-                `;
-                container.appendChild(eventDiv);
-            });
-            
-            openModal('calendarModal');
-        } else {
-            window.contractManagementManager.showNotification('Failed to load calendar events', 'error');
-        }
-    } catch (error) {
-        console.error('Failed to load calendar events:', error);
-        window.contractManagementManager.showNotification('An error occurred', 'error');
-    }
-}
-
-function hideCalendarModal() {
-    closeModal('calendarModal');
-}
-
-function showTerminateModal(employeeId) {
-    document.getElementById('terminateEmployeeId').value = employeeId;
-    openModal('terminateModal');
-}
-
-function hideTerminateModal() {
-    closeModal('terminateModal');
-    document.getElementById('terminateForm').reset();
-}
-
-// Action functions
-function showEmployeeContracts(employeeId) {
-    window.location.href = `/contract-management/employee/${employeeId}`;
-}
-
-function renewContract(employeeId) {
-    window.contractManagementManager.showNotification('Contract renewal feature coming soon', 'info');
-}
-
-function terminateContract(employeeId) {
-    showTerminateModal(employeeId);
-}
-
-function generateReport(employeeId) {
-    window.contractManagementManager.showNotification('Contract report generation feature coming soon', 'info');
-}
-
-// Initialize contract management manager
-document.addEventListener('DOMContentLoaded', function() {
-    window.contractManagementManager = new ContractManagementManager();
 });
 </script>
 @endpush

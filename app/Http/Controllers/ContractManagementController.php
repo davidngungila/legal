@@ -2,498 +2,268 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EmployeeRegistration;
+use App\Helpers\AuditLogger;
+use App\Models\Client;
+use App\Models\Employee;
+use App\Models\EmploymentContract;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ContractManagementController extends Controller
 {
-    /**
-     * Display the contract management dashboard.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = EmployeeRegistration::where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        
-        return view('hris.contract-management.index', compact('employees'));
-    }
-
-    /**
-     * Display contracts for a specific employee.
-     */
-    public function employeeContracts(EmployeeRegistration $employee)
-    {
-        // In a real implementation, this would fetch contracts from database
-        // For now, we'll pass the employee and show a placeholder view
-        return view('hris.contract-management.employee-contracts', compact('employee'));
-    }
-
-    /**
-     * Store contract management data for an employee.
-     */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'employee_registration_id' => 'required|exists:employee_registrations,id',
-            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
-            'contract_number' => 'required|string|max:50',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'probation_period_months' => 'nullable|integer|min:1|max:12',
-            'job_title' => 'required|string|max:255',
-            'department' => 'required|string|max:255',
-            'work_location' => 'required|string|max:255',
-            'reporting_to' => 'required|string|max:255',
-            'working_hours' => 'required|string|max:100',
-            'salary_currency' => 'required|string|max:3',
-            'gross_salary' => 'required|numeric|min:0',
-            'net_salary' => 'nullable|numeric|min:0',
-            'payment_frequency' => 'required|in:weekly,biweekly,monthly,quarterly,annually',
-            'benefits' => 'nullable|string|max:2000',
-            'allowances' => 'nullable|string|max:2000',
-            'leave_entitlement_days' => 'required|integer|min:0|max:365',
-            'notice_period_days' => 'required|integer|min:1|max:365',
-            'confidentiality_clause' => 'required|boolean',
-            'non_compete_clause' => 'required|boolean',
-            'non_compete_duration_months' => 'nullable|integer|min:1|max:60',
-            'termination_conditions' => 'nullable|string|max:2000',
-            'renewal_terms' => 'nullable|string|max:2000',
-            'contract_file_path' => 'required|file|mimes:pdf,doc,docx|max:10240',
-            'signed_contract_path' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
-            'status' => 'required|in:draft,active,expired,terminated,renewed',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        $clientId = session('current_client_id');
+        if (! $clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
         }
 
-        try {
-            // Handle file uploads
-            $uploadedFiles = [];
-            $fileFields = [
-                'contract_file_path' => 'contract_file',
-                'signed_contract_path' => 'signed_contract'
-            ];
+        $currentClient = Client::find($clientId);
 
-            foreach ($fileFields as $dbField => $fileField) {
-                if ($request->hasFile($fileField)) {
-                    $file = $request->file($fileField);
-                    $fileName = time() . '_' . $fileField . '_' . $request->employee_registration_id . '.' . $file->getClientOriginalExtension();
-                    $filePath = $file->storeAs('contracts', $fileName, 'public');
-                    $uploadedFiles[$dbField] = $filePath;
-                }
+        $query = EmploymentContract::with(['employee'])
+            ->where('client_id', $clientId);
+
+        if ($request->filled('search')) {
+            $query->search($request->get('search'));
+        }
+
+        if ($request->filled('status') && $request->get('status') !== 'all') {
+            $query->where('status', $request->get('status'));
+        }
+
+        if ($request->filled('contract_type') && $request->get('contract_type') !== 'all') {
+            $query->where('contract_type', $request->get('contract_type'));
+        }
+
+        $sortField = in_array($request->get('sort'), ['effective_date', 'expiry_date', 'basic_salary', 'created_at'])
+            ? $request->get('sort')
+            : 'created_at';
+        $sortDir = $request->get('dir') === 'asc' ? 'asc' : 'desc';
+
+        $contracts = $query->orderBy($sortField, $sortDir)->paginate(12)->withQueryString();
+
+        $stats = EmploymentContract::getContractStats();
+        $attention = EmploymentContract::getRequiringAttention();
+        $events = EmploymentContract::getCalendarEvents();
+
+        return view('hris.contract-management.index', compact(
+            'currentClient', 'contracts', 'stats', 'attention', 'events'
+        ));
+    }
+
+    public function employeeContracts(Request $request)
+    {
+        $clientId = session('current_client_id');
+        if (! $clientId) {
+            return response()->json(['success' => false, 'message' => 'Please select a client first.'], 422);
+        }
+
+        $employeeId = $request->get('employee_id');
+        if ($employeeId) {
+            $employee = Employee::where('client_id', $clientId)->find($employeeId);
+            if (! $employee) {
+                return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
             }
 
-            // Simulate creating contract management record
-            $contractData = array_merge($request->all(), $uploadedFiles, [
-                'created_by' => auth()->id(),
-                'created_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Contract created successfully',
-                'data' => $contractData
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Contract creation failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
+            $contracts = EmploymentContract::with(['employee'])
+                ->where('client_id', $clientId)
+                ->where('employee_id', $employee->id)
+                ->orderByDesc('effective_date')
+                ->get();
+        } else {
+            $contracts = EmploymentContract::with(['employee'])
+                ->where('client_id', $clientId)
+                ->orderByDesc('created_at')
+                ->get();
         }
+
+        return response()->json(['success' => true, 'contracts' => $contracts]);
     }
 
-    /**
-     * Update contract management data for an employee.
-     */
-    public function update(Request $request, EmployeeRegistration $employee)
-    {
-        $validator = Validator::make($request->all(), [
-            'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
-            'contract_number' => 'required|string|max:50',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'probation_period_months' => 'nullable|integer|min:1|max:12',
-            'job_title' => 'required|string|max:255',
-            'department' => 'required|string|max:255',
-            'work_location' => 'required|string|max:255',
-            'reporting_to' => 'required|string|max:255',
-            'working_hours' => 'required|string|max:100',
-            'salary_currency' => 'required|string|max:3',
-            'gross_salary' => 'required|numeric|min:0',
-            'net_salary' => 'nullable|numeric|min:0',
-            'payment_frequency' => 'required|in:weekly,biweekly,monthly,quarterly,annually',
-            'benefits' => 'nullable|string|max:2000',
-            'allowances' => 'nullable|string|max:2000',
-            'leave_entitlement_days' => 'required|integer|min:0|max:365',
-            'notice_period_days' => 'required|integer|min:1|max:365',
-            'confidentiality_clause' => 'required|boolean',
-            'non_compete_clause' => 'required|boolean',
-            'non_compete_duration_months' => 'nullable|integer|min:1|max:60',
-            'termination_conditions' => 'nullable|string|max:2000',
-            'renewal_terms' => 'nullable|string|max:2000',
-            'status' => 'required|in:draft,active,expired,terminated,renewed',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            // In a real implementation, this would update the contracts table
-            $contractData = array_merge($request->all(), [
-                'updated_by' => auth()->id(),
-                'updated_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Contract updated successfully',
-                'data' => $contractData
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Contract update failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Activate contract.
-     */
-    public function activate(EmployeeRegistration $employee)
-    {
-        try {
-            // In a real implementation, this would update the contract status
-            return response()->json([
-                'success' => true,
-                'message' => 'Contract activated successfully',
-                'data' => [
-                    'status' => 'active',
-                    'activated_by' => auth()->id(),
-                    'activated_at' => now(),
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Contract activation failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Terminate contract.
-     */
-    public function terminate(Request $request, EmployeeRegistration $employee)
-    {
-        $validator = Validator::make($request->all(), [
-            'termination_date' => 'required|date|before_or_equal:today',
-            'termination_reason' => 'required|string|max:500',
-            'termination_type' => 'required|in:resignation,dismissal,retirement,contract_expiry,mutual_agreement',
-            'final_settlement_amount' => 'nullable|numeric|min:0',
-            'handover_completed' => 'required|boolean',
-            'clearance_completed' => 'required|boolean',
-            'exit_interview_completed' => 'required|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            // In a real implementation, this would update the contract status and add termination details
-            return response()->json([
-                'success' => true,
-                'message' => 'Contract terminated successfully',
-                'data' => array_merge($request->all(), [
-                    'status' => 'terminated',
-                    'terminated_by' => auth()->id(),
-                    'terminated_at' => now(),
-                ])
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Contract termination failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Renew contract.
-     */
-    public function renew(Request $request, EmployeeRegistration $employee)
-    {
-        $validator = Validator::make($request->all(), [
-            'new_start_date' => 'required|date',
-            'new_end_date' => 'nullable|date|after:new_start_date',
-            'renewal_reason' => 'required|string|max:500',
-            'salary_change' => 'nullable|numeric',
-            'new_gross_salary' => 'nullable|numeric|min:0',
-            'terms_changes' => 'nullable|string|max:2000',
-            'renewal_document_path' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            // Handle file upload
-            $uploadedFiles = [];
-            if ($request->hasFile('renewal_document_path')) {
-                $file = $request->file('renewal_document_path');
-                $fileName = time() . '_renewal_' . $employee->id . '.' . $file->getClientOriginalExtension();
-                $filePath = $file->storeAs('contracts', $fileName, 'public');
-                $uploadedFiles['renewal_document_path'] = $filePath;
-            }
-
-            // In a real implementation, this would create a new contract record
-            return response()->json([
-                'success' => true,
-                'message' => 'Contract renewed successfully',
-                'data' => array_merge($request->all(), $uploadedFiles, [
-                    'status' => 'renewed',
-                    'renewed_by' => auth()->id(),
-                    'renewed_at' => now(),
-                ])
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Contract renewal failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Generate contract report.
-     */
-    public function generateReport(EmployeeRegistration $employee)
-    {
-        try {
-            // This would generate a PDF report using a library like DomPDF
-            // For now, return a success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Contract report generated successfully',
-                'download_url' => '/contract-management/' . $employee->id . '/report'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Report generation failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get contract statistics.
-     */
     public function statistics()
     {
-        try {
-            // In a real implementation, this would query the contracts table
-            $stats = [
-                'total_contracts' => EmployeeRegistration::where('status', 'approved')->count(), // Placeholder
-                'active_contracts' => 42, // Placeholder
-                'expired_contracts' => 8, // Placeholder
-                'terminated_contracts' => 3, // Placeholder
-                'expiring_soon' => 12, // Placeholder
-                'by_type' => [
-                    'permanent' => 25,
-                    'temporary' => 12,
-                    'probation' => 8,
-                    'internship' => 5,
-                    'consultant' => 3,
-                    'contractor' => 2
-                ],
-                'average_duration_months' => 18.5, // Placeholder
-                'renewal_rate' => 75.2, // Placeholder
-            ];
-
-            return response()->json([
-                'success' => true,
-                'statistics' => $stats
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Statistics retrieval failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'statistics' => EmploymentContract::getContractStats(),
+        ]);
     }
 
-    /**
-     * Get contracts requiring attention.
-     */
     public function requiringAttention()
     {
-        try {
-            // In a real implementation, this would find contracts requiring attention
-            $employees = EmployeeRegistration::where('status', 'approved')
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
-                ->get();
+        return response()->json([
+            'success' => true,
+            'attention' => EmploymentContract::getRequiringAttention(),
+        ]);
+    }
 
-            return response()->json([
-                'success' => true,
-                'employees' => $employees
+    public function calendar()
+    {
+        return response()->json([
+            'success' => true,
+            'events' => EmploymentContract::getCalendarEvents(),
+        ]);
+    }
+
+    public function generateReport(Request $request)
+    {
+        $clientId = session('current_client_id');
+        if (! $clientId) {
+            return back()->with('error', 'Please select a client first.');
+        }
+
+        $status = $request->get('status');
+        $format = $request->get('format', 'pdf');
+
+        $query = EmploymentContract::with(['employee'])
+            ->where('client_id', $clientId)
+            ->orderBy('expiry_date');
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $contracts = $query->get();
+        $stats = EmploymentContract::getContractStats();
+        $currentClient = Client::find($clientId);
+
+        if ($format === 'pdf') {
+            $reportStatus = $status ?: 'all';
+
+            AuditLogger::log(
+                'employment_contract.report_generated',
+                null,
+                'Employment Contracts',
+                "Contract management report generated ({$reportStatus})"
+            );
+
+            $pdf = Pdf::loadView('hris.employment-contracts.pdf-report', compact('contracts', 'stats', 'currentClient'))
+                ->setPaper('a4')
+                ->setOption('margin-top', '16mm')
+                ->setOption('margin-bottom', '18mm')
+                ->setOption('margin-left', '14mm')
+                ->setOption('margin-right', '14mm');
+
+            return $pdf->download('employment-contracts-report-' . now()->format('Y-m-d') . '.pdf');
+        }
+
+        return back()->with('error', 'Unsupported report format.');
+    }
+
+    public function activate(EmploymentContract $contract)
+    {
+        $clientId = session('current_client_id');
+        if (! $clientId || $contract->client_id != $clientId) {
+            return back()->with('error', 'Invalid request.');
+        }
+
+        try {
+            $old = $contract->toArray();
+            $contract->update([
+                'status' => 'active',
+                'activated_at' => now(),
+                'updated_by' => auth()->id(),
             ]);
 
+            AuditLogger::log(
+                'employment_contract.activated',
+                $contract,
+                'Employment Contracts',
+                "Employment contract {$contract->formatted_contract_number} activated",
+                $old,
+                $contract->toArray()
+            );
+
+            return back()->with('success', 'Employment contract activated successfully!');
         } catch (\Exception $e) {
-            \Log::error('Requiring attention contracts retrieval failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Failed to activate employment contract: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Upload contract document.
-     */
-    public function uploadDocument(Request $request, EmployeeRegistration $employee)
+    public function terminate(Request $request, EmploymentContract $contract)
     {
+        $clientId = session('current_client_id');
+        if (! $clientId || $contract->client_id != $clientId) {
+            return back()->with('error', 'Invalid request.');
+        }
+
         $validator = Validator::make($request->all(), [
-            'document_type' => 'required|in:contract,signed_contract,renewal_document,amendment,termination_notice',
-            'document_file' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'termination_date' => 'required|date|before_or_equal:today',
+            'termination_reason' => 'required|string|max:1000',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return back()->withErrors($validator)->withInput();
         }
 
         try {
-            if ($request->hasFile('document_file')) {
-                $file = $request->file('document_file');
-                $fileName = time() . '_' . $request->document_type . '_' . $employee->id . '.' . $file->getClientOriginalExtension();
-                $filePath = $file->storeAs('contracts', $fileName, 'public');
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Contract document uploaded successfully',
-                    'file_path' => $filePath
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'No file uploaded'
-            ], 400);
-
-        } catch (\Exception $e) {
-            \Log::error('Document upload failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Download contract document.
-     */
-    public function downloadDocument(EmployeeRegistration $employee, $documentType)
-    {
-        try {
-            // In a real implementation, this would fetch the document from storage
-            return response()->json([
-                'success' => false,
-                'message' => 'Document download feature coming soon'
-            ], 501);
-
-        } catch (\Exception $e) {
-            \Log::error('Document download failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get contract calendar.
-     */
-    public function calendar()
-    {
-        try {
-            // In a real implementation, this would return contract events for calendar
-            $events = [
-                [
-                    'title' => 'Contract Expiry - John Doe',
-                    'start' => now()->addDays(15)->format('Y-m-d'),
-                    'type' => 'expiry',
-                    'employee' => 'John Doe'
-                ],
-                [
-                    'title' => 'Probation End - Jane Smith',
-                    'start' => now()->addDays(30)->format('Y-m-d'),
-                    'type' => 'probation_end',
-                    'employee' => 'Jane Smith'
-                ],
-                [
-                    'title' => 'Contract Renewal - Bob Johnson',
-                    'start' => now()->addDays(45)->format('Y-m-d'),
-                    'type' => 'renewal',
-                    'employee' => 'Bob Johnson'
-                ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'events' => $events
+            $old = $contract->toArray();
+            $contract->update([
+                'status' => 'terminated',
+                'terminated_at' => now()->setDateFrom($request->termination_date),
+                'termination_reason' => $request->termination_reason,
+                'notes' => ($contract->notes ? $contract->notes . "\n" : '')
+                    . "Terminated {$request->termination_date} - {$request->termination_reason}",
+                'updated_by' => auth()->id(),
             ]);
 
+            AuditLogger::log(
+                'employment_contract.terminated',
+                $contract,
+                'Employment Contracts',
+                "Employment contract {$contract->formatted_contract_number} terminated",
+                $old,
+                $contract->toArray()
+            );
+
+            return back()->with('success', 'Employment contract terminated successfully!');
         } catch (\Exception $e) {
-            \Log::error('Calendar retrieval failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Failed to terminate employment contract: ' . $e->getMessage());
+        }
+    }
+
+    public function renew(Request $request, EmploymentContract $contract)
+    {
+        $clientId = session('current_client_id');
+        if (! $clientId || $contract->client_id != $clientId) {
+            return back()->with('error', 'Invalid request.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'new_effective_date' => 'required|date',
+            'new_expiry_date' => 'nullable|date|after:new_effective_date',
+            'renewal_reason' => 'required|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $old = $contract->toArray();
+            $contract->update([
+                'status' => 'renewed',
+                'effective_date' => $request->new_effective_date,
+                'expiry_date' => $request->new_expiry_date ?: $contract->expiry_date,
+                'renewal_count' => $contract->renewal_count + 1,
+                'last_renewal_date' => now()->toDateString(),
+                'notes' => ($contract->notes ? $contract->notes . "\n" : '')
+                    . "Renewed on " . now()->format('Y-m-d') . " - {$request->renewal_reason}",
+                'updated_by' => auth()->id(),
+            ]);
+
+            AuditLogger::log(
+                'employment_contract.renewed',
+                $contract,
+                'Employment Contracts',
+                "Employment contract {$contract->formatted_contract_number} renewed (count {$contract->renewal_count})",
+                $old,
+                $contract->toArray()
+            );
+
+            return back()->with('success', 'Employment contract renewed successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to renew employment contract: ' . $e->getMessage());
         }
     }
 }
-

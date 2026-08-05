@@ -460,17 +460,13 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // HRIS - Contract Management Routes
     Route::prefix('contract-management')->name('contract-management.')->group(function () {
         Route::get('/', [ContractManagementController::class, 'index'])->name('index');
-        Route::get('/employee/{employee}', [ContractManagementController::class, 'employeeContracts'])->name('employee-contracts');
-        Route::post('/', [ContractManagementController::class, 'store'])->name('store');
-        Route::put('/{employee}', [ContractManagementController::class, 'update'])->name('update');
-        Route::post('/{employee}/activate', [ContractManagementController::class, 'activate'])->name('activate');
-        Route::post('/{employee}/terminate', [ContractManagementController::class, 'terminate'])->name('terminate');
-        Route::post('/{employee}/renew', [ContractManagementController::class, 'renew'])->name('renew');
-        Route::post('/{employee}/generate-report', [ContractManagementController::class, 'generateReport'])->name('generate-report');
+        Route::get('/employee-contracts', [ContractManagementController::class, 'employeeContracts'])->name('employee-contracts');
+        Route::post('/{contract}/activate', [ContractManagementController::class, 'activate'])->name('activate');
+        Route::post('/{contract}/terminate', [ContractManagementController::class, 'terminate'])->name('terminate');
+        Route::post('/{contract}/renew', [ContractManagementController::class, 'renew'])->name('renew');
+        Route::post('/generate-report', [ContractManagementController::class, 'generateReport'])->name('generate-report');
         Route::get('/statistics', [ContractManagementController::class, 'statistics'])->name('statistics');
         Route::get('/requiring-attention', [ContractManagementController::class, 'requiringAttention'])->name('requiring-attention');
-        Route::post('/{employee}/upload-document', [ContractManagementController::class, 'uploadDocument'])->name('upload-document');
-        Route::get('/{employee}/download-document/{documentType}', [ContractManagementController::class, 'downloadDocument'])->name('download-document');
         Route::get('/calendar', [ContractManagementController::class, 'calendar'])->name('calendar');
     });
 
@@ -478,16 +474,17 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::prefix('employment-contracts')->name('employment-contracts.')->group(function () {
         Route::get('/', [EmploymentContractsController::class, 'index'])->name('index');
         Route::get('/employee/{employee}', [EmploymentContractsController::class, 'employeeContracts'])->name('employee-contracts');
+        Route::get('/{contract}/edit', [EmploymentContractsController::class, 'edit'])->name('edit');
         Route::post('/', [EmploymentContractsController::class, 'store'])->name('store');
-        Route::put('/{employee}', [EmploymentContractsController::class, 'update'])->name('update');
-        Route::post('/{employee}/activate', [EmploymentContractsController::class, 'activate'])->name('activate');
-        Route::post('/{employee}/terminate', [EmploymentContractsController::class, 'terminate'])->name('terminate');
-        Route::post('/{employee}/renew', [EmploymentContractsController::class, 'renew'])->name('renew');
-        Route::post('/{employee}/generate-pdf', [EmploymentContractsController::class, 'generatePdf'])->name('generate-pdf');
+        Route::put('/{contract}', [EmploymentContractsController::class, 'update'])->name('update');
+        Route::post('/{contract}/activate', [EmploymentContractsController::class, 'activate'])->name('activate');
+        Route::post('/{contract}/terminate', [EmploymentContractsController::class, 'terminate'])->name('terminate');
+        Route::post('/{contract}/renew', [EmploymentContractsController::class, 'renew'])->name('renew');
+        Route::post('/{contract}/generate-pdf', [EmploymentContractsController::class, 'generatePdf'])->name('generate-pdf');
         Route::get('/statistics', [EmploymentContractsController::class, 'statistics'])->name('statistics');
         Route::get('/requiring-attention', [EmploymentContractsController::class, 'requiringAttention'])->name('requiring-attention');
-        Route::post('/{employee}/upload-document', [EmploymentContractsController::class, 'uploadDocument'])->name('upload-document');
-        Route::get('/{employee}/download-document/{documentType}', [EmploymentContractsController::class, 'downloadDocument'])->name('download-document');
+        Route::post('/{contract}/upload-document', [EmploymentContractsController::class, 'uploadDocument'])->name('upload-document');
+        Route::get('/{contract}/download-document/{documentType}', [EmploymentContractsController::class, 'downloadDocument'])->name('download-document');
         Route::get('/calendar', [EmploymentContractsController::class, 'calendar'])->name('calendar');
     });
 
