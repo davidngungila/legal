@@ -399,21 +399,33 @@
                         </button>
                         <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
                             <li>
-                                <a href="{{ route('performance.goals') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.goals') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                <a href="{{ route('performance.cycles.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.cycles.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="repeat" class="w-3 h-3"></i>
+                                    <span class="text-xs">Cycles</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('performance.goals.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.goals.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                                     <i data-feather="target" class="w-3 h-3"></i>
                                     <span class="text-xs">Goals</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                <a href="{{ route('performance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.index') || request()->routeIs('performance.show') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                                     <i data-feather="star" class="w-3 h-3"></i>
                                     <span class="text-xs">Appraisals</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('performance.pip') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.pip') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                <a href="{{ route('performance.pip.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.pip.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                                     <i data-feather="activity" class="w-3 h-3"></i>
                                     <span class="text-xs">PIP</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('performance.calibration.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('performance.calibration.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="users" class="w-3 h-3"></i>
+                                    <span class="text-xs">Calibration</span>
                                 </a>
                             </li>
                             <li>

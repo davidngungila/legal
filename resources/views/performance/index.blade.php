@@ -308,18 +308,8 @@
 </x-advanced-modal>
 
 <script>
-function applyFilters() {
-    const period = document.getElementById('filterPeriod').value;
-    const dept = document.getElementById('filterDepartment').value;
-    window.location.href = `{{ route('performance.index') }}?period=${period}&department=${dept}`;
-}
-
-function viewReview(id) {
-    alert('Viewing review ' + id);
-}
-
-function exportPerformanceReport() {
-    const reviews = @json($reviews->map(fn($r) => [
+@php
+    $exportRows = $reviews->map(fn($r) => [
         'Employee' => ($r->employee?->first_name ?? '') . ' ' . ($r->employee?->last_name ?? ''),
         'Title' => $r->employee?->job_title ?? '',
         'Status' => ucfirst(str_replace('_', ' ', $r->status)),
@@ -327,7 +317,20 @@ function exportPerformanceReport() {
         'Rating' => $r->rating,
         'Score' => $r->status === 'completed' ? $r->rating * 20 : '',
         'Comments' => $r->comments ?? '',
-    ])->values());
+    ])->values();
+@endphp
+function applyFilters() {
+    const period = document.getElementById('filterPeriod').value;
+    const dept = document.getElementById('filterDepartment').value;
+    window.location.href = `{{ route('performance.index') }}?period=${period}&department=${dept}`;
+}
+
+function viewReview(id) {
+    window.location.href = '{{ route('performance.show', 0) }}'.replace(/\/0$/, '/' + id);
+}
+
+function exportPerformanceReport() {
+    const reviews = @json($exportRows);
 
     if (!reviews.length) {
         alert('No performance reviews to export.');

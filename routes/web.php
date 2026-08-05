@@ -237,9 +237,38 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/', [PerformanceController::class, 'index'])->name('index');
         Route::post('/', [PerformanceController::class, 'store'])->name('store');
         Route::put('/{review}', [PerformanceController::class, 'updateStatus'])->name('update');
-        Route::get('/goals', [PerformanceController::class, 'goals'])->name('goals');
-        Route::get('/pip', [PerformanceController::class, 'pip'])->name('pip');
+        Route::get('/{review}/show', [PerformanceController::class, 'show'])->name('show');
+        Route::post('/{review}/ratings', [PerformanceController::class, 'storeRatings'])->name('ratings.store');
         Route::get('/analytics', [PerformanceController::class, 'analytics'])->name('analytics');
+
+        // Performance Cycles
+        Route::get('/cycles', [App\Http\Controllers\PerformanceCycleController::class, 'index'])->name('cycles.index');
+        Route::post('/cycles', [App\Http\Controllers\PerformanceCycleController::class, 'store'])->name('cycles.store');
+        Route::put('/cycles/{cycle}', [App\Http\Controllers\PerformanceCycleController::class, 'update'])->name('cycles.update');
+        Route::delete('/cycles/{cycle}', [App\Http\Controllers\PerformanceCycleController::class, 'destroy'])->name('cycles.destroy');
+
+        // Goals & KPIs
+        Route::get('/goals', [App\Http\Controllers\EmployeeGoalController::class, 'index'])->name('goals.index');
+        Route::post('/goals', [App\Http\Controllers\EmployeeGoalController::class, 'store'])->name('goals.store');
+        Route::put('/goals/{goal}', [App\Http\Controllers\EmployeeGoalController::class, 'update'])->name('goals.update');
+        Route::delete('/goals/{goal}', [App\Http\Controllers\EmployeeGoalController::class, 'destroy'])->name('goals.destroy');
+        Route::post('/goals/{goal}/kpis', [App\Http\Controllers\EmployeeGoalController::class, 'storeKpi'])->name('goals.kpis.store');
+        Route::put('/goals/{goal}/kpis/{kpi}', [App\Http\Controllers\EmployeeGoalController::class, 'updateKpi'])->name('goals.kpis.update');
+        Route::delete('/goals/{goal}/kpis/{kpi}', [App\Http\Controllers\EmployeeGoalController::class, 'destroyKpi'])->name('goals.kpis.destroy');
+
+        // PIP
+        Route::get('/pip', [App\Http\Controllers\PerformancePipController::class, 'index'])->name('pip.index');
+        Route::post('/pip', [App\Http\Controllers\PerformancePipController::class, 'store'])->name('pip.store');
+        Route::put('/pip/{pip}', [App\Http\Controllers\PerformancePipController::class, 'update'])->name('pip.update');
+        Route::delete('/pip/{pip}', [App\Http\Controllers\PerformancePipController::class, 'destroy'])->name('pip.destroy');
+        Route::post('/pip/{pip}/reviews', [App\Http\Controllers\PerformancePipController::class, 'storeReview'])->name('pip.reviews.store');
+        Route::delete('/pip/{pip}/reviews/{review}', [App\Http\Controllers\PerformancePipController::class, 'destroyReview'])->name('pip.reviews.destroy');
+
+        // Calibration
+        Route::get('/calibration', [App\Http\Controllers\CalibrationSessionController::class, 'index'])->name('calibration.index');
+        Route::post('/calibration', [App\Http\Controllers\CalibrationSessionController::class, 'store'])->name('calibration.store');
+        Route::put('/calibration/{session}', [App\Http\Controllers\CalibrationSessionController::class, 'update'])->name('calibration.update');
+        Route::delete('/calibration/{session}', [App\Http\Controllers\CalibrationSessionController::class, 'destroy'])->name('calibration.destroy');
     });
 
     // Employee Relations & Discipline Routes
@@ -481,16 +510,26 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::get('/hris', [DashboardController::class, 'hrisDashboard'])->name('hris.dashboard');
 
     // Training Routes
-    Route::prefix('training')->group(function () {
-        Route::get('/', function () {
-            return view('training.index');
-        })->name('training.index');
-        Route::get('/plans', function () {
-            return view('training.plans');
-        })->name('training.plans');
-        Route::get('/completions', function () {
-            return view('training.completions');
-        })->name('training.completions');
+    Route::prefix('training')->name('training.')->group(function () {
+        Route::get('/', [App\Http\Controllers\TrainingController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\TrainingController::class, 'store'])->name('programs.store');
+        Route::get('/plans', [App\Http\Controllers\TrainingPlanController::class, 'index'])->name('plans');
+        Route::post('/plans', [App\Http\Controllers\TrainingPlanController::class, 'store'])->name('plans.store');
+        Route::put('/plans/{plan}', [App\Http\Controllers\TrainingPlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [App\Http\Controllers\TrainingPlanController::class, 'destroy'])->name('plans.destroy');
+        Route::get('/completions', [App\Http\Controllers\TrainingController::class, 'completions'])->name('completions');
+        Route::get('/certificate/{enrollment}', [App\Http\Controllers\TrainingController::class, 'certificate'])->name('certificate');
+        Route::get('/programs/{program}', [App\Http\Controllers\TrainingController::class, 'show'])->name('programs.show');
+        Route::put('/programs/{program}', [App\Http\Controllers\TrainingController::class, 'update'])->name('programs.update');
+        Route::delete('/programs/{program}', [App\Http\Controllers\TrainingController::class, 'destroy'])->name('programs.destroy');
+        Route::post('/programs/{program}/sessions', [App\Http\Controllers\TrainingSessionController::class, 'store'])->name('sessions.store');
+        Route::get('/sessions/{session}', [App\Http\Controllers\TrainingSessionController::class, 'show'])->name('sessions.show');
+        Route::put('/sessions/{session}', [App\Http\Controllers\TrainingSessionController::class, 'update'])->name('sessions.update');
+        Route::delete('/sessions/{session}', [App\Http\Controllers\TrainingSessionController::class, 'destroy'])->name('sessions.destroy');
+        Route::post('/sessions/{session}/enroll', [App\Http\Controllers\TrainingSessionController::class, 'bulkEnroll'])->name('sessions.bulkEnroll');
+        Route::patch('/enrollments/{enrollment}/attendance', [App\Http\Controllers\TrainingSessionController::class, 'updateAttendance'])->name('enrollments.attendance');
+        Route::patch('/enrollments/{enrollment}/score', [App\Http\Controllers\TrainingSessionController::class, 'updateScore'])->name('enrollments.score');
+        Route::delete('/enrollments/{enrollment}', [App\Http\Controllers\TrainingSessionController::class, 'unenroll'])->name('enrollments.unenroll');
     });
 
     // Benefits Routes
