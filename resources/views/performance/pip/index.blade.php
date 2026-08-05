@@ -333,7 +333,7 @@ function editPip(plan) {
 function openPipReviewModal(pipId) {
     document.getElementById('pipReviewForm').reset();
     document.getElementById('pip_review_date').value = new Date().toISOString().split('T')[0];
-    document.getElementById('pipReviewForm').action = '{{ route('performance.pip.reviews.store', 0) }}'.replace(/\/0$/, '/' + pipId);
+    document.getElementById('pipReviewForm').action = '{{ route('performance.pip.reviews.store', ['pip' => ':id']) }}'.replace(':id', pipId);
     openModal('pipReviewModal');
 }
 

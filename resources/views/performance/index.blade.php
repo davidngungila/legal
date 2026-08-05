@@ -326,7 +326,7 @@ function applyFilters() {
 }
 
 function viewReview(id) {
-    window.location.href = '{{ route('performance.show', 0) }}'.replace(/\/0$/, '/' + id);
+    window.location.href = '{{ route('performance.show', ['review' => ':id']) }}'.replace(':id', id);
 }
 
 function exportPerformanceReport() {

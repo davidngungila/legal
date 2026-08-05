@@ -312,7 +312,7 @@ function editGoal(goal) {
 function openKpiModal(goal) {
     document.getElementById('kpiForm').reset();
     document.getElementById('kpi_method').value = 'POST';
-    document.getElementById('kpiForm').action = '{{ route('performance.goals.kpis.store', 0) }}'.replace(/\/0$/, '/' + goal.id);
+    document.getElementById('kpiForm').action = '{{ route('performance.goals.kpis.store', ['goal' => ':id']) }}'.replace(':id', goal.id);
     openModal('kpiModal');
 }
 
@@ -323,7 +323,7 @@ function editKpi(kpi, goalId) {
     document.getElementById('kpi_measurement_unit').value = kpi.measurement_unit || '';
     document.getElementById('kpi_deadline').value = kpi.deadline || '';
     document.getElementById('kpi_method').value = 'PUT';
-    document.getElementById('kpiForm').action = '{{ route('performance.goals.kpis.update', [0, 0]) }}'.replace(/\/0\/0$/, '/' + goalId + '/' + kpi.id);
+    document.getElementById('kpiForm').action = '{{ route('performance.goals.kpis.update', ['goal' => ':goalId', 'kpi' => ':kpiId']) }}'.replace(':goalId', goalId).replace(':kpiId', kpi.id);
     openModal('kpiModal');
 }
 
