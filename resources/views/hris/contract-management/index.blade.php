@@ -120,7 +120,9 @@
         <!-- Contract Type Distribution -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-1">
             <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Contract Distribution</h3>
-            <canvas id="contractTypeChart" height="200"></canvas>
+            <div class="relative h-56">
+                <canvas id="contractTypeChart"></canvas>
+            </div>
             <div class="mt-4 space-y-2">
                 @foreach(\App\Models\EmploymentContract::CONTRACT_TYPES as $typeKey => $typeLabel)
                     @php $count = $stats['by_type']->get($typeKey, 0); @endphp
@@ -489,6 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
                     y: { beginAtZero: true, ticks: { precision: 0 } },

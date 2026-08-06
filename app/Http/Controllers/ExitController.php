@@ -41,7 +41,10 @@ class ExitController extends Controller
             ->where('client_id', $clientId)
             ->latest()
             ->paginate(20);
-        $employees = Employee::where('client_id', $clientId)->where('status', 'active')->get();
+        $employees = Employee::where('client_id', $clientId)
+            ->where('status', 'active')
+            ->whereNotIn('id', ExitCase::where('client_id', $clientId)->where('status', '!=', 'cancelled')->pluck('employee_id'))
+            ->get();
 
         $stats = [
             'total' => $exitCases->total(),
@@ -67,6 +70,14 @@ class ExitController extends Controller
             'notice_date' => 'nullable|date',
             'reason' => 'nullable|string',
         ]);
+
+        $existing = ExitCase::where('client_id', $clientId)
+            ->where('employee_id', $validated['employee_id'])
+            ->where('status', '!=', 'cancelled')
+            ->first();
+        if ($existing) {
+            return back()->with('error', 'An exit process already exists for this employee.');
+        }
 
         $exitNumber = 'EXIT-' . date('Y') . '-' . str_pad(ExitCase::where('client_id', $clientId)->count() + 1, 4, '0', STR_PAD_LEFT);
 

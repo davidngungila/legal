@@ -531,29 +531,44 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
 
     // Benefits Routes
     Route::prefix('benefits')->name('benefits.')->group(function () {
-        Route::get('/enrollment', function () {
-            return view('benefits.enrollment');
-        })->name('enrollment');
+        Route::get('/enrollment', [App\Http\Controllers\BenefitsController::class, 'enrollment'])->name('enrollment');
+        Route::post('/enrollment', [App\Http\Controllers\BenefitsController::class, 'storeEnrollment'])->name('enrollment.store');
+        Route::put('/enrollment/{id}', [App\Http\Controllers\BenefitsController::class, 'updateEnrollment'])->name('enrollment.update');
+        Route::delete('/enrollment/{id}', [App\Http\Controllers\BenefitsController::class, 'destroyEnrollment'])->name('enrollment.destroy');
         Route::get('/life-events', [App\Http\Controllers\BenefitsController::class, 'lifeEvents'])->name('life-events');
         Route::post('/life-events', [App\Http\Controllers\BenefitsController::class, 'storeLifeEvent'])->name('life-events.store');
         Route::put('/life-events/{id}', [App\Http\Controllers\BenefitsController::class, 'updateLifeEvent'])->name('life-events.update');
         Route::delete('/life-events/{id}', [App\Http\Controllers\BenefitsController::class, 'destroyLifeEvent'])->name('life-events.destroy');
-        Route::get('/plans', function () {
-            return view('benefits.plans');
-        })->name('plans');
+        Route::get('/plans', [App\Http\Controllers\BenefitsController::class, 'plans'])->name('plans');
+        Route::post('/plans', [App\Http\Controllers\BenefitsController::class, 'storePlan'])->name('plans.store');
+        Route::put('/plans/{id}', [App\Http\Controllers\BenefitsController::class, 'updatePlan'])->name('plans.update');
+        Route::delete('/plans/{id}', [App\Http\Controllers\BenefitsController::class, 'destroyPlan'])->name('plans.destroy');
     });
 
     // Succession Routes
     Route::prefix('succession')->name('succession.')->group(function () {
-        Route::get('/talent-pools', function () {
-            return view('succession.talent-pools');
-        })->name('talent-pools');
-        Route::get('/readiness', function () {
-            return view('succession.readiness');
-        })->name('readiness');
-        Route::get('/career-paths', function () {
-            return view('succession.career-paths');
-        })->name('career-paths');
+        Route::get('/talent-pools', [App\Http\Controllers\SuccessionController::class, 'talentPools'])->name('talent-pools');
+        Route::post('/talent-pools', [App\Http\Controllers\SuccessionController::class, 'storeTalentPool'])->name('talent-pools.store');
+        Route::put('/talent-pools/{id}', [App\Http\Controllers\SuccessionController::class, 'updateTalentPool'])->name('talent-pools.update');
+        Route::delete('/talent-pools/{id}', [App\Http\Controllers\SuccessionController::class, 'destroyTalentPool'])->name('talent-pools.destroy');
+        Route::post('/talent-pools/{poolId}/members', [App\Http\Controllers\SuccessionController::class, 'storeMember'])->name('talent-pools.members.store');
+        Route::patch('/members/{memberId}', [App\Http\Controllers\SuccessionController::class, 'updateMember'])->name('talent-pools.members.update');
+        Route::delete('/members/{memberId}', [App\Http\Controllers\SuccessionController::class, 'destroyMember'])->name('talent-pools.members.destroy');
+        Route::get('/readiness', [App\Http\Controllers\SuccessionController::class, 'readiness'])->name('readiness');
+        Route::post('/readiness', [App\Http\Controllers\SuccessionController::class, 'storeReadiness'])->name('readiness.store');
+        Route::put('/readiness/{id}', [App\Http\Controllers\SuccessionController::class, 'updateReadiness'])->name('readiness.update');
+        Route::delete('/readiness/{id}', [App\Http\Controllers\SuccessionController::class, 'destroyReadiness'])->name('readiness.destroy');
+        Route::get('/readiness/export', [App\Http\Controllers\SuccessionController::class, 'exportReadiness'])->name('readiness.export');
+        Route::get('/career-paths', [App\Http\Controllers\SuccessionController::class, 'careerPaths'])->name('career-paths');
+        Route::post('/career-paths', [App\Http\Controllers\SuccessionController::class, 'storeCareerPath'])->name('career-paths.store');
+        Route::put('/career-paths/{id}', [App\Http\Controllers\SuccessionController::class, 'updateCareerPath'])->name('career-paths.update');
+        Route::delete('/career-paths/{id}', [App\Http\Controllers\SuccessionController::class, 'destroyCareerPath'])->name('career-paths.destroy');
+        Route::post('/career-paths/{pathId}/levels', [App\Http\Controllers\SuccessionController::class, 'storeLevel'])->name('career-paths.levels.store');
+        Route::put('/levels/{levelId}', [App\Http\Controllers\SuccessionController::class, 'updateLevel'])->name('career-paths.levels.update');
+        Route::delete('/levels/{levelId}', [App\Http\Controllers\SuccessionController::class, 'destroyLevel'])->name('career-paths.levels.destroy');
+        Route::post('/career-paths/{pathId}/members', [App\Http\Controllers\SuccessionController::class, 'storePathMember'])->name('career-paths.members.store');
+        Route::patch('/path-members/{memberId}', [App\Http\Controllers\SuccessionController::class, 'updatePathMember'])->name('career-paths.members.update');
+        Route::delete('/path-members/{memberId}', [App\Http\Controllers\SuccessionController::class, 'destroyPathMember'])->name('career-paths.members.destroy');
     });
 
     // Analytics Routes

@@ -139,13 +139,14 @@
                 <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Executive Level 1">
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                <input type="text" name="position" list="positionList" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Select or type a position">
-                <datalist id="positionList">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Position <span class="text-red-500">*</span></label>
+                <select name="position" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select a registered position</option>
                     @foreach($positions as $position)
-                    <option value="{{ $position }}"></option>
+                    <option value="{{ $position }}">{{ $position }}</option>
                     @endforeach
-                </datalist>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Positions are sourced from the registered positions list.</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Min Salary (TZS) <span class="text-red-500">*</span></label>
@@ -196,13 +197,15 @@
                 <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $structure->name }}">
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                <input type="text" name="position" list="positionListEdit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="{{ $structure->position }}">
-                <datalist id="positionListEdit">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Position <span class="text-red-500">*</span></label>
+                <select name="position" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    @if(!in_array($structure->position, $positions))
+                    <option value="{{ $structure->position }}" selected>{{ $structure->position }}</option>
+                    @endif
                     @foreach($positions as $position)
-                    <option value="{{ $position }}"></option>
+                    <option value="{{ $position }}" {{ $structure->position === $position ? 'selected' : '' }}>{{ $position }}</option>
                     @endforeach
-                </datalist>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Min Salary (TZS) <span class="text-red-500">*</span></label>

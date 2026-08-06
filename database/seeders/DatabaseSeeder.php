@@ -13,6 +13,10 @@ use Database\Seeders\LeaveManagementDemoSeeder;
 use Database\Seeders\PerformanceManagementDemoSeeder;
 use Database\Seeders\DisciplinaryManagementDemoSeeder;
 use Database\Seeders\ExitManagementDemoSeeder;
+use Database\Seeders\BenefitsPlansDemoSeeder;
+use Database\Seeders\BenefitsEnrollmentsDemoSeeder;
+use Database\Seeders\TalentManagementDemoSeeder;
+use Database\Seeders\SuccessionDemoSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -35,6 +39,10 @@ class DatabaseSeeder extends Seeder
             PerformanceManagementDemoSeeder::class,
             DisciplinaryManagementDemoSeeder::class,
             ExitManagementDemoSeeder::class,
+            BenefitsPlansDemoSeeder::class,
+            BenefitsEnrollmentsDemoSeeder::class,
+            TalentManagementDemoSeeder::class,
+            SuccessionDemoSeeder::class,
             SampleClientUsersSeeder::class,
             DemoAccountsSeeder::class,
         ]);

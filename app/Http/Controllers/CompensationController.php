@@ -8,6 +8,7 @@ use App\Models\SalaryStructure;
 use App\Models\MeritReview;
 use App\Models\Allowance;
 use App\Models\Loan;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Schema;
@@ -325,13 +326,11 @@ class CompensationController extends Controller
             ->orderBy('name')
             ->get();
 
-        $positions = Employee::where('client_id', $clientId)
-            ->whereNotNull('position')
-            ->where('position', '!=', '')
-            ->select('position')
-            ->distinct()
-            ->orderBy('position')
-            ->pluck('position')
+        $positions = Position::where('client_id', $clientId)
+            ->where('is_active', true)
+            ->orderBy('title')
+            ->pluck('title')
+            ->unique()
             ->values()
             ->all();
 
@@ -354,7 +353,7 @@ class CompensationController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'position' => 'nullable|string|max:255',
+            'position' => 'required|string|max:255',
             'min_salary' => 'required|numeric|min:0',
             'mid_salary' => 'required|numeric|min:0',
             'max_salary' => 'required|numeric|min:0',
@@ -396,7 +395,7 @@ class CompensationController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'position' => 'nullable|string|max:255',
+            'position' => 'required|string|max:255',
             'min_salary' => 'required|numeric|min:0',
             'mid_salary' => 'required|numeric|min:0',
             'max_salary' => 'required|numeric|min:0',

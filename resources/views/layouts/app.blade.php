@@ -569,8 +569,8 @@
                     card.classList.add('hover-card');
                 });
                 
-                // Add button transitions, excluding sidebar
-                const buttons = document.querySelectorAll('button:not(#sidebar *), .btn:not(#sidebar *)');
+                // Add button transitions, excluding sidebar and notification button
+                const buttons = document.querySelectorAll('button:not(#sidebar *):not(#notificationButton), .btn:not(#sidebar *):not(#notificationButton)');
                 buttons.forEach(button => {
                     button.classList.add('btn-transition');
                 });
