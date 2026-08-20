@@ -75,8 +75,19 @@
 
     <!-- Roles Table -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
             <h2 class="text-lg font-semibold text-gray-900">Roles List</h2>
+            @if($activePermissionFilter)
+            <div class="flex items-center gap-3">
+                <span class="px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-full flex items-center gap-2">
+                    <i data-feather="key" class="w-4 h-4"></i>
+                    Roles with permission "<strong>{{ $activePermissionFilter }}</strong>"
+                </span>
+                <button onclick="window.location.href='/roles'" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                    Clear Filter
+                </button>
+            </div>
+            @endif
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -451,7 +462,7 @@ async function deleteRole(roleId) {
 // Refresh roles from API (for after create/update/delete)
 async function refreshRoles() {
     try {
-        const response = await fetch(API_BASE, {
+        const response = await fetch(`${API_BASE}${window.location.search}`, {
             headers: {
                 'Accept': 'application/json',
             },

@@ -310,6 +310,14 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/download', [ComplianceController::class, 'downloadReport'])->name('compliance.download');
         Route::get('/statutory-filings', [ComplianceController::class, 'statutoryFilings'])->name('compliance.statutory-filings');
         Route::get('/deadlines', [ComplianceController::class, 'deadlines'])->name('compliance.deadlines');
+        
+        // Statutory Filings API
+        Route::post('/filings', [ComplianceController::class, 'storeFiling'])->name('compliance.filings.store');
+        Route::get('/filings/{id}', [ComplianceController::class, 'getFiling'])->name('compliance.filings.show');
+        Route::put('/filings/{id}', [ComplianceController::class, 'updateFiling'])->name('compliance.filings.update');
+        Route::delete('/filings/{id}', [ComplianceController::class, 'deleteFiling'])->name('compliance.filings.destroy');
+        Route::post('/filings/{id}/submit', [ComplianceController::class, 'markFilingSubmitted'])->name('compliance.filings.submit');
+        Route::get('/filings/export', [ComplianceController::class, 'exportFilings'])->name('compliance.filings.export');
     });
 
     // HRIS - User Registration Routes

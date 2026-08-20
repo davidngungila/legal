@@ -272,6 +272,7 @@ async function loadPermissions() {
         if (data.success) {
             permissions = data.permissions;
             filteredPermissions = [...permissions];
+            populateGroupOptions();
             renderPermissions();
             updateStats();
         } else {
@@ -291,6 +292,7 @@ function renderPermissions() {
     filteredPermissions.forEach(permission => {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50';
+        const roleCount = (permission.roles || []).length;
         row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
@@ -312,9 +314,17 @@ function renderPermissions() {
                 ${permission.description || 'No description'}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                    ${permission.roles ? permission.roles.length : 0} roles
-                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="/roles?permission=${encodeURIComponent(permission.name)}" title="View roles with this permission" class="px-2 py-1 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors">
+                        <i data-feather="shield" class="w-3.5 h-3.5"></i>
+                        ${roleCount} ${roleCount === 1 ? 'role' : 'roles'}
+                    </a>
+                    ${(permission.roles || []).slice(0, 2).map(role => `
+                        <a href="/roles?permission=${encodeURIComponent(permission.name)}" title="View roles with this permission" class="px-2 py-1 text-xs leading-5 font-medium rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                            ${role.display_name || role.name}
+                        </a>
+                    `).join('')}
+                </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -357,6 +367,28 @@ function updateStats() {
     document.getElementById('totalGroupsCount').textContent = groups.length;
     document.getElementById('totalRolesCount').textContent = roles.size;
     document.getElementById('activePermissionsCount').textContent = totalPermissions;
+}
+
+// Populate group dropdowns from actual permission data
+function populateGroupOptions() {
+    const groups = [...new Set(permissions.map(p => p.group))].sort();
+
+    const filter = document.getElementById('groupFilter');
+    if (filter) {
+        const current = filter.value;
+        filter.innerHTML = '<option value="">All Groups</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+        filter.value = current;
+    }
+
+    const createSelect = document.querySelector('#createPermissionForm select[name="group"]');
+    if (createSelect) {
+        createSelect.innerHTML = '<option value="">Select Group</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+    }
+
+    const editSelect = document.getElementById('editPermissionGroup');
+    if (editSelect) {
+        editSelect.innerHTML = '<option value="">Select Group</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+    }
 }
 
 // Modal functions

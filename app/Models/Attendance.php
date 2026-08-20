@@ -216,4 +216,262 @@ class Attendance extends Model
         
         return $this;
     }
+
+    /**
+     * Detect and record late arrival
+     * BR-WT rules enforcement
+     */
+    public function detectLateArrival($shiftStartTime = '08:00')
+    {
+        if ($this->clock_in) {
+            $clockIn = \Carbon\Carbon::parse($this->clock_in);
+            $shiftStart = \Carbon\Carbon::parse($shiftStartTime);
+            
+            if ($clockIn->gt($shiftStart)) {
+                $this->late_minutes = $clockIn->diffInMinutes($shiftStart);
+                
+                // Add to violation flags
+                $flags = $this->violation_flags ?? [];
+                $flags[] = 'late_arrival';
+                $this->violation_flags = $flags;
+            }
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Detect and record early departure
+     * BR-WT rules enforcement
+     */
+    public function detectEarlyDeparture($shiftEndTime = '17:00')
+    {
+        if ($this->clock_out) {
+            $clockOut = \Carbon\Carbon::parse($this->clock_out);
+            $shiftEnd = \Carbon\Carbon::parse($shiftEndTime);
+            
+            if ($clockOut->lt($shiftEnd)) {
+                $this->early_departure_minutes = $shiftEnd->diffInMinutes($clockOut);
+                
+                // Add to violation flags
+                $flags = $this->violation_flags ?? [];
+                $flags[] = 'early_departure';
+                $this->violation_flags = $flags;
+            }
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Check 12-hour daily maximum violation
+     * BR-WT-003
+     */
+    public function check12HourLimit()
+    {
+        if ($this->total_hours > 12) {
+            $flags = $this->violation_flags ?? [];
+            $flags[] = 'exceeds_12_hour_limit';
+            $this->violation_flags = $flags;
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Calculate night shift hours (20:00 - 06:00)
+     * BR-PAY-007
+     */
+    public function calculateNightShiftHours()
+    {
+        if (!$this->clock_in || !$this->clock_out) {
+            return $this;
+        }
+
+        $clockIn = \Carbon\Carbon::parse($this->clock_in);
+        $clockOut = \Carbon\Carbon::parse($this->clock_out);
+        
+        $nightStart = \Carbon\Carbon::parse($clockIn->format('Y-m-d') . ' 20:00');
+        $nightEnd = \Carbon\Carbon::parse($clockOut->format('Y-m-d') . ' 06:00')->addDay();
+        
+        $nightHours = 0;
+        
+        // Calculate overlap with night shift period
+        if ($clockIn->lt($nightEnd) && $clockOut->gt($nightStart)) {
+            $effectiveStart = max($clockIn, $nightStart);
+            $effectiveEnd = min($clockOut, $nightEnd);
+            $nightHours = $effectiveEnd->diffInHours($effectiveStart);
+        }
+        
+        $this->night_hours = max(0, $nightHours);
+        
+        return $this;
+    }
+
+    /**
+     * Auto-classify attendance status code based on data
+     * FR-ATT-006
+     */
+    public function autoClassifyStatusCode()
+    {
+        if ($this->status_code) {
+            return $this; // Already set
+        }
+
+        if ($this->total_hours >= 11 && $this->total_hours <= 12) {
+            $this->status_code = '12'; // 12-Hour Shift
+        } elseif ($this->total_hours >= 7 && $this->total_hours <= 9) {
+            $this->status_code = '9'; // Ordinary Hours
+        } elseif ($this->status === 'absent') {
+            $this->status_code = 'A'; // Absent
+        }
+
+        return $this;
+    }
+
+    /**
+     * Check if this is a rest day (Saturday or Sunday by default)
+     */
+    public function isRestDay()
+    {
+        if (!$this->attendance_date) {
+            return false;
+        }
+        
+        $date = \Carbon\Carbon::parse($this->attendance_date);
+        return $date->isWeekend();
+    }
+
+    /**
+     * Check if this is a public holiday
+     */
+    public function isPublicHoliday()
+    {
+        if (!$this->attendance_date) {
+            return false;
+        }
+        
+        return \App\Models\PublicHoliday::where('holiday_date', $this->attendance_date)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Create violation record for detected violations
+     */
+    public function createViolationRecords()
+    {
+        if (empty($this->violation_flags)) {
+            return $this;
+        }
+
+        foreach ($this->violation_flags as $flag) {
+            \App\Models\AttendanceViolation::create([
+                'client_id' => $this->client_id,
+                'employee_id' => $this->employee_id,
+                'attendance_id' => $this->id,
+                'violation_date' => $this->attendance_date,
+                'violation_type' => $flag,
+                'details' => $this->getViolationDescription($flag),
+                'status' => 'open',
+                'action_triggered' => false,
+            ]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get human-readable violation description
+     */
+    private function getViolationDescription($flag)
+    {
+        $descriptions = [
+            'late_arrival' => "Late arrival by {$this->late_minutes} minutes",
+            'early_departure' => "Early departure by {$this->early_departure_minutes} minutes",
+            'exceeds_12_hour_limit' => "Worked {$this->total_hours} hours, exceeds 12-hour daily limit",
+            'exceeds_45_hour_weekly' => "Weekly hours exceed 45-hour limit",
+            'exceeds_50_hour_monthly_overtime' => "Monthly overtime exceeds 50-hour cap",
+            'missing_rest_period' => "Missing mandatory 24-hour rest period",
+        ];
+
+        return $descriptions[$flag] ?? 'Attendance violation detected';
+    }
+
+    /**
+     * Check employee's weekly hours (45-hour limit)
+     * BR-WT-001
+     */
+    public function checkWeeklyHourLimit()
+    {
+        if (!$this->attendance_date || !$this->employee_id) {
+            return $this;
+        }
+
+        $weekStart = \Carbon\Carbon::parse($this->attendance_date)->startOfWeek();
+        $weekEnd = \Carbon\Carbon::parse($this->attendance_date)->endOfWeek();
+
+        $weeklyHours = self::where('employee_id', $this->employee_id)
+            ->whereBetween('attendance_date', [$weekStart, $weekEnd])
+            ->where('id', '!=', $this->id) // Exclude current record
+            ->sum('total_hours');
+
+        $totalWeeklyHours = $weeklyHours + $this->total_hours;
+
+        if ($totalWeeklyHours > 45) {
+            $flags = $this->violation_flags ?? [];
+            $flags[] = 'exceeds_45_hour_weekly';
+            $this->violation_flags = $flags;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Check employee's monthly overtime (50-hour cap)
+     * BR-WT-006
+     */
+    public function checkMonthlyOvertimeCap()
+    {
+        if (!$this->attendance_date || !$this->employee_id) {
+            return $this;
+        }
+
+        $monthStart = \Carbon\Carbon::parse($this->attendance_date)->startOfMonth();
+        $monthEnd = \Carbon\Carbon::parse($this->attendance_date)->endOfMonth();
+
+        $monthlyOvertime = self::where('employee_id', $this->employee_id)
+            ->whereBetween('attendance_date', [$monthStart, $monthEnd])
+            ->where('id', '!=', $this->id)
+            ->sum('overtime_hours');
+
+        $totalMonthlyOvertime = $monthlyOvertime + $this->overtime_hours;
+
+        if ($totalMonthlyOvertime > 50) {
+            // Cap overtime at 50 hours
+            $this->overtime_hours = max(0, 50 - $monthlyOvertime);
+            
+            $flags = $this->violation_flags ?? [];
+            $flags[] = 'exceeds_50_hour_monthly_overtime';
+            $this->violation_flags = $flags;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Execute complete attendance processing with violation detection
+     */
+    public function processAttendance($shiftStartTime = '08:00', $shiftEndTime = '17:00')
+    {
+        return $this
+            ->calculateTotalHours()
+            ->calculateNightShiftHours()
+            ->detectLateArrival($shiftStartTime)
+            ->detectEarlyDeparture($shiftEndTime)
+            ->check12HourLimit()
+            ->checkWeeklyHourLimit()
+            ->checkMonthlyOvertimeCap()
+            ->autoClassifyStatusCode();
+    }
 }

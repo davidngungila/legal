@@ -66,6 +66,22 @@
         </div>
     </div>
 
+    <!-- Browse by Category -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Browse by Category</h2>
+        <div class="flex flex-wrap gap-3">
+            @php($categories = $documents->groupBy('category')->sortKeys())
+            @foreach($categories as $catName => $catDocs)
+                @php($catSlug = $catName ?: 'general')
+                <a href="{{ route('documents.category', $catSlug) }}" class="flex items-center space-x-2 px-4 py-2 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all">
+                    <span class="w-2 h-2 rounded-full {{ $loop->first ? 'bg-blue-500' : ($loop->iteration == 2 ? 'bg-green-500' : ($loop->iteration == 3 ? 'bg-orange-500' : 'bg-purple-500')) }}"></span>
+                    <span class="text-sm font-medium text-gray-800">{{ $catName ?: 'General' }}</span>
+                    <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{{ $catDocs->count() }}</span>
+                </a>
+            @endforeach
+        </div>
+    </div>
+
     <!-- Featured Documents -->
     <div class="mb-8">
         <h2 class="text-xl font-bold text-gray-900 mb-6">Featured Documents</h2>
@@ -155,19 +171,15 @@
             <div class="flex items-center space-x-3">
                 <select id="categoryFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Categories</option>
-                    <option value="HR">HR</option>
-                    <option value="Safety">Safety</option>
-                    <option value="IT">IT</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Operations">Operations</option>
+                    @foreach($documents->groupBy('category')->sortKeys() as $catName => $catDocs)
+                        <option value="{{ strtolower($catName ?? '') }}">{{ $catName ?: 'General' }}</option>
+                    @endforeach
                 </select>
                 <select id="typeFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">All Types</option>
-                    <option value="contract">Contracts</option>
-                    <option value="handbook">Handbooks</option>
-                    <option value="policy">Policies</option>
-                    <option value="safety">Safety</option>
-                    <option value="form">Forms</option>
+                    @foreach($documents->groupBy('document_type')->sortKeys() as $typeName => $typeDocs)
+                        <option value="{{ strtolower($typeName) }}">{{ ucfirst($typeName) }}</option>
+                    @endforeach
                 </select>
             </div>
         </div>
@@ -180,6 +192,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Effective Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -188,7 +201,7 @@
                 <tbody class="bg-white divide-y divide-gray-200" id="documentsTable">
                     @if($documents->count() > 0)
                         @foreach($documents as $document)
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50" data-title="{{ strtolower($document->title) }}" data-category="{{ strtolower($document->category ?? '') }}" data-type="{{ strtolower($document->document_type) }}">
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
                                     <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
@@ -206,10 +219,15 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $document->category }}
+                                <a href="{{ route('documents.category', $document->category ?? 'general') }}" class="text-indigo-600 hover:text-indigo-800">
+                                    {{ $document->category }}
+                                </a>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $document->version }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $document->effective_date ? $document->effective_date->format('M d, Y') : 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {!! $document->status_badge !!}
@@ -224,8 +242,8 @@
                         </tr>
                         @endforeach
                     @else
-                        <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <tr id="documentsEmptyState">
+                            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
                                 <i data-feather="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
                                 <p>No documents found.</p>
                                 <p class="text-sm mt-2">Documents will appear here once added by HR.</p>
@@ -240,46 +258,37 @@
 
 @push('scripts')
 <script>
-// Document search
-document.getElementById('documentSearch').addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#documentsTable tr');
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query) ? '' : 'none';
-    });
-});
+const documentSearchInput = document.getElementById('documentSearch');
+const categoryFilter = document.getElementById('categoryFilter');
+const typeFilter = document.getElementById('typeFilter');
 
-// Category filter
-document.getElementById('categoryFilter').addEventListener('change', function(e) {
-    const category = e.target.value;
-    const rows = document.querySelectorAll('#documentsTable tr');
-    
-    rows.forEach(row => {
-        if (category === '') {
-            row.style.display = '';
-        } else {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(category.toLowerCase()) ? '' : 'none';
-        }
-    });
-});
+function filterDocuments() {
+    const query = documentSearchInput ? documentSearchInput.value.toLowerCase() : '';
+    const category = categoryFilter ? categoryFilter.value : '';
+    const type = typeFilter ? typeFilter.value : '';
+    const rows = document.querySelectorAll('#documentsTable tr[data-title]');
+    let visible = 0;
 
-// Type filter
-document.getElementById('typeFilter').addEventListener('change', function(e) {
-    const type = e.target.value;
-    const rows = document.querySelectorAll('#documentsTable tr');
-    
     rows.forEach(row => {
-        if (type === '') {
-            row.style.display = '';
-        } else {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(type.toLowerCase()) ? '' : 'none';
-        }
+        const title = row.getAttribute('data-title');
+        const rowCategory = row.getAttribute('data-category');
+        const rowType = row.getAttribute('data-type');
+        const show = (!query || title.includes(query))
+            && (!category || rowCategory === category)
+            && (!type || rowType === type);
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
     });
-});
+
+    const emptyState = document.getElementById('documentsEmptyState');
+    if (emptyState) {
+        emptyState.style.display = visible === 0 ? '' : 'none';
+    }
+}
+
+if (documentSearchInput) documentSearchInput.addEventListener('input', filterDocuments);
+if (categoryFilter) categoryFilter.addEventListener('change', filterDocuments);
+if (typeFilter) typeFilter.addEventListener('change', filterDocuments);
 
 // Initialize feather icons
 if (typeof feather !== 'undefined') {

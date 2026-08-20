@@ -147,6 +147,127 @@ class NotificationService
             );
         }
 
+        // Statutory compliance deadlines (NSSF, TRA, WCF)
+        $upcomingDeadlines = \DB::table('statutory_compliance_deadlines')
+            ->where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [$today, now()->addDays(7)->toDateString()])
+            ->get();
+
+        foreach ($upcomingDeadlines as $deadline) {
+            $daysLeft = (int) \Carbon\Carbon::parse($deadline->due_date)->diffInDays(now());
+            $items[] = $this->item(
+                $daysLeft <= 2 ? 'critical' : 'warning',
+                'file-check',
+                $daysLeft <= 2 ? 'red' : 'yellow',
+                'Statutory Filing Due',
+                "{$deadline->authority} {$deadline->filing_type} due in {$daysLeft} day(s)",
+                route('compliance.index'),
+                $deadline->due_date
+            );
+        }
+
+        // Overdue statutory filings
+        $overdueDeadlines = \DB::table('statutory_compliance_deadlines')
+            ->where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->where('due_date', '<', $today)
+            ->get();
+
+        foreach ($overdueDeadlines as $deadline) {
+            $daysOverdue = (int) now()->diffInDays(\Carbon\Carbon::parse($deadline->due_date));
+            $items[] = $this->item(
+                'critical',
+                'alert-circle',
+                'red',
+                'Statutory Filing Overdue',
+                "{$deadline->authority} {$deadline->filing_type} overdue by {$daysOverdue} day(s)",
+                route('compliance.index'),
+                $deadline->due_date
+            );
+        }
+
+        // Performance reviews overdue
+        $overdueReviews = \App\Models\PerformanceReview::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->where('review_date', '<', $today)
+            ->with('employee')
+            ->get();
+
+        foreach ($overdueReviews as $review) {
+            $daysOverdue = (int) now()->diffInDays(\Carbon\Carbon::parse($review->review_date));
+            $employeeName = $review->employee ? trim(($review->employee->first_name ?? '') . ' ' . ($review->employee->last_name ?? '')) : 'Employee';
+            $items[] = $this->item(
+                'warning',
+                'clipboard',
+                'yellow',
+                'Performance Review Overdue',
+                "{$employeeName}'s review overdue by {$daysOverdue} day(s)",
+                route('performance.index'),
+                $review->review_date
+            );
+        }
+
+        // Leave requests pending approval
+        $pendingLeave = \App\Models\LeaveRequest::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->where('created_at', '<', now()->subDays(2))
+            ->with('employee')
+            ->get();
+
+        foreach ($pendingLeave as $leave) {
+            $employeeName = $leave->employee ? trim(($leave->employee->first_name ?? '') . ' ' . ($leave->employee->last_name ?? '')) : 'Employee';
+            $items[] = $this->item(
+                'warning',
+                'calendar',
+                'yellow',
+                'Leave Request Pending',
+                "{$employeeName}'s leave request pending approval",
+                route('leave.index'),
+                $leave->created_at
+            );
+        }
+
+        // Attendance violations
+        $openViolations = \App\Models\AttendanceViolation::where('client_id', $clientId)
+            ->where('status', 'open')
+            ->where('action_triggered', false)
+            ->with('employee')
+            ->get();
+
+        foreach ($openViolations as $violation) {
+            $employeeName = $violation->employee ? trim(($violation->employee->first_name ?? '') . ' ' . ($violation->employee->last_name ?? '')) : 'Employee';
+            $items[] = $this->item(
+                'warning',
+                'alert-triangle',
+                'yellow',
+                'Attendance Violation',
+                "{$employeeName}: {$violation->violation_type}",
+                route('attendance.index'),
+                $violation->violation_date
+            );
+        }
+
+        // Active PIPs
+        $activePips = \App\Models\PerformanceImprovementPlan::where('client_id', $clientId)
+            ->where('status', 'active')
+            ->with('employee')
+            ->get();
+
+        foreach ($activePips as $pip) {
+            $employeeName = $pip->employee ? trim(($pip->employee->first_name ?? '') . ' ' . ($pip->employee->last_name ?? '')) : 'Employee';
+            $daysRemaining = (int) \Carbon\Carbon::parse($pip->end_date)->diffInDays(now());
+            $items[] = $this->item(
+                'info',
+                'trending-up',
+                'blue',
+                'Active PIP',
+                "{$employeeName}'s PIP ends in {$daysRemaining} day(s)",
+                route('performance.index'),
+                $pip->end_date
+            );
+        }
+
         usort($items, function ($a, $b) {
             $severityRank = ['critical' => 3, 'warning' => 2, 'info' => 1];
             return ($severityRank[$b['severity']] ?? 0) <=> ($severityRank[$a['severity']] ?? 0);

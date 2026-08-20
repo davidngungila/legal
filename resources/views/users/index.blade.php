@@ -476,14 +476,11 @@ function updateNotificationBadge() {
                             : `<div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
                                 <span class="text-indigo-600 font-medium text-sm">${firstInitial}${lastInitial}</span>
                             </div>`}
-                        <div>
-                            <div class="text-sm font-medium text-gray-900">${fullName}</div>
-                            <div class="text-sm text-gray-500 truncate">${email}</div>
-                        </div>
+                        <div class="text-sm font-medium text-gray-900 truncate">${fullName}</div>
                     </div>
                 </td>
-                <td class="w-64 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                    ${email}
+                <td class="w-64 px-6 py-4 text-sm text-gray-900">
+                    <div class="truncate">${email}</div>
                 </td>
                 <td class="w-40 px-6 py-4 whitespace-nowrap">
                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(roleValue)}">

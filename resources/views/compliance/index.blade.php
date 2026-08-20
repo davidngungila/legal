@@ -11,11 +11,11 @@
             <p class="text-gray-600 mt-2">Ensure full compliance with Tanzania Labour Laws and regulations</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onclick="downloadReports()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i data-feather="download" class="w-4 h-4 inline mr-2"></i>
                 Download Reports
             </button>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button onclick="runAudit()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="shield" class="w-4 h-4 inline mr-2"></i>
                 Run Audit
             </button>
@@ -1005,6 +1005,55 @@ if (typeof showNotification === 'undefined') {
                 }
             }, 300);
         }, 3000);
+    }
+}
+
+// Download Reports
+async function downloadReports() {
+    try {
+        const response = await fetch('/compliance/reports');
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Reports downloaded successfully!', 'success');
+            // Create a download link for the reports
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result.reports, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "compliance_reports_" + new Date().toISOString().split('T')[0] + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
+}
+
+// Run Audit
+async function runAudit() {
+    try {
+        const response = await fetch('/compliance/audit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Compliance audit completed successfully!', 'success');
+            // Display audit results
+            alert(`Audit Results:\n\nAudit ID: ${result.results.audit_id}\nDate: ${result.results.date}\nOverall Score: ${result.results.overall_score}%\nRisk Level: ${result.results.risk_level}\n\nAreas Assessed: ${result.results.areas_assessed.length}\nRecommendations: ${result.results.recommendations.length}`);
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
     }
 }
 </script>

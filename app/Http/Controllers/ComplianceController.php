@@ -411,7 +411,21 @@ class ComplianceController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        return view('compliance.statutory-filings', ['currentClient' => $currentClient]);
+        
+        // Get statutory filings for the current client
+        $filings = \DB::table('statutory_compliance_deadlines')
+            ->where('client_id', $clientId)
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Group by authority
+        $groupedFilings = $filings->groupBy('authority');
+
+        return view('compliance.statutory-filings', [
+            'currentClient' => $currentClient,
+            'filings' => $filings,
+            'groupedFilings' => $groupedFilings
+        ]);
     }
 
     public function deadlines()
@@ -422,6 +436,261 @@ class ComplianceController extends Controller
         }
 
         $currentClient = Client::find($clientId);
-        return view('compliance.deadlines', ['currentClient' => $currentClient]);
+        
+        // Get all deadlines for the current client
+        $today = now()->toDateString();
+        
+        $upcomingDeadlines = \DB::table('statutory_compliance_deadlines')
+            ->where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->where('due_date', '>=', $today)
+            ->orderBy('due_date', 'asc')
+            ->take(10)
+            ->get();
+
+        $overdueDeadlines = \DB::table('statutory_compliance_deadlines')
+            ->where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->where('due_date', '<', $today)
+            ->orderBy('due_date', 'desc')
+            ->get();
+
+        $completedDeadlines = \DB::table('statutory_compliance_deadlines')
+            ->where('client_id', $clientId)
+            ->where('status', 'submitted')
+            ->orderBy('actual_filing_date', 'desc')
+            ->take(10)
+            ->get();
+
+        return view('compliance.deadlines', [
+            'currentClient' => $currentClient,
+            'upcomingDeadlines' => $upcomingDeadlines,
+            'overdueDeadlines' => $overdueDeadlines,
+            'completedDeadlines' => $completedDeadlines
+        ]);
+    }
+
+    /**
+     * Store new statutory filing deadline
+     */
+    public function storeFiling(Request $request)
+    {
+        try {
+            $clientId = session('current_client_id');
+            if (!$clientId) {
+                return response()->json(['error' => 'No client selected'], 400);
+            }
+
+            $validated = $request->validate([
+                'authority' => 'required|string',
+                'filing_type' => 'required|string',
+                'deadline_type' => 'required|in:monthly,quarterly,annual,adhoc',
+                'filing_period_start' => 'required|date',
+                'filing_period_end' => 'required|date',
+                'due_date' => 'required|date',
+                'amount' => 'nullable|numeric',
+                'notes' => 'nullable|string',
+            ]);
+
+            $filing = \DB::table('statutory_compliance_deadlines')->insertGetId([
+                'client_id' => $clientId,
+                'authority' => $validated['authority'],
+                'filing_type' => $validated['filing_type'],
+                'deadline_type' => $validated['deadline_type'],
+                'filing_period_start' => $validated['filing_period_start'],
+                'filing_period_end' => $validated['filing_period_end'],
+                'due_date' => $validated['due_date'],
+                'amount' => $validated['amount'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Filing deadline created successfully',
+                'id' => $filing
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Mark filing as submitted
+     */
+    public function markFilingSubmitted(Request $request, $id)
+    {
+        try {
+            $clientId = session('current_client_id');
+            if (!$clientId) {
+                return response()->json(['error' => 'No client selected'], 400);
+            }
+
+            $validated = $request->validate([
+                'actual_filing_date' => 'required|date',
+                'amount' => 'nullable|numeric',
+                'reference_number' => 'nullable|string',
+            ]);
+
+            $updated = \DB::table('statutory_compliance_deadlines')
+                ->where('id', $id)
+                ->where('client_id', $clientId)
+                ->update([
+                    'status' => 'submitted',
+                    'actual_filing_date' => $validated['actual_filing_date'],
+                    'amount' => $validated['amount'],
+                    'reference_number' => $validated['reference_number'],
+                    'submitted_by' => auth()->id(),
+                    'submitted_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            if ($updated) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Filing marked as submitted successfully'
+                ]);
+            }
+
+            return response()->json(['error' => 'Filing not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get filing details
+     */
+    public function getFiling($id)
+    {
+        try {
+            $clientId = session('current_client_id');
+            if (!$clientId) {
+                return response()->json(['error' => 'No client selected'], 400);
+            }
+
+            $filing = \DB::table('statutory_compliance_deadlines')
+                ->where('id', $id)
+                ->where('client_id', $clientId)
+                ->first();
+
+            if (!$filing) {
+                return response()->json(['error' => 'Filing not found'], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'filing' => $filing
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Export statutory filings report
+     */
+    public function exportFilings(Request $request)
+    {
+        try {
+            $clientId = session('current_client_id');
+            if (!$clientId) {
+                return response()->json(['error' => 'No client selected'], 400);
+            }
+
+            $filings = \DB::table('statutory_compliance_deadlines')
+                ->where('client_id', $clientId)
+                ->orderBy('due_date', 'asc')
+                ->get();
+
+            // Convert to CSV format
+            $csv = "Authority,Filing Type,Period,Due Date,Amount,Status,Submitted Date,Reference\n";
+            foreach ($filings as $filing) {
+                $csv .= "{$filing->authority},{$filing->filing_type}," .
+                        Carbon::parse($filing->filing_period_start)->format('M Y') . "," .
+                        Carbon::parse($filing->due_date)->format('d M Y') . "," .
+                        ($filing->amount ?? '0') . "," .
+                        $filing->status . "," .
+                        ($filing->actual_filing_date ? Carbon::parse($filing->actual_filing_date)->format('d M Y') : '') . "," .
+                        ($filing->reference_number ?? '') . "\n";
+            }
+
+            return response($csv)
+                ->header('Content-Type', 'text/csv')
+                ->header('Content-Disposition', 'attachment; filename="statutory_filings_' . now()->format('Y-m-d') . '.csv"');
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update filing
+     */
+    public function updateFiling(Request $request, $id)
+    {
+        try {
+            $clientId = session('current_client_id');
+            if (!$clientId) {
+                return response()->json(['error' => 'No client selected'], 400);
+            }
+
+            $validated = $request->validate([
+                'authority' => 'sometimes|required|string',
+                'filing_type' => 'sometimes|required|string',
+                'deadline_type' => 'sometimes|required|in:monthly,quarterly,annual,adhoc',
+                'filing_period_start' => 'sometimes|required|date',
+                'filing_period_end' => 'sometimes|required|date',
+                'due_date' => 'sometimes|required|date',
+                'amount' => 'nullable|numeric',
+                'notes' => 'nullable|string',
+            ]);
+
+            $updated = \DB::table('statutory_compliance_deadlines')
+                ->where('id', $id)
+                ->where('client_id', $clientId)
+                ->update(array_merge($validated, ['updated_at' => now()]));
+
+            if ($updated) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Filing updated successfully'
+                ]);
+            }
+
+            return response()->json(['error' => 'Filing not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Delete filing
+     */
+    public function deleteFiling($id)
+    {
+        try {
+            $clientId = session('current_client_id');
+            if (!$clientId) {
+                return response()->json(['error' => 'No client selected'], 400);
+            }
+
+            $deleted = \DB::table('statutory_compliance_deadlines')
+                ->where('id', $id)
+                ->where('client_id', $clientId)
+                ->delete();
+
+            if ($deleted) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Filing deleted successfully'
+                ]);
+            }
+
+            return response()->json(['error' => 'Filing not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

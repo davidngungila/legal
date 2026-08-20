@@ -13,7 +13,7 @@ class PermissionController
      */
     public function index()
     {
-        $permissions = Permission::all();
+        $permissions = Permission::with('roles')->get();
         
         return response()->json([
             'success' => true,

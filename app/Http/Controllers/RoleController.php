@@ -15,8 +15,17 @@ class RoleController
      */
     public function index()
     {
-        $roles = Role::with(['permissions', 'users'])->get();
-        
+        $roles = Role::with(['permissions', 'users']);
+        $activePermissionFilter = request()->query('permission');
+
+        if ($activePermissionFilter) {
+            $roles->whereHas('permissions', function ($query) use ($activePermissionFilter) {
+                $query->where('name', $activePermissionFilter);
+            });
+        }
+
+        $roles = $roles->get();
+
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -26,7 +35,7 @@ class RoleController
         
         $permissions = \App\Models\Permission::all();
         
-        return view('roles.index', compact('roles', 'permissions'));
+        return view('roles.index', compact('roles', 'permissions', 'activePermissionFilter'));
     }
     
     /**
@@ -120,7 +129,7 @@ class RoleController
         
         try {
             $oldValues = $role->toArray();
-            $oldPermissions = $role->permissions->pluck('id')->toArray();
+            $oldPermissions = $role->permissions()->pluck('permissions.id')->toArray();
             
             $role->update([
                 'name' => $request->get('name'),
