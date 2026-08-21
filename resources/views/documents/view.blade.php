@@ -2,6 +2,13 @@
 
 @section('title', $document->title . ' - LegalHR Tanzania')
 
+@php
+    $hasPdfFile = $document->file_path
+        && \Illuminate\Support\Facades\Storage::disk('public')->exists($document->file_path)
+        && strtolower($document->file_type ?? '') === 'pdf';
+    $pdfUrl = $hasPdfFile ? \Illuminate\Support\Facades\Storage::disk('public')->url($document->file_path) : null;
+@endphp
+
 @section('content')
 <div class="p-6">
     <!-- Header -->
@@ -16,6 +23,12 @@
             </div>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
+            @if($pdfUrl)
+            <button onclick="openPdfPreview()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
+                <i data-feather="eye" class="w-4 h-4"></i>
+                <span>Preview PDF</span>
+            </button>
+            @endif
             <a href="{{ $document->download_url }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
                 <i data-feather="download" class="w-4 h-4"></i>
                 <span>Download PDF</span>
@@ -39,6 +52,20 @@
                     </div>
                     {!! $document->status_badge !!}
                 </div>
+                @if($pdfUrl)
+                <div class="p-4">
+                    <div class="w-full h-[70vh] rounded-lg overflow-hidden border border-gray-200">
+                        <iframe src="{{ $pdfUrl }}" class="w-full h-full border-0" title="{{ $document->title }}"></iframe>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <p class="text-sm text-gray-500">Preview of the uploaded PDF.</p>
+                        <a href="{{ $pdfUrl }}" target="_blank" class="inline-flex items-center space-x-2 text-purple-600 hover:text-purple-800 text-sm font-medium">
+                            <i data-feather="external-link" class="w-4 h-4"></i>
+                            <span>Open in new tab</span>
+                        </a>
+                    </div>
+                </div>
+                @else
                 <div class="p-6">
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-8">
                         <div class="text-center mb-8">
@@ -76,6 +103,7 @@
                         </a>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
 
@@ -141,4 +169,55 @@
         </div>
     </div>
 </div>
+
+@if($pdfUrl)
+<!-- Fullscreen PDF Preview Modal -->
+<div id="pdfPreviewModal" class="hidden fixed inset-0 z-[60] bg-black/60 items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[95vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center space-x-3">
+                <i data-feather="eye" class="w-5 h-5 text-purple-600"></i>
+                <h3 class="font-semibold text-gray-900">{{ $document->title }}</h3>
+            </div>
+            <button onclick="closePdfPreview()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <i data-feather="x" class="w-5 h-5 text-gray-500"></i>
+            </button>
+        </div>
+        <div class="p-4 overflow-hidden flex-1">
+            <iframe src="{{ $pdfUrl }}" class="w-full h-full min-h-[60vh] border-0 rounded-lg" title="{{ $document->title }}"></iframe>
+        </div>
+        <div class="px-6 py-3 border-t border-gray-100 flex justify-end space-x-3 flex-shrink-0">
+            <button onclick="closePdfPreview()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Close</button>
+            <a href="{{ $document->download_url }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
+                <i data-feather="download" class="w-4 h-4"></i>
+                <span>Download PDF</span>
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
+@push('scripts')
+<script>
+    function openPdfPreview() {
+        const modal = document.getElementById('pdfPreviewModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closePdfPreview() {
+        const modal = document.getElementById('pdfPreviewModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.getElementById('pdfPreviewModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closePdfPreview();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closePdfPreview();
+    });
+</script>
+@endpush
 @endsection

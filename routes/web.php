@@ -644,9 +644,27 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // Onboarding Routes
     Route::prefix('onboarding')->group(function () {
         Route::get('/', [OnboardingController::class, 'index'])->name('onboarding.index');
+        Route::get('/export', [OnboardingController::class, 'exportReport'])->name('onboarding.export');
         Route::post('/start', [OnboardingController::class, 'startOnboarding'])->name('onboarding.start');
         Route::post('/complete/{employeeId}', [OnboardingController::class, 'completeOnboarding'])->name('onboarding.complete');
         Route::get('/progress/{employeeId}', [OnboardingController::class, 'getProgress'])->name('onboarding.progress');
+        Route::post('/checklist/{checklistId}/toggle', [OnboardingController::class, 'toggleChecklistItem'])->name('onboarding.checklist.toggle');
+        Route::get('/form-data', [OnboardingController::class, 'getFormData'])->name('onboarding.form-data');
+        Route::get('/new-hires', [OnboardingController::class, 'getNewHires'])->name('onboarding.new-hires');
+        Route::get('/checklist-template', [OnboardingController::class, 'getChecklistTemplate'])->name('onboarding.checklist-template.get');
+        Route::post('/checklist-template', [OnboardingController::class, 'saveChecklistTemplate'])->name('onboarding.checklist-template.save');
+        Route::post('/checklist-template/reset', [OnboardingController::class, 'resetChecklistTemplate'])->name('onboarding.checklist-template.reset');
+        Route::post('/{employeeId}/documents', [OnboardingController::class, 'uploadDocument'])->name('onboarding.documents.upload');
+        Route::post('/documents/{documentId}/verify', [OnboardingController::class, 'verifyDocument'])->name('onboarding.documents.verify');
+        Route::delete('/documents/{documentId}', [OnboardingController::class, 'deleteDocument'])->name('onboarding.documents.delete');
+        Route::get('/document-types', [OnboardingController::class, 'getRequiredDocumentTypes'])->name('onboarding.document-types');
+        Route::post('/{employeeId}/contract/generate', [OnboardingController::class, 'generateContract'])->name('onboarding.contract.generate');
+        Route::post('/contract/{contractId}/sign', [OnboardingController::class, 'signContract'])->name('onboarding.contract.sign');
+        Route::get('/contract/{contractId}', [OnboardingController::class, 'getContractForSigning'])->name('onboarding.contract.view');
+        Route::get('/policy-types', [OnboardingController::class, 'getPolicyTypes'])->name('onboarding.policy-types');
+        Route::post('/{employeeId}/policies', [OnboardingController::class, 'assignPolicies'])->name('onboarding.policies.assign');
+        Route::post('/policy/{acknowledgmentId}/acknowledge', [OnboardingController::class, 'acknowledgePolicy'])->name('onboarding.policy.acknowledge');
+        Route::get('/{employeeId}/policies', [OnboardingController::class, 'getEmployeePolicies'])->name('onboarding.policies.list');
     });
 
     // Employee Self Service Routes
@@ -709,6 +727,13 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // Documents & Policies Routes
     Route::prefix('documents')->group(function () {
         Route::get('/', [DocumentsController::class, 'index'])->name('documents.index');
+        Route::get('/create', [DocumentsController::class, 'create'])->name('documents.create');
+        Route::post('/', [DocumentsController::class, 'store'])->name('documents.store');
+        Route::get('/{id}/edit', [DocumentsController::class, 'edit'])->name('documents.edit');
+        Route::put('/{id}', [DocumentsController::class, 'update'])->name('documents.update');
+        Route::delete('/{id}', [DocumentsController::class, 'destroy'])->name('documents.destroy');
+        Route::post('/preview', [DocumentsController::class, 'preview'])->name('documents.preview');
+        Route::get('/file-preview/{id}', [DocumentsController::class, 'filePreview'])->name('documents.file-preview');
         Route::get('/view/{id}', [DocumentsController::class, 'view'])->name('documents.view');
         Route::get('/download/{id}', [DocumentsController::class, 'download'])->name('documents.download');
         Route::get('/category/{category}', [DocumentsController::class, 'byCategory'])->name('documents.category');

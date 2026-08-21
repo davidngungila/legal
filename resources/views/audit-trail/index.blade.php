@@ -86,9 +86,13 @@
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{{ $audit->created_at->format('Y-m-d H:i:s') }}</td>
                         <td class="px-4 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                                    <span class="text-white text-xs font-bold">{{ $audit->user ? substr($audit->user->first_name, 0, 1) : 'S' }}</span>
-                                </div>
+                                @if($audit->user && $audit->user->profile_photo_url)
+                                    <img src="{{ $audit->user->profile_photo_url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover mr-3">
+                                @else
+                                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-white text-xs font-bold">{{ $audit->user ? substr($audit->user->first_name, 0, 1) : 'S' }}</span>
+                                    </div>
+                                @endif
                                 <span class="text-sm font-medium text-gray-900">{{ $audit->user ? $audit->user->first_name . ' ' . $audit->user->last_name : 'System' }}</span>
                             </div>
                         </td>
@@ -213,6 +217,18 @@
                     newValuesHtml = '<div class="bg-blue-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">New Values</h4><pre class="text-xs text-gray-700 overflow-x-auto">' + JSON.stringify(audit.new_values, null, 2) + '</pre></div>';
                 }
                 
+                let userHtml = '';
+                if (audit.user) {
+                    const userPhoto = audit.user.profile_photo_url 
+                        ? `<img src="${audit.user.profile_photo_url}" alt="Profile" class="w-12 h-12 rounded-full object-cover mr-3">`
+                        : `<div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-white text-xl font-bold">${audit.user.first_name.charAt(0)}${audit.user.last_name.charAt(0)}</span>
+                           </div>`;
+                    userHtml = `<div class="flex items-center">${userPhoto}<span>${audit.user.first_name} ${audit.user.last_name}</span></div>`;
+                } else {
+                    userHtml = '<span>System</span>';
+                }
+
                 document.getElementById('auditDetailsContent').innerHTML = `
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div>
@@ -221,7 +237,7 @@
                         </div>
                         <div>
                             <span class="text-sm text-gray-500">User</span>
-                            <p class="font-medium">${audit.user ? audit.user.first_name + ' ' + audit.user.last_name : 'System'}</p>
+                            <p class="font-medium">${userHtml}</p>
                         </div>
                         <div>
                             <span class="text-sm text-gray-500">Event</span>

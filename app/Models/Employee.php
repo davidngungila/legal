@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Carbon\Carbon;
 use App\Models\Traits\BelongsToCurrentClient;
+use App\Models\OnboardingChecklist;
 
 class Employee extends Model
 {
@@ -245,6 +246,14 @@ class Employee extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(EmployeeDocument::class);
+    }
+
+    /**
+     * Get the onboarding checklist items for the employee.
+     */
+    public function onboardingChecklists(): HasMany
+    {
+        return $this->hasMany(OnboardingChecklist::class);
     }
 
     /**

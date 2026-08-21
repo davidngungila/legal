@@ -16,6 +16,10 @@
                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 <i data-feather="search" class="w-5 h-5 text-gray-400 absolute left-3 top-2.5"></i>
             </div>
+            <button onclick="openCreateDocumentModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
+                <i data-feather="plus" class="w-4 h-4"></i>
+                <span>Add Document</span>
+            </button>
         </div>
     </div>
 
@@ -87,79 +91,79 @@
         <h2 class="text-xl font-bold text-gray-900 mb-6">Featured Documents</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Employment Contract -->
-            @if(isset($groupedDocuments['contract']) && $groupedDocuments['contract']->count() > 0)
-                @php($contract = $groupedDocuments['contract']->first())
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i data-feather="{{ $contract->icon }}" class="w-6 h-6 text-blue-600"></i>
-                        </div>
-                        {!! $contract->status_badge !!}
+            @php($contract = $publicDocuments->where('document_type', 'contract')->first())
+            @if($contract)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="{{ $contract->icon }}" class="w-6 h-6 text-blue-600"></i>
                     </div>
-                    <h3 class="font-semibold text-gray-900 mb-2">{{ $contract->title }}</h3>
-                    <p class="text-sm text-gray-600 mb-4">{{ Str::limit($contract->description, 80) }}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500">{{ $contract->formatted_file_size }}</span>
-                        <a href="{{ $contract->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
-                    </div>
+                    {!! $contract->status_badge !!}
                 </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{{ $contract->title }}</h3>
+                <p class="text-sm text-gray-600 mb-4">{{ Str::limit($contract->description, 80) }}</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">{{ $contract->formatted_file_size }}</span>
+                    <a href="{{ $contract->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
+                </div>
+            </div>
             @endif
 
             <!-- Employee Handbook -->
-            @if(isset($groupedDocuments['handbook']) && $groupedDocuments['handbook']->count() > 0)
-                @php($handbook = $groupedDocuments['handbook']->first())
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i data-feather="{{ $handbook->icon }}" class="w-6 h-6 text-purple-600"></i>
-                        </div>
-                        {!! $handbook->status_badge !!}
+            @php($handbook = $publicDocuments->where('document_type', 'handbook')->first())
+            @if($handbook)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="{{ $handbook->icon }}" class="w-6 h-6 text-purple-600"></i>
                     </div>
-                    <h3 class="font-semibold text-gray-900 mb-2">{{ $handbook->title }}</h3>
-                    <p class="text-sm text-gray-600 mb-4">{{ Str::limit($handbook->description, 80) }}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500">{{ $handbook->formatted_file_size }}</span>
-                        <a href="{{ $handbook->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
-                    </div>
+                    {!! $handbook->status_badge !!}
                 </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{{ $handbook->title }}</h3>
+                <p class="text-sm text-gray-600 mb-4">{{ Str::limit($handbook->description, 80) }}</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">{{ $handbook->formatted_file_size }}</span>
+                    <a href="{{ $handbook->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
+                </div>
+            </div>
             @endif
 
             <!-- Code of Conduct -->
-            @if(isset($groupedDocuments['policy']) && $groupedDocuments['policy']->count() > 0)
-                @php($policy = $groupedDocuments['policy']->where('title', 'like', '%Code of Conduct%')->first() ?? $groupedDocuments['policy']->first())
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i data-feather="{{ $policy->icon }}" class="w-6 h-6 text-green-600"></i>
-                        </div>
-                        {!! $policy->status_badge !!}
+            @php($policy = $publicDocuments->where('document_type', 'policy')->where('title', 'like', '%Code of Conduct%')->first() ?? $publicDocuments->where('document_type', 'policy')->first())
+            @if($policy)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="{{ $policy->icon }}" class="w-6 h-6 text-green-600"></i>
                     </div>
-                    <h3 class="font-semibold text-gray-900 mb-2">{{ $policy->title }}</h3>
-                    <p class="text-sm text-gray-600 mb-4">{{ Str::limit($policy->description, 80) }}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500">{{ $policy->formatted_file_size }}</span>
-                        <a href="{{ $policy->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
-                    </div>
+                    {!! $policy->status_badge !!}
                 </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{{ $policy->title }}</h3>
+                <p class="text-sm text-gray-600 mb-4">{{ Str::limit($policy->description, 80) }}</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">{{ $policy->formatted_file_size }}</span>
+                    <a href="{{ $policy->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
+                </div>
+            </div>
             @endif
 
             <!-- Safety Policy -->
-            @if(isset($groupedDocuments['safety']) && $groupedDocuments['safety']->count() > 0)
-                @php($safety = $groupedDocuments['safety']->first())
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <i data-feather="{{ $safety->icon }}" class="w-6 h-6 text-orange-600"></i>
-                        </div>
-                        {!! $safety->status_badge !!}
+            @php($safety = $publicDocuments->where('document_type', 'safety')->first())
+            @if($safety)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="{{ $safety->icon }}" class="w-6 h-6 text-orange-600"></i>
                     </div>
-                    <h3 class="font-semibold text-gray-900 mb-2">{{ $safety->title }}</h3>
-                    <p class="text-sm text-gray-600 mb-4">{{ Str::limit($safety->description, 80) }}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500">{{ $safety->formatted_file_size }}</span>
-                        <a href="{{ $safety->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
-                    </div>
+                    {!! $safety->status_badge !!}
                 </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{{ $safety->title }}</h3>
+                <p class="text-sm text-gray-600 mb-4">{{ Str::limit($safety->description, 80) }}</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">{{ $safety->formatted_file_size }}</span>
+                    <a href="{{ $safety->view_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Document</a>
+                </div>
+            </div>
             @endif
         </div>
     </div>
@@ -235,10 +239,25 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $document->formatted_file_size }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ $document->view_url }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                <a href="{{ $document->download_url }}" class="text-gray-600 hover:text-gray-900">Download</a>
-                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <button onclick="previewStoredDocument({{ $document->id }})" class="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Preview PDF">
+                                    <i data-feather="eye" class="w-5 h-5"></i>
+                                </button>
+                                <a href="{{ $document->view_url }}" class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Details">
+                                    <i data-feather="file-text" class="w-5 h-5"></i>
+                                </a>
+                                <a href="{{ $document->download_url }}" class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Download">
+                                    <i data-feather="download" class="w-5 h-5"></i>
+                                </a>
+                                <button onclick="openEditDocumentModal({{ $document->id }})" class="p-2 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors" title="Edit">
+                                    <i data-feather="edit-2" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="deleteDocument({{ $document->id }})" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                    <i data-feather="trash-2" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </td>
                         </tr>
                         @endforeach
                     @else
@@ -256,11 +275,38 @@
     </div>
 </div>
 
+<!-- Create/Edit Document Modal -->
+<div id="documentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-start justify-center z-50 overflow-y-auto py-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col">
+        <div class="p-6 border-b border-gray-200 flex-shrink-0 sticky top-0 bg-white z-10 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900" id="documentModalTitle">Add Document</h3>
+            <button onclick="closeDocumentModal()" class="w-9 h-9 rounded-xl bg-white/70 hover:bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all flex items-center justify-center">
+                <i data-feather="x" class="w-4 h-4 text-gray-500"></i>
+            </button>
+        </div>
+        <div class="p-6 flex-1 overflow-y-auto">
+            @include('documents.partials.document-form', ['document_types' => [
+                'contract' => 'Contract',
+                'handbook' => 'Handbook',
+                'policy' => 'Policy',
+                'safety' => 'Safety',
+                'procedure' => 'Procedure',
+                'form' => 'Form',
+                'report' => 'Report',
+                'other' => 'Other',
+            ]])
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 const documentSearchInput = document.getElementById('documentSearch');
 const categoryFilter = document.getElementById('categoryFilter');
 const typeFilter = document.getElementById('typeFilter');
+
+// Tag management
+let tags = [];
 
 function filterDocuments() {
     const query = documentSearchInput ? documentSearchInput.value.toLowerCase() : '';
@@ -294,7 +340,453 @@ if (typeFilter) typeFilter.addEventListener('change', filterDocuments);
 if (typeof feather !== 'undefined') {
     feather.replace();
 }
+
+// Document Modal Functions
+function openCreateDocumentModal() {
+    document.getElementById('documentModalTitle').textContent = 'Add Document';
+    document.getElementById('documentForm').reset();
+    document.getElementById('documentId').value = '';
+    document.getElementById('replaceFile').value = 'false';
+    document.getElementById('selectedFileInfo').classList.add('hidden');
+    document.getElementById('existingFileInfo').classList.add('hidden');
+    document.getElementById('replaceFileCheckbox').checked = false;
+    document.getElementById('fileDropZone').classList.remove('hidden');
+    tags = [];
+    updateTagsDisplay();
+    document.getElementById('tagsInput').value = '';
+    document.getElementById('documentModal').classList.remove('hidden');
+    document.getElementById('documentModal').classList.add('flex');
+    feather.replace();
+}
+
+function openEditDocumentModal(documentId) {
+    document.getElementById('documentModalTitle').textContent = 'Edit Document';
+    document.getElementById('documentId').value = documentId;
+    
+    // Fetch document data
+    fetch(`/documents/${documentId}/edit`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const doc = data.document;
+                document.getElementById('documentTitle').value = doc.title;
+                document.getElementById('documentDescription').value = doc.description || '';
+                document.getElementById('documentType').value = doc.document_type;
+                document.getElementById('documentCategory').value = doc.category || '';
+                document.getElementById('documentVersion').value = doc.version;
+                document.getElementById('documentStatus').value = doc.status;
+                document.getElementById('documentEffectiveDate').value = doc.effective_date ? doc.effective_date.split('T')[0] : '';
+                document.getElementById('documentExpiryDate').value = doc.expiry_date ? doc.expiry_date.split('T')[0] : '';
+                document.getElementById('documentIsRequired').checked = doc.is_required;
+                document.getElementById('documentIsPublic').checked = doc.is_public;
+                
+                // Handle tags
+                tags = doc.tags || [];
+                updateTagsDisplay();
+                
+                // Handle file info
+                if (doc.file_path) {
+                    document.getElementById('fileDropZone').classList.add('hidden');
+                    document.getElementById('existingFileInfo').classList.remove('hidden');
+                    document.getElementById('existingFileName').textContent = doc.file_path.split('/').pop();
+                    document.getElementById('existingFileSize').textContent = formatFileSize(doc.file_size);
+                } else {
+                    document.getElementById('fileDropZone').classList.remove('hidden');
+                    document.getElementById('existingFileInfo').classList.add('hidden');
+                }
+                document.getElementById('selectedFileInfo').classList.add('hidden');
+                document.getElementById('replaceFile').value = 'false';
+                document.getElementById('replaceFileCheckbox').checked = false;
+                
+                document.getElementById('documentModal').classList.remove('hidden');
+                document.getElementById('documentModal').classList.add('flex');
+                feather.replace();
+            } else {
+                showNotification('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error: ' + error.message, 'error');
+        });
+}
+
+function closeDocumentModal() {
+    document.getElementById('documentModal').classList.add('hidden');
+    document.getElementById('documentModal').classList.remove('flex');
+}
+
+// File upload handling
+document.getElementById('documentFile')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        displaySelectedFile(file);
+    }
+});
+
+// Drag and drop
+const dropZone = document.getElementById('fileDropZone');
+if (dropZone) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    dropZone.addEventListener('drop', handleDrop, false);
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight(e) {
+    dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+}
+
+function unhighlight(e) {
+    dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const file = dt.files[0];
+    if (file) {
+        document.getElementById('documentFile').files = dt.files;
+        displaySelectedFile(file);
+    }
+}
+
+function displaySelectedFile(file) {
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+        showNotification('Invalid file type. Only PDF, DOC, DOCX allowed.', 'error');
+        return;
+    }
+    
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('File size must be less than 10MB.', 'error');
+        return;
+    }
+    
+    document.getElementById('fileDropZone').classList.add('hidden');
+    document.getElementById('selectedFileInfo').classList.remove('hidden');
+    document.getElementById('existingFileInfo').classList.add('hidden');
+    
+    const icon = file.type === 'application/pdf' ? 'file-text' : 'file';
+    document.getElementById('fileIcon').setAttribute('data-feather', icon);
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+    feather.replace();
+}
+
+function clearFile() {
+    document.getElementById('documentFile').value = '';
+    document.getElementById('selectedFileInfo').classList.add('hidden');
+    document.getElementById('fileDropZone').classList.remove('hidden');
+    document.getElementById('existingFileInfo').classList.add('hidden');
+}
+
+// Preview the selected (not yet uploaded) file client-side
+function previewSelectedFile() {
+    const fileInput = document.getElementById('documentFile');
+    const file = fileInput ? fileInput.files[0] : null;
+    
+    if (!file) {
+        showNotification('No file selected.', 'error');
+        return;
+    }
+    
+    if (file.type !== 'application/pdf') {
+        showNotification('Inline preview is only available for PDF files. DOC/DOCX will be viewable after saving.', 'info');
+        return;
+    }
+    
+    const url = URL.createObjectURL(file);
+    const previewContent = document.getElementById('previewContent');
+    previewContent.innerHTML = `
+        <div class="w-full h-[70vh]">
+            <iframe src="${url}" class="w-full h-full border-0 rounded-lg" title="${file.name}"></iframe>
+        </div>
+    `;
+    
+    document.getElementById('documentPreviewModal').classList.remove('hidden');
+    document.getElementById('documentPreviewModal').classList.add('flex');
+}
+
+// Preview a saved document's stored PDF
+async function previewStoredDocument(documentId) {
+    try {
+        const response = await fetch(`/documents/file-preview/${documentId}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const result = await response.json();
+        
+        if (!result.success) {
+            showNotification('Error: ' + (result.error || 'Failed to load preview'), 'error');
+            return;
+        }
+        
+        const previewContent = document.getElementById('previewContent');
+        
+        if (result.type === 'pdf' && result.url) {
+            previewContent.innerHTML = `
+                <div class="w-full h-[70vh]">
+                    <iframe src="${result.url}" class="w-full h-full border-0 rounded-lg" title="${result.title}"></iframe>
+                </div>
+            `;
+        } else if (result.html) {
+            previewContent.innerHTML = result.html;
+        } else {
+            previewContent.innerHTML = '<p class="text-center text-gray-500 py-8">No preview available.</p>';
+        }
+        
+        document.getElementById('documentPreviewModal').classList.remove('hidden');
+        document.getElementById('documentPreviewModal').classList.add('flex');
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
+}
+
+function toggleReplaceFile() {
+    const checked = document.getElementById('replaceFileCheckbox').checked;
+    document.getElementById('replaceFile').value = checked;
+    if (checked) {
+        document.getElementById('fileDropZone').classList.remove('hidden');
+        document.getElementById('existingFileInfo').classList.add('hidden');
+    } else {
+        document.getElementById('fileDropZone').classList.add('hidden');
+        document.getElementById('existingFileInfo').classList.remove('hidden');
+        document.getElementById('selectedFileInfo').classList.add('hidden');
+        document.getElementById('documentFile').value = '';
+    }
+}
+
+// Tag handling
+document.getElementById('tagInput')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && this.value.trim()) {
+        e.preventDefault();
+        const tag = this.value.trim();
+        if (!tags.includes(tag)) {
+            tags.push(tag);
+            updateTagsDisplay();
+        }
+        this.value = '';
+    }
+});
+
+function updateTagsDisplay() {
+    const tagsList = document.getElementById('tagsList');
+    tagsList.innerHTML = tags.map(tag => `
+        <span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full flex items-center space-x-1">
+            <span>${tag}</span>
+            <button type="button" onclick="removeTag('${tag}')" class="text-indigo-500 hover:text-indigo-700">
+                <i data-feather="x" class="w-3 h-3"></i>
+            </button>
+        </span>
+    `).join('');
+    document.getElementById('tagsInput').value = JSON.stringify(tags);
+    feather.replace();
+}
+
+function removeTag(tag) {
+    tags = tags.filter(t => t !== tag);
+    updateTagsDisplay();
+}
+
+// Form submission
+document.getElementById('documentForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const documentId = formData.get('document_id');
+    const url = documentId ? `/documents/${documentId}` : '/documents';
+    const method = documentId ? 'POST' : 'POST'; // Using POST with _method for PUT
+    
+    if (documentId) {
+        formData.append('_method', 'PUT');
+    }
+    
+    // Add tags
+    formData.set('tags', JSON.stringify(tags));
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            closeDocumentModal();
+            location.reload();
+        } else {
+            if (result.errors) {
+                const firstError = Object.values(result.errors)[0][0];
+                showNotification(firstError, 'error');
+            } else {
+                showNotification('Error: ' + (result.error || 'Unknown error'), 'error');
+            }
+        }
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
+});
+
+// Preview document
+async function previewDocument() {
+    const formData = new FormData(document.getElementById('documentForm'));
+    formData.set('tags', JSON.stringify(tags));
+    
+    // Include file for preview (don't delete it)
+    
+    try {
+        const response = await fetch('/documents/preview', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const previewContent = document.getElementById('previewContent');
+            
+            if (result.type === 'pdf' && result.url) {
+                // Show PDF in iframe
+                previewContent.innerHTML = `
+                    <div class="w-full h-[70vh]">
+                        <iframe src="${result.url}" class="w-full h-full border-0 rounded-lg" title="${result.title}"></iframe>
+                    </div>
+                `;
+            } else if (result.html) {
+                // Show HTML preview
+                previewContent.innerHTML = result.html;
+            }
+            
+            document.getElementById('documentPreviewModal').classList.remove('hidden');
+            document.getElementById('documentPreviewModal').classList.add('flex');
+        } else {
+            let errorMsg = 'Error generating preview';
+            if (result.error) {
+                errorMsg += ': ' + result.error;
+            } else if (result.errors) {
+                const firstError = Object.values(result.errors)[0][0];
+                errorMsg += ': ' + firstError;
+            } else {
+                errorMsg += ': Unknown error';
+            }
+            showNotification(errorMsg, 'error');
+        }
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
+}
+
+function closePreviewModal() {
+    document.getElementById('documentPreviewModal').classList.add('hidden');
+    document.getElementById('documentPreviewModal').classList.remove('flex');
+    // Revoke any blob object URLs created for client-side previews
+    document.querySelectorAll('#previewContent iframe').forEach(iframe => {
+        if (iframe.src && iframe.src.startsWith('blob:')) {
+            URL.revokeObjectURL(iframe.src);
+        }
+    });
+    document.getElementById('previewContent').innerHTML = '';
+}
+
+// Delete document
+async function deleteDocument(documentId) {
+    if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/documents/${documentId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            location.reload();
+        } else {
+            showNotification('Error: ' + (result.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const colors = {
+        'success': 'bg-green-600',
+        'error': 'bg-red-600',
+        'info': 'bg-indigo-600',
+        'warning': 'bg-yellow-600'
+    };
+    const color = colors[type] || colors.info;
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${color} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
 </script>
 @endpush
+
+<!-- Document Preview Modal (top-level so it works from table rows and inside the form modal) -->
+<div id="documentPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[60] overflow-y-auto py-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col">
+        <div class="p-4 border-b border-gray-200 flex-shrink-0 sticky top-0 bg-white z-10 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Document Preview</h3>
+            <button onclick="closePreviewModal()" class="w-9 h-9 rounded-xl bg-white/70 hover:bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all flex items-center justify-center">
+                <i data-feather="x" class="w-4 h-4 text-gray-500"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-auto p-4" id="previewContent">
+            <!-- Preview content loaded here -->
+        </div>
+        <div class="p-4 border-t border-gray-200 flex-shrink-0 flex justify-end space-x-3">
+            <button onclick="closePreviewModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Close</button>
+        </div>
+    </div>
+</div>
 
 @endsection
