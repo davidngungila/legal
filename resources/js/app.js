@@ -1,12 +1,32 @@
 import './bootstrap';
 import feather from 'feather-icons';
 import Chart from 'chart.js/auto';
+import SignaturePadManager from './signature-pad';
 
 // Make feather globally available
 window.feather = feather;
 window.Chart = Chart;
 
 // LegalHR JavaScript Application
+
+// Initialize Signature Pads on page load
+function initSignaturePads() {
+    document.querySelectorAll('[data-signature-pad]').forEach(container => {
+        const name = container.dataset.name || 'signature';
+        const required = container.dataset.required === 'true';
+        const existingPath = container.dataset.existingPath || '';
+        const canvasWidth = parseInt(container.dataset.canvasWidth) || 400;
+        const canvasHeight = parseInt(container.dataset.canvasHeight) || 150;
+
+        new SignaturePadManager(container, {
+            name,
+            required,
+            existingPath,
+            canvasWidth,
+            canvasHeight,
+        });
+    });
+}
 
 // Initialize Feather Icons
 document.addEventListener('DOMContentLoaded', function() {
@@ -23,6 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load saved client preference
     loadSavedClient();
+
+    // Initialize signature pads
+    initSignaturePads();
 });
 
 // Client Management

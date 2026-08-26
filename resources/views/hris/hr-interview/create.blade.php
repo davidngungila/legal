@@ -523,6 +523,24 @@
                 </div>
             </div>
 
+            <!-- Signature Section -->
+            <div class="border-b border-gray-200 pb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Interviewer Signature</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <x-signature-pad name="interviewer_signature" label="Interviewer Signature" :required="true" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Interviewer Name
+                        </label>
+                        <input type="text" name="interviewer_name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <span class="text-red-500 text-sm hidden" id="interviewer_name_error"></span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Form Actions -->
             <div class="flex justify-between">
                 <button type="button" onclick="saveAsDraft()"

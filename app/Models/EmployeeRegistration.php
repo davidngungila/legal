@@ -37,6 +37,7 @@ class EmployeeRegistration extends Model
         'terms_conditions',
         'information_consent',
         'employee_signature',
+        'employee_signature_path',
         'signature_date',
         'signed_document_path',
         'ranking_details',

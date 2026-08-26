@@ -100,6 +100,18 @@ class HrCompetencyInterviewController extends Controller
                 $interview->update(['military_certificate_path' => $filePath]);
             }
 
+            // Handle base64 signature
+            if ($request->filled('interviewer_signature')) {
+                $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('interviewer_signature'));
+                $signatureImage = base64_decode($signatureData);
+                if ($signatureImage !== false) {
+                    $fileName = 'hr_int_sig_' . $interview->id . '_' . time() . '.png';
+                    $path = 'signatures/hr/' . $fileName;
+                    Storage::disk('public')->put($path, $signatureImage);
+                    $interview->update(['interviewer_signature_path' => $path]);
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $status === 'submitted' 
@@ -202,7 +214,7 @@ class HrCompetencyInterviewController extends Controller
         }
 
         try {
-            $hrCompetencyInterview->update($request->all());
+            $hrCompetencyInterview->update($request->except('interviewer_signature'));
 
             // Handle file upload for military certificate
             if ($request->hasFile('military_certificate')) {
@@ -210,6 +222,18 @@ class HrCompetencyInterviewController extends Controller
                 $fileName = 'military_cert_' . $hrCompetencyInterview->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $filePath = $file->storeAs('interview-documents', $fileName, 'public');
                 $hrCompetencyInterview->update(['military_certificate_path' => $filePath]);
+            }
+
+            // Handle base64 signature
+            if ($request->filled('interviewer_signature')) {
+                $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('interviewer_signature'));
+                $signatureImage = base64_decode($signatureData);
+                if ($signatureImage !== false) {
+                    $fileName = 'hr_int_sig_' . $hrCompetencyInterview->id . '_' . time() . '.png';
+                    $path = 'signatures/hr/' . $fileName;
+                    Storage::disk('public')->put($path, $signatureImage);
+                    $hrCompetencyInterview->update(['interviewer_signature_path' => $path]);
+                }
             }
 
             return response()->json([

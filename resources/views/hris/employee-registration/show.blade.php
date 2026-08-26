@@ -235,22 +235,34 @@
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
                     <h2 class="text-lg font-bold text-gray-900 flex items-center">
                         <i data-feather="paperclip" class="w-5 h-5 mr-2 text-indigo-600"></i>
-                        Documents
+                        Documents & Signature
                     </h2>
                 </div>
                 <div class="p-6">
+                    @if($employeeRegistration->employee_signature_path)
+                        <div class="mb-4 p-4 rounded-lg border border-gray-200">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Employee Signature</p>
+                            <img src="{{ Storage::url($employeeRegistration->employee_signature_path) }}"
+                                 alt="Employee Signature"
+                                 class="max-h-24 border border-gray-200 rounded bg-white">
+                            @if($employeeRegistration->signature_date)
+                                <p class="text-xs text-gray-500 mt-1">Signed on {{ $employeeRegistration->signature_date->format('d M Y') }}</p>
+                            @endif
+                        </div>
+                    @endif
                     @if($employeeRegistration->signed_document_path)
                         <div class="flex items-center p-3 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors group cursor-pointer">
                             <i data-feather="file" class="w-8 h-8 text-indigo-400 mr-3"></i>
                             <div class="flex-1 overflow-hidden">
-                                <p class="text-sm font-semibold text-gray-900 truncate">Signed Contract</p>
+                                <p class="text-sm font-semibold text-gray-900 truncate">Signed Registration Form</p>
                                 <p class="text-xs text-gray-500">Uploaded on {{ $employeeRegistration->updated_at->format('d M Y') }}</p>
                             </div>
                             <a href="{{ Storage::url($employeeRegistration->signed_document_path) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900">
                                 <i data-feather="download" class="w-4 h-4"></i>
                             </a>
                         </div>
-                    @else
+                    @endif
+                    @if(!$employeeRegistration->employee_signature_path && !$employeeRegistration->signed_document_path)
                         <div class="text-center py-6">
                             <i data-feather="file-minus" class="w-10 h-10 mx-auto text-gray-300 mb-2"></i>
                             <p class="text-sm text-gray-500">No documents uploaded</p>

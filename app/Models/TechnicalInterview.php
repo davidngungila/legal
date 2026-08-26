@@ -33,6 +33,7 @@ class TechnicalInterview extends Model
         'manager_comments',
         'assessment_report_path',
         'signed_file_path',
+        'interviewer_signature_path',
         'status',
         'interviewer_completed_at',
         'manager_approved_at',

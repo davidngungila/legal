@@ -402,6 +402,9 @@
             <tr>
                 <td>
                     <div class="signature-line">
+                        @if($contract->employee_signature_path)
+                            <img src="{{ Storage::url($contract->employee_signature_path) }}" alt="Employee Signature" style="max-height: 45px; margin-bottom: 4px;">
+                        @endif
                         <div class="signature-name">{{ $contract->employee->full_name }}</div>
                         <div class="signature-role">Employee</div>
                         <div class="signature-date">{{ $contract->signed_at ? 'Signed: ' . $contract->signed_at->format('F j, Y') : 'Date: ______________' }}</div>
@@ -409,6 +412,9 @@
                 </td>
                 <td>
                     <div class="signature-line">
+                        @if($contract->employer_signature_path)
+                            <img src="{{ Storage::url($contract->employer_signature_path) }}" alt="Employer Signature" style="max-height: 45px; margin-bottom: 4px;">
+                        @endif
                         <div class="signature-name">{{ $currentClient->contact_person ?: $currentClient->name }}</div>
                         <div class="signature-role">Authorized Representative - {{ $currentClient->name }}</div>
                         <div class="signature-date">Date: ______________</div>

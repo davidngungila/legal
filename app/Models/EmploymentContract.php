@@ -93,6 +93,8 @@ class EmploymentContract extends Model
         'performance_review_frequency',
         'contract_document_path',
         'signed_contract_path',
+        'employee_signature_path',
+        'employer_signature_path',
         'witness_name',
         'witness_title',
         'witness_signature_path',

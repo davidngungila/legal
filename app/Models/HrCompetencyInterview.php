@@ -79,6 +79,7 @@ class HrCompetencyInterview extends Model
         'recruiter_recommendation',
         'recommended_job_title',
         'interviewer_signature',
+        'interviewer_signature_path',
         'hr_manager_id',
         'hr_manager_approved_at',
         'signed_file_path',

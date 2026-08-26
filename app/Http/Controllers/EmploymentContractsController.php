@@ -578,6 +578,21 @@ class EmploymentContractsController extends Controller
             }
         }
 
+        // Handle base64 signatures
+        $signatureFields = ['employee_signature' => 'employee_signature_path', 'employer_signature' => 'employer_signature_path'];
+        foreach ($signatureFields as $inputName => $dbField) {
+            if ($request->filled($inputName)) {
+                $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $request->input($inputName));
+                $signatureImage = base64_decode($signatureData);
+                if ($signatureImage !== false) {
+                    $fileName = time() . '_' . $inputName . '_' . $clientId . '.png';
+                    $path = "employment-contracts/{$clientId}/signatures/{$fileName}";
+                    Storage::disk('public')->put($path, $signatureImage);
+                    $uploaded[$dbField] = $path;
+                }
+            }
+        }
+
         return $uploaded;
     }
 }

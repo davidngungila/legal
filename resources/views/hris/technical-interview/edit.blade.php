@@ -180,7 +180,7 @@
 
             <!-- File Uploads Section -->
             <div class="border-b border-gray-200 pb-8">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Supporting Documents</h2>
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Supporting Documents & Signature</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -211,9 +211,10 @@
                         @endif
                     </div>
                 </div>
+                <div class="mt-6">
+                    <x-signature-pad name="interviewer_signature" label="Interviewer Signature" :required="false" :existingPath="$technicalInterview->interviewer_signature_path" />
+                </div>
             </div>
-
-            <!-- Form Actions -->
             <div class="flex justify-between">
                 <button type="button" onclick="saveAsDraft()"
                         class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">

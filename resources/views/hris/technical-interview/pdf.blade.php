@@ -309,6 +309,9 @@
     <!-- Signatures -->
     <div class="signature-section">
         <div class="signature-box">
+            @if($technicalInterview->interviewer_signature_path)
+                <img src="{{ Storage::url($technicalInterview->interviewer_signature_path) }}" alt="Interviewer Signature" style="max-height: 45px; margin-bottom: 4px;">
+            @endif
             <div class="signature-name">{{ $technicalInterview->interviewer_name }}</div>
             <div class="signature-label">Technical Interviewer</div>
             @if($technicalInterview->interviewer_completed_at)

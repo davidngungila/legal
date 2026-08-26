@@ -328,6 +328,12 @@
             <p class="text-xs text-gray-500 mt-1">Existing file stored. Upload to replace.</p>
         @endif
     </div>
+    <div class="md:col-span-2">
+        <x-signature-pad name="employee_signature" label="Employee Signature" :required="false" :existingPath="$c->employee_signature_path ?? ''" />
+    </div>
+    <div class="md:col-span-2">
+        <x-signature-pad name="employer_signature" label="Employer Signature" :required="false" :existingPath="$c->employer_signature_path ?? ''" />
+    </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Witness Name</label>
         <input type="text" name="witness_name" value="{{ $value('witness_name') }}"

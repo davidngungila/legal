@@ -106,6 +106,14 @@ class EmployeeRegistrationController extends Controller
                 'status' => $status,
             ]));
 
+            // Handle base64 signature
+            if ($request->filled('employee_signature')) {
+                $signaturePath = $this->saveBase64Signature($request->input('employee_signature'), 'signatures/employee', 'emp_sig', $employee->id);
+                if ($signaturePath) {
+                    $employee->update(['employee_signature_path' => $signaturePath]);
+                }
+            }
+
             // Handle file upload for signed document
             if ($request->hasFile('signed_document')) {
                 $file = $request->file('signed_document');
@@ -202,7 +210,15 @@ class EmployeeRegistrationController extends Controller
         }
 
         try {
-            $employeeRegistration->update($request->all());
+            $employeeRegistration->update($request->except('employee_signature'));
+
+            // Handle base64 signature
+            if ($request->filled('employee_signature')) {
+                $signaturePath = $this->saveBase64Signature($request->input('employee_signature'), 'signatures/employee', 'emp_sig', $employeeRegistration->id);
+                if ($signaturePath) {
+                    $employeeRegistration->update(['employee_signature_path' => $signaturePath]);
+                }
+            }
 
             // Handle file upload for signed document
             if ($request->hasFile('signed_document')) {
@@ -385,6 +401,30 @@ class EmployeeRegistrationController extends Controller
                 'success' => false,
                 'message' => 'Sorry! Operation failed - ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Save base64 signature to storage.
+     */
+    private function saveBase64Signature(string $base64Data, string $directory, string $prefix, int $id): ?string
+    {
+        try {
+            $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $base64Data);
+            $signatureImage = base64_decode($signatureData);
+
+            if ($signatureImage === false) {
+                return null;
+            }
+
+            $fileName = $prefix . '_' . $id . '_' . time() . '.png';
+            $path = $directory . '/' . $fileName;
+            Storage::disk('public')->put($path, $signatureImage);
+
+            return $path;
+        } catch (\Exception $e) {
+            \Log::error('Signature save failed: ' . $e->getMessage());
+            return null;
         }
     }
 

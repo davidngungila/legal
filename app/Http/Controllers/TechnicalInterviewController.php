@@ -69,6 +69,18 @@ class TechnicalInterviewController extends Controller
                 'interviewer_completed_at' => $status === 'submitted' ? now() : null,
             ]));
 
+            // Handle base64 signature
+            if ($request->filled('interviewer_signature')) {
+                $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('interviewer_signature'));
+                $signatureImage = base64_decode($signatureData);
+                if ($signatureImage !== false) {
+                    $fileName = 'tech_int_sig_' . $interview->id . '_' . time() . '.png';
+                    $path = 'signatures/technical/' . $fileName;
+                    Storage::disk('public')->put($path, $signatureImage);
+                    $interview->update(['interviewer_signature_path' => $path]);
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $status === 'submitted' 
@@ -180,7 +192,19 @@ class TechnicalInterviewController extends Controller
         }
 
         try {
-            $technicalInterview->update($request->all());
+            $technicalInterview->update($request->except('interviewer_signature'));
+
+            // Handle base64 signature
+            if ($request->filled('interviewer_signature')) {
+                $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('interviewer_signature'));
+                $signatureImage = base64_decode($signatureData);
+                if ($signatureImage !== false) {
+                    $fileName = 'tech_int_sig_' . $technicalInterview->id . '_' . time() . '.png';
+                    $path = 'signatures/technical/' . $fileName;
+                    Storage::disk('public')->put($path, $signatureImage);
+                    $technicalInterview->update(['interviewer_signature_path' => $path]);
+                }
+            }
 
             return response()->json([
                 'success' => true,

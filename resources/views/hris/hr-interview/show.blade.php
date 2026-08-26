@@ -135,6 +135,14 @@
                             <div class="text-gray-900">-</div>
                         @endif
                     </div>
+                    @if($hrCompetencyInterview->interviewer_signature_path)
+                    <div>
+                        <div class="text-gray-500">Interviewer Signature</div>
+                        <img src="{{ Storage::url($hrCompetencyInterview->interviewer_signature_path) }}"
+                             alt="Interviewer Signature"
+                             class="max-h-20 border border-gray-200 rounded bg-white mt-1">
+                    </div>
+                    @endif
                 </div>
             </div>
 

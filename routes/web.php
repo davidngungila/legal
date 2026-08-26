@@ -841,4 +841,11 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/contracts/{contract}/print-pdf', [ContractController::class, 'printPdf'])->name('contracts.print-pdf');
     Route::get('/contracts/expiring', [ContractController::class, 'expiringSoon'])->name('contracts.expiring');
     Route::get('/contracts/statistics', [ContractController::class, 'statistics'])->name('contracts.statistics');
+
+    // Signature Storage Routes
+    Route::post('/signature/store', [\App\Http\Controllers\SignatureController::class, 'store'])->name('signature.store');
+    Route::post('/signature/store/{directory}/{prefix}', [\App\Http\Controllers\SignatureController::class, 'storeBase64'])->name('signature.store-base64');
+
+    // Employment Contract Signing Route
+    Route::post('/employment-contracts/{contract}/sign', [\App\Http\Controllers\EmploymentContractsController::class, 'signContract'])->name('employment-contracts.sign');
 });

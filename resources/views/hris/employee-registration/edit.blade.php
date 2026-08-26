@@ -256,12 +256,7 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Employee Signature
-                            </label>
-                            <input type="text" name="employee_signature" value="{{ $employeeRegistration->employee_signature }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                   placeholder="Type signature or upload signed document">
+                            <x-signature-pad name="employee_signature" label="Employee Signature" :required="true" :existingPath="$employeeRegistration->employee_signature_path" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
