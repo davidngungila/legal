@@ -652,6 +652,17 @@ window.openModal = function openModal(modalId) {
     if (modal) {
         modal.classList.remove('hidden');
         lockScroll();
+
+        // Re-resize any signature pad canvases inside the modal now that it's visible
+        requestAnimationFrame(() => {
+            if (window.signaturePads) {
+                Object.values(window.signaturePads).forEach(pad => {
+                    if (modal.contains(pad.container)) {
+                        pad.resizeCanvas();
+                    }
+                });
+            }
+        });
     }
 }
 
