@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Employee Registrations - Orvion HRIS')
+@section('title', 'Register from Interview - Orvion HRIS')
 
 @section('content')
 <div class="p-6">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 font-manrope">Employee Registrations</h1>
-            <p class="text-gray-600 mt-2">Manage registered employees and their information</p>
+            <h1 class="text-3xl font-bold text-gray-900 font-manrope">Register from Interview</h1>
+            <p class="text-gray-600 mt-2">Manage employees registered from interviews</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
             <a href="{{ route('employee-registration.create') }}" 
@@ -113,7 +113,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ $employee->work_station }}</div>
-                                <div class="text-sm text-gray-500">{{ $employee->type_of_contract }}</div>
+                                <div class="text-sm text-gray-500">{{ \App\Models\EmploymentContract::CONTRACT_TYPES[$employee->type_of_contract] ?? $employee->type_of_contract }}</div>
                                 <div class="text-sm text-gray-500">{{ $employee->place_of_recruitment }}</div>
                                 <div class="text-xs text-gray-400">Employed: {{ $employee->date_employed->format('d M Y') }}</div>
                             </td>

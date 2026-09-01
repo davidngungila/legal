@@ -50,4 +50,9 @@ class Position extends Model
 
         return static::where('client_id', $clientId);
     }
+
+    protected static function filterByClient(\Illuminate\Database\Eloquent\Builder $builder, $clientId)
+    {
+        $builder->where('client_id', $clientId);
+    }
 }

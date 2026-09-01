@@ -164,15 +164,9 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('positions.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('positions.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="briefcase" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Positions</span>
-                        </a>
-                    </li>
-                    <li>
                         <a href="{{ route('employee-registration.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('employee-registration.*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="user-plus" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Employee Registration</span>
+                            <span class="text-xs">Register from Interview</span>
                         </a>
                     </li>
                     <li>

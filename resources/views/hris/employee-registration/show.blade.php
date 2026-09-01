@@ -121,7 +121,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Contract Type</label>
-                        <p class="text-sm font-semibold text-gray-900">{{ $employeeRegistration->type_of_contract }}</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ \App\Models\EmploymentContract::CONTRACT_TYPES[$employeeRegistration->type_of_contract] ?? $employeeRegistration->type_of_contract }}</p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Date Employed</label>

@@ -149,6 +149,8 @@ class SignaturePadManager {
 
     resizeCanvas() {
         if (!this.canvas) return;
+        // Skip when hidden (offsetWidth/Height are 0), keep previous dimensions
+        if (!this.canvas.offsetWidth || !this.canvas.offsetHeight) return;
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
         this.canvas.width = this.canvas.offsetWidth * ratio;
         this.canvas.height = this.canvas.offsetHeight * ratio;

@@ -116,8 +116,12 @@ class EmployeeController extends Controller
      */
     public function getPositionsByDepartment($departmentId)
     {
+        $clientId = session('current_client_id');
         $department = Department::forCurrentClient()->where('id', $departmentId)->firstOrFail();
-        $positions = $department->positions()->where('is_active', true)->get();
+        $positions = $department->positions()
+            ->where('client_id', $clientId)
+            ->where('is_active', true)
+            ->get();
         return response()->json($positions);
     }
 
