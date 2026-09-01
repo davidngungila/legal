@@ -224,7 +224,14 @@ class PermissionSeeder extends Seeder
             ['name' => 'selfservice.policy', 'display_name' => 'Access Policies', 'group' => 'Self Service', 'description' => 'Access policy documents'],
             ['name' => 'selfservice.tracking', 'display_name' => 'Legal Tracking', 'group' => 'Self Service', 'description' => 'All submissions legally tracked'],
             
-            // MODULE 15: CASE MANAGEMENT (CMA / COURT READY)
+            // MODULE 15: EMPLOYMENT CONTRACTS
+            ['name' => 'employment_contract.view', 'display_name' => 'View Employment Contracts', 'group' => 'Employment Contracts', 'description' => 'View employment contracts and agreements'],
+            ['name' => 'employment_contract.create', 'display_name' => 'Create Employment Contracts', 'group' => 'Employment Contracts', 'description' => 'Create new employment contracts'],
+            ['name' => 'employment_contract.edit', 'display_name' => 'Edit Employment Contracts', 'group' => 'Employment Contracts', 'description' => 'Edit and update employment contracts'],
+            ['name' => 'employment_contract.manage', 'display_name' => 'Manage Contract Documents', 'group' => 'Employment Contracts', 'description' => 'Manage contract documents, uploads, and downloads'],
+            ['name' => 'employment_contract.delete', 'display_name' => 'Delete Employment Contracts', 'group' => 'Employment Contracts', 'description' => 'Delete employment contracts'],
+
+            // MODULE 16: CASE MANAGEMENT (CMA / COURT READY)
             ['name' => 'casemanagement.view', 'display_name' => 'View Case Management', 'group' => 'Case Management', 'description' => 'View case management'],
             ['name' => 'casemanagement.manage', 'display_name' => 'Manage Cases', 'group' => 'Case Management', 'description' => 'Manage legal cases'],
             ['name' => 'casemanagement.generator', 'display_name' => 'Generate Case Files', 'group' => 'Case Management', 'description' => 'Case file generator'],

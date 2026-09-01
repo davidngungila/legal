@@ -17,10 +17,17 @@
             @endif
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
+        @if(!$isEmployee)
             <button type="button" onclick="openModal('newLeaveRequestModal')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
                 New Leave Request
             </button>
+        @else
+            <button type="button" onclick="openModal('newLeaveRequestModal')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="plus" class="w-4 h-4 inline mr-2"></i>
+                Apply for Leave
+            </button>
+        @endif
         </div>
     </div>
 
@@ -95,7 +102,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->leave_type }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->leaveType->type_name ?? $request->getOriginal('leave_type') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->start_date->format('M d, Y') }} - {{ $request->end_date->format('M d, Y') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->days }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -116,6 +123,7 @@
                                     <i data-feather="eye" class="w-4 h-4"></i>
                                 </button>
                                 
+                                @if(!$isEmployee)
                                 <!-- Edit -->
                                 <button type="button" onclick="openUpdateModal({{ $request->id }})" class="text-indigo-600 hover:text-indigo-900 cursor-pointer p-1" title="Edit">
                                     <i data-feather="edit-2" class="w-4 h-4"></i>
@@ -137,6 +145,7 @@
                                 <button type="button" onclick="deleteLeaveRequest({{ $request->id }})" class="text-gray-600 hover:text-gray-900 cursor-pointer p-1" title="Delete">
                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                 </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -158,7 +167,11 @@
 <x-advanced-modal id="newLeaveRequestModal" title="New Leave Request" icon="plus" color="indigo" size="lg">
     <form action="{{ route('leave.store') }}" method="POST" id="newLeaveRequestForm">
         @csrf
+        @if($isEmployee && $currentEmployee)
+            <input type="hidden" name="employee_id" value="{{ $currentEmployee->id }}">
+        @endif
         <div class="space-y-4">
+                @if(!$isEmployee)
                 <div>
                     <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
                     <select id="employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
@@ -171,6 +184,7 @@
                     <p class="mt-1 text-sm text-red-600">No active employees found for this client.</p>
                     @endif
                 </div>
+                @endif
                 <div>
                     <label for="leave_type_id" class="block text-sm font-medium text-gray-700">Leave Type</label>
                     <select id="leave_type_id" name="leave_type_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
@@ -213,7 +227,11 @@
         @csrf
         @method('PUT')
         <input type="hidden" id="update_request_id" name="request_id" value="">
+        @if($isEmployee && $currentEmployee)
+            <input type="hidden" name="employee_id" id="update_employee_id" value="{{ $currentEmployee->id }}">
+        @endif
         <div class="space-y-4">
+                @if(!$isEmployee)
                 <div>
                     <label for="update_employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
                     <select id="update_employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
@@ -223,6 +241,7 @@
                         @endforeach
                     </select>
                 </div>
+                @endif
                 <div>
                     <label for="update_leave_type_id" class="block text-sm font-medium text-gray-700">Leave Type</label>
                     <select id="update_leave_type_id" name="leave_type_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
@@ -340,12 +359,12 @@ function viewLeaveRequest(id) {
                 document.getElementById('view_employee_name').textContent=`${r.employee.first_name} ${r.employee.last_name}`;
                 document.getElementById('view_employee_id').textContent=r.employee.employee_id;
                 document.getElementById('view_employee_initials').textContent=`${r.employee.first_name[0]}${r.employee.last_name[0]}`;
-                document.getElementById('view_leave_type').textContent=r.leave_type;
-                document.getElementById('view_start_date').textContent=r.start_date;
-                document.getElementById('view_end_date').textContent=r.end_date;
+                document.getElementById('view_leave_type').textContent=r.leave_type.type_name;
+                document.getElementById('view_start_date').textContent=new Date(r.start_date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+                document.getElementById('view_end_date').textContent=new Date(r.end_date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
                 document.getElementById('view_days').textContent=r.days;
                 document.getElementById('view_reason').textContent=r.reason||'No reason provided';
-                document.getElementById('view_applied_at').textContent=r.applied_at||'N/A';
+                document.getElementById('view_applied_at').textContent=r.applied_at ? new Date(r.applied_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'N/A';
                 const b=document.getElementById('view_status_badge');
                 b.className='px-2 py-1 text-xs font-semibold rounded-full';
                 if(r.status=='approved')b.classList.add('bg-green-100','text-green-800');

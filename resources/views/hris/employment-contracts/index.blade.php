@@ -16,13 +16,29 @@
                 <i data-feather="settings" class="w-4 h-4 mr-2"></i>
                 Contract Management
             </a>
+            @hasPermission('employment_contract.create')
             <button onclick="openModal('createContractModal')"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
                 <i data-feather="plus" class="w-4 h-4 mr-2"></i>
                 New Contract
             </button>
+            @endhasPermission
         </div>
     </div>
+
+    @if ($errors->any())
+        <div id="validationErrors" class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+            <h3 class="text-sm font-semibold text-red-800 flex items-center mb-2">
+                <i data-feather="alert-circle" class="w-4 h-4 mr-2"></i>
+                Please fix the following errors:
+            </h3>
+            <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
@@ -252,16 +268,21 @@
                                        class="text-indigo-600 hover:text-indigo-900" title="Employee contracts">
                                         <i data-feather="eye" class="w-4 h-4"></i>
                                     </a>
+                                    @hasPermission('employment_contract.edit')
                                     <a href="{{ route('employment-contracts.edit', $contract->id) }}"
                                        class="text-blue-600 hover:text-blue-900" title="Edit">
                                         <i data-feather="edit-2" class="w-4 h-4"></i>
                                     </a>
+                                    @endhasPermission
+                                    @hasPermission('employment_contract.manage')
                                     <form method="POST" action="{{ route('employment-contracts.generate-pdf', $contract->id) }}" class="inline">
                                         @csrf
                                         <button type="submit" class="text-purple-600 hover:text-purple-900" title="Download PDF">
                                             <i data-feather="download" class="w-4 h-4"></i>
                                         </button>
                                     </form>
+                                    @endhasPermission
+                                    @hasPermission('employment_contract.edit')
                                     @if($status === 'draft')
                                         <form method="POST" action="{{ route('employment-contracts.activate', $contract->id) }}" class="inline">
                                             @csrf
@@ -282,10 +303,13 @@
                                             <i data-feather="x-circle" class="w-4 h-4"></i>
                                         </button>
                                     @endif
+                                    @endhasPermission
+                                    @hasPermission('employment_contract.manage')
                                     <button onclick="openUploadModal({{ $contract->id }}, '{{ $contract->formatted_contract_number }}')"
                                             class="text-gray-500 hover:text-gray-700" title="Upload document">
                                         <i data-feather="upload" class="w-4 h-4"></i>
                                     </button>
+                                    @endhasPermission
                                 </div>
                             </td>
                         </tr>
@@ -526,5 +550,11 @@ function openUploadModal(contractId, contractNumber) {
     document.getElementById('uploadDocumentForm').action = '{{ url('/employment-contracts') }}/' + contractId + '/upload-document';
     openModal('uploadDocumentModal');
 }
+
+@if ($errors->any())
+    document.addEventListener('DOMContentLoaded', function() {
+        openModal('createContractModal');
+    });
+@endif
 </script>
 @endpush

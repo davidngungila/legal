@@ -31,6 +31,7 @@ class ExitController extends Controller
 
     public function index()
     {
+        $this->authorize('discipline.view');
         $clientId = session('current_client_id');
         if (!$clientId) {
             return redirect()->route('dashboard')->with('error', 'Please select a client first.');

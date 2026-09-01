@@ -15,6 +15,7 @@ class LegalCase extends Model
     protected $fillable = [
         'client_id',
         'employee_id',
+        'disciplinary_case_id',
         'case_number',
         'case_type',
         'subject',
@@ -58,5 +59,10 @@ class LegalCase extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(CaseActivity::class);
+    }
+
+    public function disciplinaryCase(): BelongsTo
+    {
+        return $this->belongsTo(DisciplinaryCase::class);
     }
 }

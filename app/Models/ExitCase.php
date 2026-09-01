@@ -16,6 +16,8 @@ class ExitCase extends Model
     protected $fillable = [
         'client_id',
         'employee_id',
+        'disciplinary_case_id',
+        'employment_contract_id',
         'exit_number',
         'exit_type',
         'exit_date',
@@ -65,5 +67,15 @@ class ExitCase extends Model
     public function settlement(): HasOne
     {
         return $this->hasOne(ExitSettlement::class);
+    }
+
+    public function disciplinaryCase(): BelongsTo
+    {
+        return $this->belongsTo(DisciplinaryCase::class);
+    }
+
+    public function employmentContract(): BelongsTo
+    {
+        return $this->belongsTo(EmploymentContract::class);
     }
 }

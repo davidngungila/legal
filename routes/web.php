@@ -108,7 +108,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // User Management Routes
-    Route::prefix('users')->group(function () {
+    Route::prefix('users')->middleware('permission:users.view')->group(function () {
         Route::get('/', function () {
             $clientId = session('current_client_id');
             $currentClient = $clientId ? \App\Models\Client::find($clientId) : null;
@@ -136,7 +136,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Role Management Routes
-    Route::prefix('roles')->name('roles.')->group(function () {
+    Route::prefix('roles')->name('roles.')->middleware('permission:roles.view')->group(function () {
         Route::get('/', [RoleController::class, 'index'])->name('index');
         Route::post('/', [RoleController::class, 'store'])->name('store');
         Route::get('/{role}', [RoleController::class, 'show'])->name('show');
@@ -146,7 +146,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Permission Management Routes
-    Route::prefix('permissions')->group(function () {
+    Route::prefix('permissions')->middleware('permission:permissions.view')->group(function () {
         Route::get('/', function () {
             return view('permissions.index');
         })->name('permissions.index');
@@ -156,16 +156,17 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         })->name('permissions.create');
     });
 
-    Route::prefix('recruitment')->group(function () {
+    Route::prefix('recruitment')->middleware('permission:recruitment.view')->group(function () {
         Route::get('/', function () {
             return view('recruitment.index');
         })->name('recruitment.index');
     });
 
     // Time & Attendance Routes
-    Route::prefix('attendance')->group(function () {
+    Route::prefix('attendance')->middleware('permission:attendance.view')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('attendance.index');
         Route::post('/upsert', [AttendanceController::class, 'upsert'])->name('attendance.upsert');
+        Route::get('/import/template', [AttendanceController::class, 'downloadTemplate'])->name('attendance.import.template');
         Route::post('/import', [AttendanceController::class, 'importTimesheet'])->name('attendance.import');
         Route::get('/calendar', [AttendanceController::class, 'calendar'])->name('attendance.calendar');
         Route::get('/timesheets', [AttendanceController::class, 'timesheets'])->name('attendance.timesheets');
@@ -179,7 +180,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Payroll Routes
-    Route::prefix('payroll')->group(function () {
+    Route::prefix('payroll')->middleware('permission:payroll.view')->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
                 Route::get('/data', [PayrollController::class, 'data'])->name('payroll.data');
                 Route::post('/generate-from-attendance', [PayrollController::class, 'generateFromAttendance'])->name('payroll.generate.from.attendance');
@@ -197,19 +198,19 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             });
 
             Route::prefix('leave')->name('leave.')->group(function () {
-                Route::get('/', [App\Http\Controllers\LeaveController::class, 'index'])->name('index');
-                Route::post('/', [App\Http\Controllers\LeaveController::class, 'store'])->name('store');
-                Route::get('/balances', [App\Http\Controllers\LeaveController::class, 'balances'])->name('balances');
-                Route::get('/calendar', [App\Http\Controllers\LeaveController::class, 'calendar'])->name('calendar');
-                Route::get('/reports', [App\Http\Controllers\LeaveController::class, 'reports'])->name('reports');
-                Route::get('/{id}', [App\Http\Controllers\LeaveController::class, 'show'])->name('show');
-                Route::put('/{id}', [App\Http\Controllers\LeaveController::class, 'updateStatus'])->name('updateStatus');
-                Route::post('/{id}/approve', [App\Http\Controllers\LeaveController::class, 'approve'])->name('approve');
-                Route::post('/{id}/reject', [App\Http\Controllers\LeaveController::class, 'reject'])->name('reject');
-                Route::delete('/{id}', [App\Http\Controllers\LeaveController::class, 'destroy'])->name('destroy');
+                Route::get('/', [App\Http\Controllers\LeaveController::class, 'index'])->name('index')->middleware('permission:selfservice.leave');
+                Route::post('/', [App\Http\Controllers\LeaveController::class, 'store'])->name('store')->middleware('permission:selfservice.leave');
+                Route::get('/balances', [App\Http\Controllers\LeaveController::class, 'balances'])->name('balances')->middleware('permission:selfservice.leave');
+                Route::get('/calendar', [App\Http\Controllers\LeaveController::class, 'calendar'])->name('calendar')->middleware('permission:selfservice.leave');
+                Route::get('/reports', [App\Http\Controllers\LeaveController::class, 'reports'])->name('reports')->middleware('permission:attendance.view');
+                Route::get('/{id}', [App\Http\Controllers\LeaveController::class, 'show'])->name('show')->middleware('permission:selfservice.leave');
+                Route::put('/{id}', [App\Http\Controllers\LeaveController::class, 'updateStatus'])->name('updateStatus')->middleware('permission:attendance.view');
+                Route::post('/{id}/approve', [App\Http\Controllers\LeaveController::class, 'approve'])->name('approve')->middleware('permission:attendance.view');
+                Route::post('/{id}/reject', [App\Http\Controllers\LeaveController::class, 'reject'])->name('reject')->middleware('permission:attendance.view');
+                Route::delete('/{id}', [App\Http\Controllers\LeaveController::class, 'destroy'])->name('destroy')->middleware('permission:attendance.view');
             });
 
-            Route::prefix('compensation')->group(function () {
+            Route::prefix('compensation')->middleware('permission:compensation.view')->group(function () {
                 Route::get('/', [CompensationController::class, 'index'])->name('compensation.index');
                 Route::get('/export', [CompensationController::class, 'export'])->name('compensation.export');
                 Route::get('/employees', [CompensationController::class, 'employees'])->name('compensation.employees');
@@ -233,7 +234,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             });
 
     // Performance Routes
-    Route::prefix('performance')->name('performance.')->group(function () {
+    Route::prefix('performance')->name('performance.')->middleware('permission:performance.view')->group(function () {
         Route::get('/', [PerformanceController::class, 'index'])->name('index');
         Route::post('/', [PerformanceController::class, 'store'])->name('store');
         Route::put('/{review}', [PerformanceController::class, 'updateStatus'])->name('update');
@@ -272,7 +273,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Employee Relations & Discipline Routes
-    Route::prefix('discipline')->name('discipline.')->group(function () {
+    Route::prefix('discipline')->name('discipline.')->middleware('permission:discipline.view')->group(function () {
         Route::get('/', [App\Http\Controllers\DisciplinaryController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\DisciplinaryController::class, 'store'])->name('store');
         Route::put('/{case}/status', [App\Http\Controllers\DisciplinaryController::class, 'updateStatus'])->name('update-status');
@@ -289,7 +290,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Exit Management Routes
-    Route::prefix('exit')->name('exit.')->group(function () {
+    Route::prefix('exit')->name('exit.')->middleware('permission:discipline.view')->group(function () {
         Route::get('/', [App\Http\Controllers\ExitController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\ExitController::class, 'store'])->name('store');
         Route::put('/{id}', [App\Http\Controllers\ExitController::class, 'update'])->name('update');
@@ -303,7 +304,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Compliance Routes
-    Route::prefix('compliance')->group(function () {
+    Route::prefix('compliance')->middleware('permission:compliance.view')->group(function () {
         Route::get('/', [ComplianceController::class, 'index'])->name('compliance.index');
         Route::post('/audit', [ComplianceController::class, 'runAudit'])->name('compliance.audit');
         Route::get('/reports', [ComplianceController::class, 'getReports'])->name('compliance.reports');
@@ -321,7 +322,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - User Registration Routes
-    Route::prefix('user-registration')->name('user-registration.')->group(function () {
+    Route::prefix('user-registration')->name('user-registration.')->middleware('permission:users.view')->group(function () {
         Route::get('/', [UserRegistrationController::class, 'index'])->name('index');
         Route::get('/create', [UserRegistrationController::class, 'create'])->name('create');
         Route::post('/', [UserRegistrationController::class, 'store'])->name('store');
@@ -332,7 +333,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Client Registration Routes
-    Route::prefix('client-registration')->name('client-registration.')->group(function () {
+    Route::prefix('client-registration')->name('client-registration.')->middleware('permission:clients.view')->group(function () {
         Route::get('/', [ClientRegistrationController::class, 'index'])->name('index');
         Route::get('/create', [ClientRegistrationController::class, 'create'])->name('create');
         Route::post('/', [ClientRegistrationController::class, 'store'])->name('store');
@@ -343,7 +344,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Job Vacancy Routes
-    Route::prefix('job-vacancy')->name('job-vacancy.')->group(function () {
+    Route::prefix('job-vacancy')->name('job-vacancy.')->middleware('permission:recruitment.view')->group(function () {
         Route::get('/', [JobVacancyController::class, 'index'])->name('index');
         Route::get('/create', [JobVacancyController::class, 'create'])->name('create');
         Route::post('/', [JobVacancyController::class, 'store'])->name('store');
@@ -360,7 +361,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - HR Competency Interview Routes
-    Route::prefix('hr-interview')->name('hr-interview.')->group(function () {
+    Route::prefix('hr-interview')->name('hr-interview.')->middleware('permission:recruitment.view')->group(function () {
         Route::get('/', [HrCompetencyInterviewController::class, 'index'])->name('index');
         Route::get('/create', [HrCompetencyInterviewController::class, 'create'])->name('create');
         Route::post('/', [HrCompetencyInterviewController::class, 'store'])->name('store');
@@ -375,7 +376,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Technical Interview Routes
-    Route::prefix('technical-interview')->name('technical-interview.')->group(function () {
+    Route::prefix('technical-interview')->name('technical-interview.')->middleware('permission:recruitment.view')->group(function () {
         Route::get('/', [TechnicalInterviewController::class, 'index'])->name('index');
         Route::get('/create', [TechnicalInterviewController::class, 'create'])->name('create');
         Route::post('/', [TechnicalInterviewController::class, 'store'])->name('store');
@@ -392,7 +393,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Employee Registration Routes
-    Route::prefix('employee-registration')->name('employee-registration.')->group(function () {
+    Route::prefix('employee-registration')->name('employee-registration.')->middleware('permission:employees.view')->group(function () {
         Route::get('/', [EmployeeRegistrationController::class, 'index'])->name('index');
         Route::get('/create', [EmployeeRegistrationController::class, 'create'])->name('create');
         Route::post('/', [EmployeeRegistrationController::class, 'store'])->name('store');
@@ -407,7 +408,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Employee Document Management Routes
-    Route::prefix('employee-document')->name('employee-document.')->group(function () {
+    Route::prefix('employee-document')->name('employee-document.')->middleware('permission:employees.view')->group(function () {
         Route::get('/', [EmployeeDocumentController::class, 'index'])->name('index');
         Route::get('/employee/{employee}', [EmployeeDocumentController::class, 'employeeDocuments'])->name('employee-documents');
         Route::post('/', [EmployeeDocumentController::class, 'store'])->name('store');
@@ -422,7 +423,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Social Records Registration Routes
-    Route::prefix('social-records')->name('social-records.')->group(function () {
+    Route::prefix('social-records')->name('social-records.')->middleware('permission:employees.view')->group(function () {
         Route::get('/', [SocialRecordsController::class, 'index'])->name('index');
         Route::get('/employee/{employee}', [SocialRecordsController::class, 'employeeRecords'])->name('employee-records');
         Route::post('/', [SocialRecordsController::class, 'store'])->name('store');
@@ -435,7 +436,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Induction Training Routes
-    Route::prefix('induction-training')->name('induction-training.')->group(function () {
+    Route::prefix('induction-training')->name('induction-training.')->middleware('permission:onboarding.view')->group(function () {
         Route::get('/', [InductionTrainingController::class, 'index'])->name('index');
         Route::get('/employee/{employee}', [InductionTrainingController::class, 'employeeTraining'])->name('employee-training');
         Route::post('/', [InductionTrainingController::class, 'store'])->name('store');
@@ -450,7 +451,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Personnel ID Application Routes
-    Route::prefix('personnel-id')->name('personnel-id.')->group(function () {
+    Route::prefix('personnel-id')->name('personnel-id.')->middleware('permission:employees.view')->group(function () {
         Route::get('/', [PersonnelIdController::class, 'index'])->name('index');
         Route::get('/employee/{employee}', [PersonnelIdController::class, 'employeeId'])->name('employee-id');
         Route::post('/', [PersonnelIdController::class, 'store'])->name('store');
@@ -466,7 +467,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Contract Management Routes
-    Route::prefix('contract-management')->name('contract-management.')->group(function () {
+    Route::prefix('contract-management')->name('contract-management.')->middleware('permission:employment_contract.view')->group(function () {
         Route::get('/', [ContractManagementController::class, 'index'])->name('index');
         Route::get('/employee-contracts', [ContractManagementController::class, 'employeeContracts'])->name('employee-contracts');
         Route::post('/{contract}/activate', [ContractManagementController::class, 'activate'])->name('activate');
@@ -479,7 +480,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Employment Contracts Routes
-    Route::prefix('employment-contracts')->name('employment-contracts.')->group(function () {
+    Route::prefix('employment-contracts')->name('employment-contracts.')->middleware('permission:employment_contract.view')->group(function () {
         Route::get('/', [EmploymentContractsController::class, 'index'])->name('index');
         Route::get('/employee/{employee}', [EmploymentContractsController::class, 'employeeContracts'])->name('employee-contracts');
         Route::get('/{contract}/edit', [EmploymentContractsController::class, 'edit'])->name('edit');
@@ -497,7 +498,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // HRIS - Workflow System Routes
-    Route::prefix('workflow')->name('workflow.')->group(function () {
+    Route::prefix('workflow')->name('workflow.')->middleware('permission:employees.view')->group(function () {
         Route::get('/', [WorkflowController::class, 'index'])->name('index');
         Route::get('/statistics', [WorkflowController::class, 'statistics'])->name('statistics');
         Route::get('/pending-approvals', [WorkflowController::class, 'pendingApprovals'])->name('pending-approvals');
@@ -515,7 +516,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     Route::get('/hris', [DashboardController::class, 'hrisDashboard'])->name('hris.dashboard');
 
     // Training Routes
-    Route::prefix('training')->name('training.')->group(function () {
+    Route::prefix('training')->name('training.')->middleware('permission:training.view')->group(function () {
         Route::get('/', [App\Http\Controllers\TrainingController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\TrainingController::class, 'store'])->name('programs.store');
         Route::get('/plans', [App\Http\Controllers\TrainingPlanController::class, 'index'])->name('plans');
@@ -538,7 +539,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Benefits Routes
-    Route::prefix('benefits')->name('benefits.')->group(function () {
+    Route::prefix('benefits')->name('benefits.')->middleware('permission:compensation.view')->group(function () {
         Route::get('/enrollment', [App\Http\Controllers\BenefitsController::class, 'enrollment'])->name('enrollment');
         Route::post('/enrollment', [App\Http\Controllers\BenefitsController::class, 'storeEnrollment'])->name('enrollment.store');
         Route::put('/enrollment/{id}', [App\Http\Controllers\BenefitsController::class, 'updateEnrollment'])->name('enrollment.update');
@@ -554,7 +555,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Succession Routes
-    Route::prefix('succession')->name('succession.')->group(function () {
+    Route::prefix('succession')->name('succession.')->middleware('permission:talent.view')->group(function () {
         Route::get('/talent-pools', [App\Http\Controllers\SuccessionController::class, 'talentPools'])->name('talent-pools');
         Route::post('/talent-pools', [App\Http\Controllers\SuccessionController::class, 'storeTalentPool'])->name('talent-pools.store');
         Route::put('/talent-pools/{id}', [App\Http\Controllers\SuccessionController::class, 'updateTalentPool'])->name('talent-pools.update');
@@ -580,7 +581,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Analytics Routes
-    Route::prefix('analytics')->name('analytics.')->group(function () {
+    Route::prefix('analytics')->name('analytics.')->middleware('permission:analytics.view')->group(function () {
         Route::get('/', function () {
             return view('analytics.index');
         })->name('index');
@@ -593,7 +594,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Departments Routes
-    Route::prefix('departments')->name('departments.')->group(function () {
+    Route::prefix('departments')->name('departments.')->middleware('permission:organization.view')->group(function () {
         Route::get('/', [\App\Http\Controllers\DepartmentsController::class, 'index'])->name('index');
         Route::get('/export', [\App\Http\Controllers\DepartmentsController::class, 'export'])->name('export');
         Route::get('/import-template', [\App\Http\Controllers\DepartmentsController::class, 'importTemplate'])->name('import-template');
@@ -605,7 +606,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Positions Routes
-    Route::prefix('positions')->name('positions.')->group(function () {
+    Route::prefix('positions')->name('positions.')->middleware('permission:organization.view')->group(function () {
         Route::get('/', [\App\Http\Controllers\PositionsController::class, 'index'])->name('index');
         Route::get('/export', [\App\Http\Controllers\PositionsController::class, 'export'])->name('export');
         Route::get('/import-template', [\App\Http\Controllers\PositionsController::class, 'importTemplate'])->name('import-template');
@@ -617,7 +618,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Audit Trail Routes
-    Route::prefix('audit-trail')->name('audit-trail.')->group(function () {
+    Route::prefix('audit-trail')->name('audit-trail.')->middleware('permission:audit.view')->group(function () {
         Route::get('/', [\App\Http\Controllers\AuditController::class, 'index'])->name('index');
         Route::get('/export', [\App\Http\Controllers\AuditController::class, 'export'])->name('export');
         Route::get('/{id}', [\App\Http\Controllers\AuditController::class, 'show'])->name('show');
@@ -634,15 +635,8 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::delete('/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy')->middleware('permission:backups.manage');
     });
 
-    // Analytics Routes
-    Route::prefix('analytics')->group(function () {
-        Route::get('/', function () {
-            return view('analytics.index');
-        })->name('analytics.index');
-    });
-
     // Onboarding Routes
-    Route::prefix('onboarding')->group(function () {
+    Route::prefix('onboarding')->middleware('permission:onboarding.view')->group(function () {
         Route::get('/', [OnboardingController::class, 'index'])->name('onboarding.index');
         Route::get('/export', [OnboardingController::class, 'exportReport'])->name('onboarding.export');
         Route::post('/start', [OnboardingController::class, 'startOnboarding'])->name('onboarding.start');
@@ -668,7 +662,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     });
 
     // Employee Self Service Routes
-    Route::prefix('selfservice')->group(function () {
+    Route::prefix('selfservice')->middleware('permission:selfservice.view')->group(function () {
         Route::get('/', [SelfServiceController::class, 'index'])->name('selfservice.index');
         Route::get('/leave', [SelfServiceController::class, 'leave'])->name('selfservice.leave');
         Route::post('/leave', [SelfServiceController::class, 'storeLeave'])->name('selfservice.leave.store');
@@ -714,18 +708,8 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::get('/data', [SettingsController::class, 'getSettings'])->name('data');
     });
 
-    // Case Management Routes
-    Route::prefix('casemanagement')->group(function () {
-        Route::get('/', [CaseController::class, 'index'])->name('casemanagement.index');
-        Route::post('/', [CaseController::class, 'store'])->name('casemanagement.store');
-        Route::put('/{case}', [CaseController::class, 'update'])->name('casemanagement.update');
-        Route::get('/export', [CaseController::class, 'export'])->name('casemanagement.export');
-        Route::post('/templates', [CaseController::class, 'storeTemplate'])->name('casemanagement.templates.store');
-        Route::put('/templates/{index}', [CaseController::class, 'updateTemplate'])->name('casemanagement.templates.update');
-    });
-
     // Documents & Policies Routes
-    Route::prefix('documents')->group(function () {
+    Route::prefix('documents')->middleware('permission:employees.view')->group(function () {
         Route::get('/', [DocumentsController::class, 'index'])->name('documents.index');
         Route::get('/create', [DocumentsController::class, 'create'])->name('documents.create');
         Route::post('/', [DocumentsController::class, 'store'])->name('documents.store');
@@ -812,6 +796,7 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/help/contact', [HelpController::class, 'getContactInfo'])->name('help.contact');
 
     // Employee Management Routes
+    Route::middleware('permission:employees.view')->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
@@ -824,8 +809,10 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/employees/search', [EmployeeController::class, 'search'])->name('employees.search');
     Route::get('/employees/statistics', [EmployeeController::class, 'statistics'])->name('employees.statistics');
     Route::get('/employees/positions-by-department/{departmentId}', [EmployeeController::class, 'getPositionsByDepartment'])->name('employees.positions-by-department');
+    });
 
-    // Contract Management Routes
+    // Contract Management Routes (legacy)
+    Route::middleware('permission:employment_contract.view')->group(function () {
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
     Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
@@ -841,6 +828,7 @@ Route::get('/test-login', [TestLoginController::class, 'testLogin']);
     Route::get('/contracts/{contract}/print-pdf', [ContractController::class, 'printPdf'])->name('contracts.print-pdf');
     Route::get('/contracts/expiring', [ContractController::class, 'expiringSoon'])->name('contracts.expiring');
     Route::get('/contracts/statistics', [ContractController::class, 'statistics'])->name('contracts.statistics');
+    });
 
     // Signature Storage Routes
     Route::post('/signature/store', [\App\Http\Controllers\SignatureController::class, 'store'])->name('signature.store');

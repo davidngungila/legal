@@ -225,7 +225,7 @@ class AuthController
         }
 
         if (!$client) {
-            if ($user->hasRole('super_admin') || $user->hasRole('admin') || $user->hasRole('lead_hr_admin')) {
+            if ($user->hasRole('super_admin')) {
                 $client = Client::orderBy('name')->first();
             } else {
                 $client = $user->clients()->orderBy('name')->first();
@@ -244,8 +244,8 @@ class AuthController
             $user->update(['current_client_id' => $client->id]);
         }
 
-        // For admin users, ensure they have access to the client
-        if (($user->hasRole('super_admin') || $user->hasRole('admin') || $user->hasRole('lead_hr_admin')) && 
+        // Only super_admin is auto-synced into clients they visit
+        if ($user->hasRole('super_admin') && 
             !$user->clients()->where('clients.id', $client->id)->exists()) {
             $user->clients()->syncWithoutDetaching([
                 $client->id => [

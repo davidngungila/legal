@@ -141,6 +141,7 @@
             @endhasPermission
 
             <!-- Human Resources -->
+            @hasPermission('employees.view')
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -206,8 +207,10 @@
                     </li>
                 </ul>
             </li>
+            @endhasPermission
 
             <!-- Contracts -->
+            @hasPermission('employment_contract.view')
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -231,8 +234,10 @@
                     </li>
                 </ul>
             </li>
+            @endhasPermission
 
             <!-- Time & Payroll -->
+            @if(Auth::user()->hasPermission('attendance.view') || Auth::user()->hasPermission('payroll.view'))
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -378,8 +383,10 @@
                     </li>
                 </ul>
             </li>
+            @endif
 
             <!-- Performance & Training -->
+            @if(Auth::user()->hasPermission('performance.view') || Auth::user()->hasPermission('training.view'))
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -467,65 +474,20 @@
                     </li>
                 </ul>
             </li>
+            @endif
 
-            <!-- Legal & Compliance -->
+            <!-- Cases & Compliance (merged) -->
+            @if(Auth::user()->hasPermission('discipline.view') || Auth::user()->hasPermission('casemanagement.view') || Auth::user()->hasPermission('compliance.view'))
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
                         <i data-feather="shield" class="w-4 h-4"></i>
-                        <span class="text-sm font-medium">Legal & Compliance</span>
+                        <span class="text-sm font-medium">Cases & Compliance</span>
                     </div>
                     <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
                 </button>
                 <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                    <li class="sidebar-dropdown">
-                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
-                            <div class="flex items-center space-x-3">
-                                <i data-feather="shield" class="w-3.5 h-3.5"></i>
-                                <span class="text-xs">Compliance</span>
-                            </div>
-                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
-                        </button>
-                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
-                            <li>
-                                <a href="{{ route('compliance.statutory-filings') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.statutory-filings') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="file-text" class="w-3 h-3"></i>
-                                    <span class="text-xs">Statutory Filings</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('compliance.deadlines') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.deadlines') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="calendar" class="w-3 h-3"></i>
-                                    <span class="text-xs">Deadlines</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
-                                    <span class="text-xs">Reports</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('casemanagement.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
-                            <i data-feather="folder" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs">Case Management</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Employee Relations -->
-            <li class="sidebar-dropdown">
-                <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
-                    <div class="flex items-center space-x-3">
-                        <i data-feather="alert-circle" class="w-4 h-4"></i>
-                        <span class="text-sm font-medium">Employee Relations</span>
-                    </div>
-                    <i data-feather="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 dropdown-arrow"></i>
-                </button>
-                <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                    @hasPermission('discipline.view')
                     <li class="sidebar-dropdown">
                         <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
                             <div class="flex items-center space-x-3">
@@ -561,16 +523,63 @@
                             </li>
                         </ul>
                     </li>
+                    @endhasPermission
+
+                    @hasPermission('casemanagement.view')
+                    <li>
+                        <a href="{{ route('casemanagement.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('casemanagement.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                            <i data-feather="folder" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs">Case Management</span>
+                        </a>
+                    </li>
+                    @endhasPermission
+
+                    @hasPermission('compliance.view')
+                    <li class="sidebar-dropdown">
+                        <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
+                            <div class="flex items-center space-x-3">
+                                <i data-feather="shield" class="w-3.5 h-3.5"></i>
+                                <span class="text-xs">Compliance</span>
+                            </div>
+                            <i data-feather="chevron-down" class="w-3 h-3 transition-transform duration-300 dropdown-arrow"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 max-h-0 opacity-0 ml-4">
+                            <li>
+                                <a href="{{ route('compliance.statutory-filings') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.statutory-filings') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="file-text" class="w-3 h-3"></i>
+                                    <span class="text-xs">Statutory Filings</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compliance.deadlines') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.deadlines') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="calendar" class="w-3 h-3"></i>
+                                    <span class="text-xs">Deadlines</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('compliance.index') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('compliance.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                                    <i data-feather="bar-chart" class="w-3 h-3"></i>
+                                    <span class="text-xs">Reports</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endhasPermission
+
+                    @hasPermission('discipline.view')
                     <li>
                         <a href="{{ route('exit.index') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('exit.index') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="log-out" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Exit Management</span>
                         </a>
                     </li>
+                    @endhasPermission
                 </ul>
             </li>
+            @endif
 
             <!-- Analytics -->
+            @hasPermission('analytics.view')
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -600,8 +609,10 @@
                     </li>
                 </ul>
             </li>
+            @endhasPermission
 
             <!-- Self Service -->
+            @hasPermission('selfservice.view')
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -644,12 +655,14 @@
                                     <span class="text-xs">Calendar</span>
                                 </a>
                             </li>
+                            @hasPermission('attendance.view')
                             <li>
                                 <a href="{{ route('leave.reports') }}" class="flex items-center space-x-3 px-3 py-1 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('leave.reports') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                                     <i data-feather="bar-chart" class="w-3 h-3"></i>
                                     <span class="text-xs">Reports</span>
                                 </a>
                             </li>
+                            @endhasPermission
                         </ul>
                     </li>
                     <li>
@@ -678,16 +691,20 @@
                     </li>
                 </ul>
             </li>
+            @endhasPermission
 
             <!-- Documents -->
+            @hasPermission('employees.view')
             <li>
                 <a href="{{ route('documents.index') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 {{ request()->routeIs('documents.*') ? 'bg-white/10 backdrop-blur-sm' : '' }}">
                     <i data-feather="book" class="w-4 h-4"></i>
                     <span class="text-sm font-medium">Documents & Policies</span>
                 </a>
             </li>
+            @endhasPermission
             
             <!-- Administration -->
+            @if(Auth::user()->hasPermission('users.view') || Auth::user()->hasPermission('audit_trail.view') || Auth::user()->hasPermission('backups.view'))
             <li class="sidebar-dropdown">
                 <button type="button" class="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-300 group">
                     <div class="flex items-center space-x-3">
@@ -729,6 +746,7 @@
                     </li>
                 </ul>
             </li>
+            @endif
         </ul>
     </nav>
 </aside>

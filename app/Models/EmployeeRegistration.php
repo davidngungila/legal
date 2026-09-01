@@ -14,6 +14,7 @@ class EmployeeRegistration extends Model
 
     protected $fillable = [
         'client_id',
+        'employee_id',
         'employee_number',
         'hr_interview_id',
         'technical_interview_id',
@@ -55,11 +56,16 @@ class EmployeeRegistration extends Model
         'information_consent' => 'boolean',
         'approved_at' => 'datetime',
         'age' => 'integer',
-        'job_descriptions' => 'array',
-        'terms_conditions' => 'array',
-        'ranking_details' => 'array',
-        'employment_history' => 'array',
+        'job_descriptions' => 'string',
+        'terms_conditions' => 'string',
+        'ranking_details' => 'string',
+        'employment_history' => 'string',
     ];
+
+    public function employee(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
 
     /**
      * Get the HR interview associated with the registration.

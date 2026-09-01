@@ -239,7 +239,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ $request->employee->first_name ?? '' }} {{ $request->employee->last_name ?? '' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->leave_type }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->leaveType->type_name ?? $request->getOriginal('leave_type') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->start_date->format('M d, Y') }} - {{ $request->end_date->format('M d, Y') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->days }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">

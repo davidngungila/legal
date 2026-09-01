@@ -14,6 +14,7 @@ class ContractManagementController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('employment_contract.view');
         $clientId = session('current_client_id');
         if (! $clientId) {
             return redirect()->route('dashboard')->with('error', 'Please select a client first.');

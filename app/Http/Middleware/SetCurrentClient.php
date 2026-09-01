@@ -46,8 +46,8 @@ class SetCurrentClient
                 $currentClient = $clientId ? Client::find($clientId) : null;
             }
             
-            // For super_admin, admin, and lead_hr_admin users, ensure they have access to the current client
-            if ($currentClient && auth()->check() && (auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('lead_hr_admin'))) {
+            // Only super_admin is auto-synced into clients they visit
+            if ($currentClient && auth()->check() && auth()->user()->hasRole('super_admin')) {
                 if (!auth()->user()->clients()->where('clients.id', $clientId)->exists()) {
                     auth()->user()->clients()->syncWithoutDetaching([
                         $clientId => [
@@ -89,8 +89,8 @@ class SetCurrentClient
                 return;
             }
 
-            // Use same logic as ClientSwitchController for stability
-            if ($user->hasRole('admin') || $user->hasRole('super_admin') || $user->hasRole('lead_hr_admin')) {
+            // Only super_admin can access all clients; admin/lead_hr_admin restricted to assigned clients
+            if ($user->hasRole('super_admin')) {
                 $firstClient = Client::orderBy('name')->first();
             } else {
                 $firstClient = $user->clients()->orderBy('name')->first();

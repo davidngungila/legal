@@ -89,6 +89,8 @@ class EmployeeRegistrationController extends Controller
             'information_consent' => $isDraft ? 'nullable|boolean' : 'required|boolean',
             'ranking_details' => 'nullable|string|max:2000',
             'employment_history' => 'nullable|string|max:3000',
+            'signature_date' => 'nullable|date',
+            'employee_signature' => 'nullable|string',
             'status' => 'nullable|in:draft,submitted',
         ];
 
@@ -104,6 +106,7 @@ class EmployeeRegistrationController extends Controller
                 'employee_number' => $employeeNumber,
                 'created_by' => auth()->id(),
                 'status' => $status,
+                'signature_date' => $validated['signature_date'] ?? null,
             ]));
 
             // Handle base64 signature

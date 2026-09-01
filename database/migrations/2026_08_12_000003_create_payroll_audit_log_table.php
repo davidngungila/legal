@@ -17,7 +17,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('client_id');
                 $table->unsignedBigInteger('payroll_id')->nullable();
                 $table->unsignedBigInteger('employee_id')->nullable();
-                $table->string(' action'); // CREATE, UPDATE, DELETE, APPROVE, REJECT, LOCK, REVERSE
+                $table->string('action'); // CREATE, UPDATE, DELETE, APPROVE, REJECT, LOCK, REVERSE
                 $table->unsignedBigInteger('performed_by');
                 $table->timestamp('performed_at');
                 $table->text('old_value')->nullable();

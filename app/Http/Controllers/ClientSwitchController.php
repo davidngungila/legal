@@ -45,6 +45,16 @@ class ClientSwitchController extends Controller
             $clientId = $request->client_id;
             $client = Client::findOrFail($clientId);
 
+            // Non-super_admin users can only switch to clients they belong to
+            if (!auth()->user()->hasRole('super_admin')) {
+                if (!auth()->user()->clients()->where('clients.id', $clientId)->exists()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not assigned to this client'
+                    ], 403);
+                }
+            }
+
             // Check if client is active
             if ($client->status !== 'active') {
                 return response()->json([
@@ -186,8 +196,12 @@ class ClientSwitchController extends Controller
             }
         }
         
-        // Fallback to any available client, sorted alphabetically for stability
-        return Client::orderBy('name')->first();
+        // Fallback to first available client for super_admin only
+        if (auth()->check() && auth()->user()->hasRole('super_admin')) {
+            return Client::orderBy('name')->first();
+        }
+
+        return null;
     }
 
     /**
@@ -195,15 +209,14 @@ class ClientSwitchController extends Controller
      */
     public function available()
     {
-        if (!auth()->user()->hasRole('super_admin')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
-        $clients = Client::orderBy('name')->get();
+        $user = auth()->user();
         $currentClientId = Session::get('current_client_id');
+
+        if ($user->hasRole('super_admin')) {
+            $clients = Client::orderBy('name')->get();
+        } else {
+            $clients = $user->clients()->orderBy('name')->get();
+        }
 
         return response()->json([
             'success' => true,

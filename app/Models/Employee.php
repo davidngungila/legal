@@ -222,6 +222,31 @@ class Employee extends Model
         return $this->hasMany(Contract::class);
     }
 
+    public function employmentContracts(): HasMany
+    {
+        return $this->hasMany(EmploymentContract::class);
+    }
+
+    public function disciplinaryCases(): HasMany
+    {
+        return $this->hasMany(DisciplinaryCase::class);
+    }
+
+    public function legalCases(): HasMany
+    {
+        return $this->hasMany(LegalCase::class);
+    }
+
+    public function exitCases(): HasMany
+    {
+        return $this->hasMany(ExitCase::class);
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EmployeeRegistration::class, 'employee_id');
+    }
+
     public function inductionTrainings(): HasMany
     {
         return $this->hasMany(InductionTraining::class);

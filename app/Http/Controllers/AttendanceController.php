@@ -397,6 +397,76 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.index')->with('success', $message);
     }
 
+    public function downloadTemplate()
+    {
+        $clientId = session('current_client_id');
+        $employees = Employee::where('client_id', $clientId)->where('status', 'active')->get(['id', 'employee_id', 'first_name', 'last_name']);
+
+        $filename = 'timesheet_template_' . now()->format('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($employees) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['employee_id', 'date', 'status_code', 'clock_in', 'clock_out', 'total_hours', 'notes', 'source', 'manual_entry']);
+
+            foreach ($employees->take(3) as $emp) {
+                fputcsv($handle, [
+                    $emp->employee_id,
+                    now()->toDateString(),
+                    '9',
+                    '08:00',
+                    '17:00',
+                    '8.0',
+                    'Regular attendance',
+                    'manual',
+                    'true',
+                ]);
+                fputcsv($handle, [
+                    $emp->employee_id,
+                    now()->addDay()->toDateString(),
+                    'AL',
+                    '',
+                    '',
+                    '0',
+                    'Annual Leave',
+                    'manual',
+                    'true',
+                ]);
+                fputcsv($handle, [
+                    $emp->employee_id,
+                    now()->addDays(2)->toDateString(),
+                    'A',
+                    '',
+                    '',
+                    '0',
+                    'Absent - no reason',
+                    'manual',
+                    'true',
+                ]);
+            }
+
+            fputcsv($handle, []);
+            fputcsv($handle, ['--- STATUS CODE REFERENCE ---']);
+            fputcsv($handle, ['Code', 'Meaning']);
+            fputcsv($handle, ['9', 'Present / Ordinary Hours']);
+            fputcsv($handle, ['12', 'Overtime (12-hour shift)']);
+            fputcsv($handle, ['A', 'Absent']);
+            fputcsv($handle, ['AL', 'Annual Leave']);
+            fputcsv($handle, ['SLF', 'Sick Leave Full Pay']);
+            fputcsv($handle, ['SLH', 'Sick Leave Half Pay']);
+            fputcsv($handle, ['UL', 'Unpaid Leave']);
+            fputcsv($handle, ['M', 'Official Mission']);
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function timesheets(Request $request)
     {
         $clientId = session('current_client_id');

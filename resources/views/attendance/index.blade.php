@@ -96,9 +96,17 @@
             </div>
             <h3 class="text-xl font-bold mb-2">Timesheet Entry</h3>
             <p class="text-sm opacity-90 mb-4">Submit weekly timesheets</p>
-            <button class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                Enter Timesheet
-            </button>
+            <div class="flex space-x-2">
+                <button class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm">
+                    Enter Timesheet
+                </button>
+                <button onclick="openTimesheetImport()" class="bg-white text-blue-600 px-3 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm" title="Import CSV">
+                    <i data-feather="upload" class="w-4 h-4 inline"></i>
+                </button>
+                <a href="{{ route('attendance.import.template') }}" class="bg-white text-blue-600 px-3 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm" title="Download Template">
+                    <i data-feather="download" class="w-4 h-4 inline"></i> Template
+                </a>
+            </div>
         </div>
 
         <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">

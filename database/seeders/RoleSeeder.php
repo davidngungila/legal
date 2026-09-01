@@ -72,6 +72,9 @@ class RoleSeeder extends Seeder
                     // Case Management
                     'casemanagement.view', 'casemanagement.manage', 'casemanagement.generator', 'casemanagement.chronology', 'casemanagement.evidence', 'casemanagement.witness', 'casemanagement.readiness',
                     
+                    // Employment Contracts
+                    'employment_contract.view', 'employment_contract.create', 'employment_contract.edit', 'employment_contract.manage', 'employment_contract.delete',
+                    
                     // Dashboard & Reports
                     'dashboard.view', 'reports.view', 'reports.create', 'reports.export', 'reports.schedule',
                     
@@ -123,13 +126,13 @@ class RoleSeeder extends Seeder
                     'performance.view', 'performance.manage', 'performance.goals', 'performance.appraisal', 'performance.pip', 'performance.warning', 'performance.kpi', 'performance.okr', 'performance.360', 'performance.improvement', 'performance.discipline', 'performance.promotion', 'performance.talent', 'performance.documentation',
                     
                     // Employee Relations & Discipline (CRITICAL)
-                    'discipline.view', 'discipline.manage', 'discipline.incident', 'discipline.investigation', 'discipline.letter', 'discipline.report', 'discipline.misconduct', 'discipline.progressive', 'discipline.evidence', 'discipline.hearing', 'discipline.adjourn', 'discipline.approval', 'discipline.risk', 'discipline.case', 'discipline.timeline', 'discipline.witness', 'discipline.sensitivity', 'discipline.engineer', 'discipline.legal', 'discipline.precedent', 'discipline.score', 'discipline.exposure', 'discipline.block', 'discipline.suspension', 'discipline.warning', 'discipline.termination', 'discipline.outcome',
+                    'discipline.view', 'discipline.manage', 'discipline.incident', 'discipline.investigation', 'discipline.letter', 'discipline.report', 'discipline.misconduct', 'discipline.progressive', 'discipline.evidence', 'discipline.hearing', 'discipline.adjourn', 'discipline.approval', 'discipline.risk', 'discipline.case', 'discipline.timeline', 'discipline.witness', 'discipline.sensitivity',                     'discipline.engine', 'discipline.legal', 'discipline.precedent', 'discipline.score', 'discipline.exposure', 'discipline.block', 'discipline.suspension', 'discipline.warning', 'discipline.termination', 'discipline.outcome',
                     
                     // Compliance & Legal
                     'compliance.view', 'compliance.manage', 'compliance.elra', 'compliance.labour', 'compliance.osha', 'compliance.union', 'compliance.data', 'compliance.database', 'compliance.audit', 'compliance.scan', 'compliance.filing', 'compliance.update', 'compliance.expat', 'compliance.policy', 'compliance.bargaining', 'compliance.dashboard',
                     
                     // Training & Development
-                    'training.view', 'training.manage', 'training.needs', 'training.compliance', 'training.records', 'training.skills', 'training.certification', 'training.budget', 'training.history', 'training.compliance', 'training.succession',
+                    'training.view', 'training.manage', 'training.needs', 'training.compliance', 'training.records', 'training.skills', 'training.certification', 'training.budget', 'training.history', 'training.succession',
                     
                     // Talent Management
                     'talent.view', 'talent.manage', 'talent.succession', 'talent.potential', 'talent.skills',
@@ -142,6 +145,9 @@ class RoleSeeder extends Seeder
                     
                     // Case Management
                     'casemanagement.view', 'casemanagement.manage', 'casemanagement.generator', 'casemanagement.chronology', 'casemanagement.evidence', 'casemanagement.witness', 'casemanagement.readiness',
+                    
+                    // Employment Contracts
+                    'employment_contract.view', 'employment_contract.create', 'employment_contract.edit', 'employment_contract.manage', 'employment_contract.delete',
                     
                     // Dashboard & Reports
                     'dashboard.view', 'reports.view', 'reports.create', 'reports.export', 'reports.schedule',
@@ -210,6 +216,9 @@ class RoleSeeder extends Seeder
                     // Case Management
                     'casemanagement.view', 'casemanagement.manage', 'casemanagement.generator', 'casemanagement.chronology', 'casemanagement.evidence', 'casemanagement.witness', 'casemanagement.readiness',
                     
+                    // Employment Contracts
+                    'employment_contract.view', 'employment_contract.create', 'employment_contract.edit', 'employment_contract.manage',
+                    
                     // Dashboard & Reports
                     'dashboard.view', 'reports.view', 'reports.create', 'reports.export', 'reports.schedule',
                     
@@ -258,6 +267,9 @@ class RoleSeeder extends Seeder
                     // Compliance & Legal
                     'compliance.view', 'compliance.labour', 'compliance.osha', 'compliance.union', 'compliance.data', 'compliance.scan', 'compliance.filing', 'compliance.expat', 'compliance.policy',
                     
+                    // Employment Contracts
+                    'employment_contract.view', 'employment_contract.create', 'employment_contract.edit', 'employment_contract.manage',
+                    
                     // Training & Development
                     'training.view', 'training.manage', 'training.needs', 'training.compliance', 'training.records', 'training.skills', 'training.certification', 'training.history',
                     
@@ -287,6 +299,9 @@ class RoleSeeder extends Seeder
                     // Compliance & Legal (financial)
                     'compliance.view', 'compliance.labour', 'compliance.filing',
                     
+                    // Employment Contracts
+                    'employment_contract.view',
+                    
                     // Dashboard & Reports
                     'dashboard.view', 'reports.view', 'reports.create', 'reports.export', 'reports.schedule',
                 ],
@@ -313,6 +328,9 @@ class RoleSeeder extends Seeder
                     
                     // Employee Relations & Discipline (team)
                     'discipline.view', 'discipline.incident', 'discipline.investigation', 'discipline.letter', 'discipline.report', 'discipline.misconduct', 'discipline.progressive', 'discipline.evidence', 'discipline.hearing', 'discipline.risk', 'discipline.case', 'discipline.timeline',
+                    
+                    // Employment Contracts
+                    'employment_contract.view',
                     
                     // Training & Development (team)
                     'training.view', 'training.manage', 'training.needs', 'training.records', 'training.skills', 'training.certification', 'training.history',
@@ -346,7 +364,7 @@ class RoleSeeder extends Seeder
                 'description' => 'External Auditor - Read-only access for compliance auditing',
                 'permissions' => [
                     // Read-only access to all modules
-                    'organization.view', 'employees.view', 'recruitment.view', 'onboarding.view', 'attendance.view', 'payroll.view', 'compensation.view', 'performance.view', 'discipline.view', 'compliance.view', 'training.view', 'talent.view', 'analytics.view', 'selfservice.view', 'casemanagement.view', 'dashboard.view', 'reports.view', 'reports.export',
+                    'organization.view', 'employees.view', 'recruitment.view', 'onboarding.view', 'attendance.view', 'payroll.view', 'compensation.view', 'performance.view', 'discipline.view', 'compliance.view', 'training.view', 'talent.view', 'analytics.view', 'selfservice.view', 'casemanagement.view', 'employment_contract.view', 'dashboard.view', 'reports.view', 'reports.export',
                     
                     // Audit-specific
                     'audit.view', 'audit.trail', 'audit.compliance', 'audit.export',

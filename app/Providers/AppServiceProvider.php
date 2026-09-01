@@ -6,6 +6,7 @@ use App\Auth\ClientAwareUserProvider;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
@@ -37,6 +38,20 @@ class AppServiceProvider extends ServiceProvider
         Blade::if('hasPermission', function (string $permission) {
             $user = auth()->user();
             return $user && ($user->hasRole('super_admin') || $user->hasPermission($permission));
+        });
+
+        // Grant super_admin full access to all abilities, and allow permission
+        // holders to use the same permission names via Gate (i.e. $this->authorize())
+        Gate::before(function ($user, $ability) {
+            if ($user->hasRole('super_admin')) {
+                return true;
+            }
+
+            if ($user->hasPermission($ability)) {
+                return true;
+            }
+
+            return null;
         });
         
         Blade::if('hasRole', function (string $role) {

@@ -10,11 +10,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class EmploymentContractsController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('employment_contract.view');
         $clientId = session('current_client_id');
         if (! $clientId) {
             return redirect()->route('dashboard')->with('error', 'Please select a client first.');
@@ -86,6 +88,7 @@ class EmploymentContractsController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('employment_contract.create');
         $clientId = session('current_client_id');
         if (! $clientId) {
             return back()->with('error', 'Please select a client first.');
@@ -123,6 +126,7 @@ class EmploymentContractsController extends Controller
 
     public function edit(EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.edit');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             return redirect()->route('employment-contracts.index')->with('error', 'Invalid request.');
@@ -138,6 +142,7 @@ class EmploymentContractsController extends Controller
 
     public function update(Request $request, EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.edit');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             return back()->with('error', 'Invalid request.');
@@ -175,6 +180,7 @@ class EmploymentContractsController extends Controller
 
     public function activate(EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.edit');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             return back()->with('error', 'Invalid request.');
@@ -205,6 +211,7 @@ class EmploymentContractsController extends Controller
 
     public function terminate(Request $request, EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.edit');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             return back()->with('error', 'Invalid request.');
@@ -256,6 +263,7 @@ class EmploymentContractsController extends Controller
 
     public function renew(Request $request, EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.edit');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             return back()->with('error', 'Invalid request.');
@@ -313,6 +321,7 @@ class EmploymentContractsController extends Controller
 
     public function generatePdf(EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.manage');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             abort(403, 'Unauthorized access to contract record.');
@@ -340,6 +349,7 @@ class EmploymentContractsController extends Controller
 
     public function statistics()
     {
+        $this->authorize('employment_contract.view');
         return response()->json([
             'success' => true,
             'statistics' => EmploymentContract::getContractStats(),
@@ -348,6 +358,7 @@ class EmploymentContractsController extends Controller
 
     public function requiringAttention()
     {
+        $this->authorize('employment_contract.view');
         return response()->json([
             'success' => true,
             'attention' => EmploymentContract::getRequiringAttention(),
@@ -356,6 +367,7 @@ class EmploymentContractsController extends Controller
 
     public function calendar()
     {
+        $this->authorize('employment_contract.view');
         return response()->json([
             'success' => true,
             'events' => EmploymentContract::getCalendarEvents(),
@@ -364,6 +376,7 @@ class EmploymentContractsController extends Controller
 
     public function uploadDocument(Request $request, EmploymentContract $contract)
     {
+        $this->authorize('employment_contract.manage');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             return back()->with('error', 'Invalid request.');
@@ -404,6 +417,7 @@ class EmploymentContractsController extends Controller
 
     public function downloadDocument(EmploymentContract $contract, $documentType)
     {
+        $this->authorize('employment_contract.manage');
         $clientId = session('current_client_id');
         if (! $clientId || $contract->client_id != $clientId) {
             abort(403, 'Unauthorized access to contract record.');
@@ -438,7 +452,7 @@ class EmploymentContractsController extends Controller
             'contract_number' => 'nullable|string|max:50' . ($isUpdate ? '' : '|unique:employment_contracts,contract_number'),
             'effective_date' => 'required|date',
             'expiry_date' => 'nullable|date|after:effective_date',
-            'probation_end_date' => 'nullable|date|after:effective_date|before:expiry_date',
+            'probation_end_date' => ['nullable', 'date', 'after:effective_date', Rule::when(fn ($r) => $r->filled('expiry_date'), ['before:expiry_date'])],
             'job_title' => 'required|string|max:255',
             'department' => 'required|string|max:255',
             'reporting_line' => 'nullable|string|max:255',
@@ -582,13 +596,18 @@ class EmploymentContractsController extends Controller
         $signatureFields = ['employee_signature' => 'employee_signature_path', 'employer_signature' => 'employer_signature_path'];
         foreach ($signatureFields as $inputName => $dbField) {
             if ($request->filled($inputName)) {
-                $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $request->input($inputName));
-                $signatureImage = base64_decode($signatureData);
-                if ($signatureImage !== false) {
-                    $fileName = time() . '_' . $inputName . '_' . $clientId . '.png';
-                    $path = "employment-contracts/{$clientId}/signatures/{$fileName}";
-                    Storage::disk('public')->put($path, $signatureImage);
-                    $uploaded[$dbField] = $path;
+                $signatureInput = $request->input($inputName);
+
+                // Skip if value is an existing file path (not base64 data)
+                if (str_starts_with($signatureInput, 'data:image')) {
+                    $signatureData = preg_replace('#^data:image/\w+;base64,#i', '', $signatureInput);
+                    $signatureImage = base64_decode($signatureData);
+                    if ($signatureImage !== false) {
+                        $fileName = time() . '_' . $inputName . '_' . $clientId . '.png';
+                        $path = "employment-contracts/{$clientId}/signatures/{$fileName}";
+                        Storage::disk('public')->put($path, $signatureImage);
+                        $uploaded[$dbField] = $path;
+                    }
                 }
             }
         }

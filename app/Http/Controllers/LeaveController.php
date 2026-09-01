@@ -53,7 +53,14 @@ class LeaveController extends Controller
         $leaveRequests = LeaveRequest::with(['employee', 'leaveType'])->where('client_id', $clientId)->latest()->paginate(20);
         $employees = Employee::where('client_id', $clientId)->where('status', 'active')->get();
 
-        return view('leave.index', compact('currentClient', 'leaveTypes', 'leaveRequests', 'employees'));
+        $user = Auth::user();
+        $isEmployee = !$user->hasRole('super_admin') && !$user->hasRole('admin') && !$user->hasRole('lead_hr_admin') && !$user->hasRole('hr_officer') && !$user->hasRole('line_manager');
+        $currentEmployee = null;
+        if ($isEmployee && $user->employee_id) {
+            $currentEmployee = Employee::where('client_id', $clientId)->where('id', $user->employee_id)->first();
+        }
+
+        return view('leave.index', compact('currentClient', 'leaveTypes', 'leaveRequests', 'employees', 'isEmployee', 'currentEmployee'));
     }
 
     public function store(Request $request)
@@ -71,6 +78,19 @@ class LeaveController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'reason' => 'nullable|string',
             ]);
+
+            $user = Auth::user();
+            $isEmployee = !$user->hasRole('super_admin') && !$user->hasRole('admin') && !$user->hasRole('lead_hr_admin') && !$user->hasRole('hr_officer') && !$user->hasRole('line_manager');
+            if ($isEmployee) {
+                $currentEmployee = Employee::where('client_id', $clientId)->where('id', $user->employee_id)->first();
+                if ($currentEmployee && $validated['employee_id'] != $currentEmployee->id) {
+                    return back()->with('error', 'You can only submit leave requests for yourself.');
+                }
+                if (!$currentEmployee) {
+                    return back()->with('error', 'No employee profile linked to your account.');
+                }
+                $validated['employee_id'] = $currentEmployee->id;
+            }
 
             $leaveType = LeaveType::findOrFail($validated['leave_type_id']);
             $startDate = Carbon::parse($validated['start_date']);

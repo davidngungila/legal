@@ -35,7 +35,16 @@ class UserController
      */
     public function index(Request $request)
     {
-        $query = User::withoutClientFilter()->with(['roles', 'permissions', 'client', 'clients'])->orderBy('created_at', 'desc');
+        $isSuperAdmin = auth()->user()->hasRole('super_admin');
+
+        if ($isSuperAdmin) {
+            $query = User::withoutClientFilter()->with(['roles', 'permissions', 'client', 'clients'])->orderBy('created_at', 'desc');
+        } else {
+            $clientId = $this->getCurrentClientId();
+            $query = User::whereHas('clients', function ($q) use ($clientId) {
+                $q->where('clients.id', $clientId)->where('client_user.is_active', true);
+            })->with(['roles', 'permissions', 'client', 'clients'])->orderBy('created_at', 'desc');
+        }
 
         $users = $query->get();
         
@@ -53,7 +62,14 @@ class UserController
         });
 
         // Optimized stats query - single query with conditional aggregates
-        $statsQuery = User::withoutClientFilter();
+        if ($isSuperAdmin) {
+            $statsQuery = User::withoutClientFilter();
+        } else {
+            $clientId = $this->getCurrentClientId();
+            $statsQuery = User::whereHas('clients', function ($q) use ($clientId) {
+                $q->where('clients.id', $clientId)->where('client_user.is_active', true);
+            });
+        }
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'active' => (clone $statsQuery)->where('is_active', 1)->count(),
@@ -481,7 +497,15 @@ class UserController
             switch ($operation) {
                 case 'delete':
                     $clientId = $this->getCurrentClientId();
-                    $users = User::whereIn('id', $userIds)->with('roles', 'clients')->get();
+                    $isSuperAdmin = auth()->user()->hasRole('super_admin');
+
+                    if ($isSuperAdmin) {
+                        $users = User::whereIn('id', $userIds)->with('roles', 'clients')->get();
+                    } else {
+                        $users = User::whereIn('id', $userIds)->whereHas('clients', function ($q) use ($clientId) {
+                            $q->where('clients.id', $clientId)->where('client_user.is_active', true);
+                        })->with('roles', 'clients')->get();
+                    }
 
                     $superAdminCountInSelection = $users->filter(function ($user) {
                         return $user->roles->contains('name', 'super_admin');
@@ -519,14 +543,30 @@ class UserController
                     ]);
                     
                 case 'activate':
-                    User::whereIn('id', $userIds)->update(['is_active' => 1]);
+                    $isSuperAdmin = auth()->user()->hasRole('super_admin');
+                    $activateQuery = User::whereIn('id', $userIds);
+                    if (!$isSuperAdmin) {
+                        $clientId = $this->getCurrentClientId();
+                        $activateQuery->whereHas('clients', function ($q) use ($clientId) {
+                            $q->where('clients.id', $clientId)->where('client_user.is_active', true);
+                        });
+                    }
+                    $activateQuery->update(['is_active' => 1]);
                     return response()->json([
                         'success' => true,
                         'message' => 'Users activated successfully'
                     ]);
                     
                 case 'deactivate':
-                    $users = User::whereIn('id', $userIds)->with('roles')->get();
+                    $isSuperAdmin = auth()->user()->hasRole('super_admin');
+                    if ($isSuperAdmin) {
+                        $users = User::whereIn('id', $userIds)->with('roles')->get();
+                    } else {
+                        $clientId = $this->getCurrentClientId();
+                        $users = User::whereIn('id', $userIds)->whereHas('clients', function ($q) use ($clientId) {
+                            $q->where('clients.id', $clientId)->where('client_user.is_active', true);
+                        })->with('roles')->get();
+                    }
                     $superAdminCountInSelection = $users->filter(function ($user) {
                         return $user->roles->contains('name', 'super_admin');
                     })->count();
@@ -570,7 +610,16 @@ class UserController
      */
     public function export(Request $request)
     {
-        $query = User::withoutClientFilter()->with('roles');
+        $isSuperAdmin = auth()->user()->hasRole('super_admin');
+
+        if ($isSuperAdmin) {
+            $query = User::withoutClientFilter()->with('roles');
+        } else {
+            $clientId = $this->getCurrentClientId();
+            $query = User::whereHas('clients', function ($q) use ($clientId) {
+                $q->where('clients.id', $clientId)->where('client_user.is_active', true);
+            })->with('roles');
+        }
         
         // Apply same filters as index
         if ($request->filled('search')) {
