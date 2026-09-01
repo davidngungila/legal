@@ -6,6 +6,32 @@
     $checked = function ($field) use ($c) {
         return (bool) old($field, $c ? $c->{$field} : false);
     };
+
+    $clientId = session('current_client_id');
+
+    $positionList = \App\Models\Position::when($clientId, fn ($q) => $q->where('client_id', $clientId))
+        ->orderBy('title')->pluck('title')->unique()->values()->all();
+
+    $departmentList = \App\Models\Department::when($clientId, fn ($q) => $q->where('client_id', $clientId))
+        ->orderBy('name')->pluck('name')->unique()->values()->all();
+
+    if ($c) {
+        $positionList = array_values(array_unique(array_merge($positionList, [$c->job_title])));
+        $departmentList = array_values(array_unique(array_merge($departmentList, [$c->department])));
+    }
+
+    $managerList = \App\Models\Employee::when($clientId, fn ($q) => $q->where('client_id', $clientId))
+        ->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'position'])
+        ->map(fn ($e) => $e->full_name . ($e->position ? ' - ' . $e->position : ''))
+        ->all();
+
+    $employeeWorkLocations = \App\Models\Employee::when($clientId, fn ($q) => $q->where('client_id', $clientId))
+        ->get()
+        ->map(fn ($e) => trim(collect([$e->region, $e->city, $e->address])->filter()->implode(', ')))
+        ->filter()->values()->all();
+
+    $workLocationList = array_values(array_unique(array_merge($employeeWorkLocations)));
+    $currencyList = ['TZS', 'USD', 'EUR', 'GBP'];
 @endphp
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -15,11 +41,27 @@
     </div>
     <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Employee <span class="text-red-500">*</span></label>
-        <select name="employee_id" required
+        <select name="employee_id" id="contract_employee_id" required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             <option value="">Select Employee</option>
             @foreach($employees as $employee)
                 <option value="{{ $employee->id }}"
+                    data-full-name="{{ $employee->full_name }}"
+                    data-position="{{ $employee->position }}"
+                    data-department="{{ $employee->department }}"
+                    data-salary="{{ $employee->salary }}"
+                    data-currency="{{ $employee->currency }}"
+                    data-payment-frequency="{{ $employee->payment_frequency }}"
+                    data-bank-name="{{ $employee->bank_name }}"
+                    data-bank-account="{{ $employee->bank_account }}"
+                    data-bank-branch="{{ $employee->bank_branch }}"
+                    data-hire-date="{{ $employee->hire_date ? $employee->hire_date->format('Y-m-d') : '' }}"
+                    data-probation-end-date="{{ $employee->probation_end_date ? $employee->probation_end_date->format('Y-m-d') : '' }}"
+                    data-work-schedule="{{ $employee->work_schedule }}"
+                    data-region="{{ $employee->region }}"
+                    data-city="{{ $employee->city }}"
+                    data-address="{{ $employee->address }}"
+                    data-reporting-to="{{ optional($employee->manager)->full_name }}"
                     @if((int) $value('employee_id') === $employee->id) selected @endif>
                     {{ $employee->full_name }} - {{ $employee->employee_id }} ({{ $employee->position ?? 'N/A' }})
                 </option>
@@ -89,28 +131,51 @@
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Job Title <span class="text-red-500">*</span></label>
-        <input type="text" name="job_title" required value="{{ $value('job_title') }}"
+        <input type="text" name="job_title" id="contract_job_title" required value="{{ $value('job_title') }}"
+               list="jobTitleList" placeholder="Select or type job title"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <datalist id="jobTitleList">
+            @foreach($positionList as $position)
+                <option value="{{ $position }}"></option>
+            @endforeach
+        </datalist>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Department <span class="text-red-500">*</span></label>
-        <input type="text" name="department" required value="{{ $value('department') }}"
+        <input type="text" name="department" id="contract_department" required value="{{ $value('department') }}"
+               list="contractDepartmentList" placeholder="Select or type department"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <datalist id="contractDepartmentList">
+            @foreach($departmentList as $department)
+                <option value="{{ $department }}"></option>
+            @endforeach
+        </datalist>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Reporting Line</label>
-        <input type="text" name="reporting_line" value="{{ $value('reporting_line') }}"
-               placeholder="Reports to..."
+        <input type="text" name="reporting_line" id="contract_reporting_line" value="{{ $value('reporting_line') }}"
+               list="managerList" placeholder="Reports to..."
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <datalist id="managerList">
+            @foreach($managerList as $manager)
+                <option value="{{ $manager }}"></option>
+            @endforeach
+        </datalist>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Work Location <span class="text-red-500">*</span></label>
-        <input type="text" name="work_location" required value="{{ $value('work_location') }}"
+        <input type="text" name="work_location" id="contract_work_location" required value="{{ $value('work_location') }}"
+               list="workLocationList" placeholder="Select or type work location"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <datalist id="workLocationList">
+            @foreach($workLocationList as $workLocation)
+                <option value="{{ $workLocation }}"></option>
+            @endforeach
+        </datalist>
     </div>
     <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Work Schedule</label>
-        <input type="text" name="work_schedule" value="{{ $value('work_schedule') }}"
+        <input type="text" name="work_schedule" id="contract_work_schedule" value="{{ $value('work_schedule') }}"
                placeholder="e.g. Mon-Fri 8:00am - 5:00pm"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
     </div>
@@ -121,12 +186,16 @@
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Currency <span class="text-red-500">*</span></label>
-        <input type="text" name="salary_currency" required maxlength="3" value="{{ $value('salary_currency') ?: 'TZS' }}"
-               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <select name="salary_currency" id="contract_salary_currency" required maxlength="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            @foreach($currencyList as $currencyOption)
+                <option value="{{ $currencyOption }}" @if($value('salary_currency') === $currencyOption) selected @endif>{{ $currencyOption }}</option>
+            @endforeach
+        </select>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Payment Frequency <span class="text-red-500">*</span></label>
-        <select name="payment_frequency" required
+        <select name="payment_frequency" id="contract_payment_frequency" required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             @foreach(\App\Models\EmploymentContract::PAYMENT_FREQUENCIES as $freqKey => $freqLabel)
                 <option value="{{ $freqKey }}" @if($value('payment_frequency') === $freqKey) selected @endif>{{ $freqLabel }}</option>
@@ -135,7 +204,7 @@
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Basic Salary <span class="text-red-500">*</span></label>
-        <input type="number" name="basic_salary" required min="0" step="0.01" value="{{ $value('basic_salary') }}"
+        <input type="number" name="basic_salary" id="contract_basic_salary" required min="0" step="0.01" value="{{ $value('basic_salary') }}"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
     </div>
     <div>
@@ -175,17 +244,23 @@
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
-        <input type="text" name="bank_name" value="{{ $value('bank_name') }}"
+        <input type="text" name="bank_name" id="contract_bank_name" value="{{ $value('bank_name') }}"
+               list="bankNameList" placeholder="Select or type bank name"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <datalist id="bankNameList">
+            @foreach(\App\Models\Employee::where('client_id', $clientId)->whereNotNull('bank_name')->where('bank_name', '!=', '')->orderBy('bank_name')->distinct()->pluck('bank_name')->all() as $bankName)
+                <option value="{{ $bankName }}"></option>
+            @endforeach
+        </datalist>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Bank Account Name</label>
-        <input type="text" name="bank_account_name" value="{{ $value('bank_account_name') }}"
+        <input type="text" name="bank_account_name" id="contract_bank_account_name" value="{{ $value('bank_account_name') }}"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Bank Account Number</label>
-        <input type="text" name="bank_account_number" value="{{ $value('bank_account_number') }}"
+        <input type="text" name="bank_account_number" id="contract_bank_account_number" value="{{ $value('bank_account_number') }}"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
     </div>
     <div>

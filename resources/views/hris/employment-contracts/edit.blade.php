@@ -51,3 +51,51 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function initContractAutoFillEdit() {
+    const employeeSelect = document.getElementById('contract_employee_id');
+    if (!employeeSelect) return;
+
+    function fillFromEmployee(option) {
+        if (!option || !option.value) return;
+
+        const values = {
+            job_title: option.dataset.position || '',
+            department: option.dataset.department || '',
+            basic_salary: option.dataset.salary || '',
+            salary_currency: option.dataset.currency || 'TZS',
+            payment_frequency: option.dataset.paymentFrequency || '',
+            bank_name: option.dataset.bankName || '',
+            bank_account_number: option.dataset.bankAccount || '',
+            bank_account_name: option.dataset.fullName || '',
+            effective_date: option.dataset.hireDate || '',
+            probation_end_date: option.dataset.probationEndDate || '',
+            work_schedule: option.dataset.workSchedule || '',
+            work_location: [option.dataset.region, option.dataset.city, option.dataset.address]
+                .filter(Boolean).join(', '),
+            reporting_line: option.dataset.reportingTo || ''
+        };
+
+        ['job_title', 'department', 'basic_salary', 'salary_currency', 'payment_frequency',
+         'bank_name', 'bank_account_number', 'bank_account_name', 'effective_date',
+         'probation_end_date', 'work_schedule', 'work_location', 'reporting_line'
+        ].forEach(name => {
+            const field = employeeSelect.form.querySelector(`[name="${name}"]`);
+            if (field && values[name] !== undefined) {
+                field.value = values[name];
+            }
+        });
+    }
+
+    employeeSelect.addEventListener('change', () => {
+        fillFromEmployee(employeeSelect.selectedOptions[0]);
+    });
+
+    fillFromEmployee(employeeSelect.selectedOptions[0]);
+}
+
+initContractAutoFillEdit();
+</script>
+@endpush
