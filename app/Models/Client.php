@@ -44,6 +44,15 @@ class Client extends Model
     }
 
     /**
+     * Whether this is the system placeholder client ("Orvion") that is
+     * auto-created for super admins who are not attached to a real tenant yet.
+     */
+    public function isSystemPlaceholder(): bool
+    {
+        return $this->name === 'Orvion';
+    }
+
+    /**
      * Get the employees associated with the client.
      */
     public function employees()

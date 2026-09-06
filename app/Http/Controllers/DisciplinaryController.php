@@ -186,6 +186,9 @@ class DisciplinaryController extends Controller
             'proceedings_notes' => 'nullable|string',
         ]);
 
+        // Hearing must belong to a case in the active client.
+        DisciplinaryCase::where('client_id', session('current_client_id'))->findOrFail($validated['case_id']);
+
         DisciplinaryHearing::updateOrCreate(
             ['case_id' => $validated['case_id']],
             $validated
@@ -202,6 +205,9 @@ class DisciplinaryController extends Controller
             'file_path' => 'nullable|string',
         ]);
 
+        // Document must belong to a case in the active client.
+        DisciplinaryCase::where('client_id', session('current_client_id'))->findOrFail($validated['case_id']);
+
         $validated['generated_at'] = now();
         $validated['served_by'] = auth()->id();
 
@@ -214,6 +220,10 @@ class DisciplinaryController extends Controller
         $clientId = session('current_client_id');
         if (!$clientId) {
             return back()->with('error', 'Please select a client first.');
+        }
+
+        if ($case->client_id != $clientId) {
+            abort(403, 'Unauthorized access to case record.');
         }
 
         $validated = $request->validate([
@@ -232,6 +242,10 @@ class DisciplinaryController extends Controller
         $clientId = session('current_client_id');
         if (!$clientId) {
             return back()->with('error', 'Please select a client first.');
+        }
+
+        if ($case->client_id != $clientId) {
+            abort(403, 'Unauthorized access to case record.');
         }
 
         $validated = $request->validate([

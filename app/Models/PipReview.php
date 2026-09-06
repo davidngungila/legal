@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToCurrentClient;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PipReview extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $fillable = [
         'pip_id',
@@ -32,5 +34,15 @@ class PipReview extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    /**
+     * Reviews inherit their client from the parent PIP.
+     */
+    protected static function filterByClient(Builder $builder, $clientId)
+    {
+        $builder->whereHas('pip', function ($q) use ($clientId) {
+            $q->where('client_id', $clientId);
+        });
     }
 }

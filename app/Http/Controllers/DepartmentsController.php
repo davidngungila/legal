@@ -267,7 +267,7 @@ class DepartmentsController extends Controller
         }
 
         try {
-            $department = Department::findOrFail($id);
+            $department = Department::where('client_id', session('current_client_id'))->findOrFail($id);
             $department->update([
                 'name' => $request->name,
                 'code' => $request->code,
@@ -288,7 +288,7 @@ class DepartmentsController extends Controller
 
     public function destroy($id)
     {
-        $department = Department::findOrFail($id);
+        $department = Department::where('client_id', session('current_client_id'))->findOrFail($id);
         $department->delete();
 
         return redirect()->route('departments.index')
@@ -298,7 +298,7 @@ class DepartmentsController extends Controller
     public function toggleStatus(Request $request, $id)
     {
         try {
-            $department = Department::findOrFail($id);
+            $department = Department::where('client_id', session('current_client_id'))->findOrFail($id);
             $department->update([
                 'is_active' => $request->is_active
             ]);

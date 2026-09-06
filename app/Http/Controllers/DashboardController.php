@@ -22,32 +22,85 @@ use App\Models\EmployeeDocument;
 use App\Models\JobVacancy;
 use App\Models\HrCompetencyInterview;
 use App\Models\TechnicalInterview;
+use App\Models\LeaveRequest;
 
 class DashboardController extends Controller
 {
     /**
      * Display the main dashboard.
+     *
+     * The dashboard is role-aware. Employees see a personal self-service view,
+     * line managers see their team, and management roles see the full HR
+     * operations overview scoped by the permissions their role holds.
      */
     public function index()
     {
         // Get current client directly from session to ensure synchronization
         $clientId = session('current_client_id');
-        
+
         if (!$clientId) {
             return redirect()->route('clients.index')
                 ->with('error', 'Please select a client first.');
         }
-        
+
         $currentClient = Client::find($clientId);
-        
+
         if (!$currentClient) {
             return redirect()->route('clients.index')
                 ->with('error', 'Selected client not found.');
         }
-        
+
         // Share with views to ensure consistency
         view()->share('currentClient', $currentClient);
 
+        $user = Auth::user();
+        $dashboardType = $this->resolveDashboardType($user);
+
+        if ($dashboardType === 'employee') {
+            return $this->renderEmployeeDashboard($user, $currentClient);
+        }
+
+        if ($dashboardType === 'manager') {
+            return $this->renderManagerDashboard($user, $currentClient);
+        }
+
+        return $this->renderManagementDashboard($currentClient, $user);
+    }
+
+    /**
+     * Determine which dashboard persona the authenticated user should see.
+     */
+    private function resolveDashboardType($user): string
+    {
+        if ($user->hasRole('employee') && ! $this->isManagementUser($user)) {
+            return 'employee';
+        }
+
+        if ($user->hasRole('line_manager') && ! $this->isManagementUser($user)) {
+            return 'manager';
+        }
+
+        return 'management';
+    }
+
+    /**
+     * Determine whether the user holds any management-level role.
+     */
+    private function isManagementUser($user): bool
+    {
+        return $user->hasRole('super_admin')
+            || $user->hasRole('admin')
+            || $user->hasRole('lead_hr_admin')
+            || $user->hasRole('hr_officer')
+            || $user->hasRole('finance_payroll_officer')
+            || $user->hasRole('external_auditor');
+    }
+
+    /**
+     * Render the full management/HR operations dashboard.
+     */
+    private function renderManagementDashboard(Client $currentClient, $user)
+    {
         // All numbers are computed strictly for the selected client
         $stats = $this->getClientStats($currentClient->id);
         $charts = $this->getChartData($currentClient->id);
@@ -60,7 +113,414 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'stats', 'charts', 'compliance', 'events',
             'recentActivities', 'alerts', 'quickActions', 'currentClient'
-        ));
+        ))->with('dashboardType', 'management');
+    }
+
+    /**
+     * Render the employee self-service dashboard.
+     */
+    private function renderEmployeeDashboard($user, Client $currentClient)
+    {
+        $data = $this->getEmployeeDashboardData($user, $currentClient);
+
+        return view('dashboard', $data + [
+            'currentClient' => $currentClient,
+            'dashboardType' => 'employee',
+        ]);
+    }
+
+    /**
+     * Render the line-manager team dashboard.
+     */
+    private function renderManagerDashboard($user, Client $currentClient)
+    {
+        $data = $this->getManagerDashboardData($user, $currentClient);
+
+        return view('dashboard', $data + [
+            'currentClient' => $currentClient,
+            'dashboardType' => 'manager',
+        ]);
+    }
+
+    /**
+     * Gather all personal data for the employee self-service dashboard.
+     */
+    private function getEmployeeDashboardData($user, Client $currentClient): array
+    {
+        $clientId = $currentClient->id;
+
+        $employee = Employee::where('client_id', $clientId)
+            ->where('email', $user->email)
+            ->first();
+
+        if (! $employee) {
+            return [
+                'dashboardType' => 'employee',
+                'employee' => null,
+                'profile' => null,
+                'leave_balance' => 0,
+                'leave_requests' => collect(),
+                'attendance_summary' => $this->emptyAttendanceSummary(),
+                'month_attendance' => collect(),
+                'payslips' => collect(),
+                'recent_requests' => collect(),
+                'personal_alerts' => [],
+                'contract' => null,
+                'performance_reviews' => collect(),
+                'trainings' => collect(),
+                'quickActions' => $this->getEmployeeQuickActions(),
+            ];
+        }
+
+        $now = now();
+
+        // Leave balance (applied annual-allowance / self-service days requested)
+        $approvedLeaveDays = SelfService::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->where('request_type', 'leave')
+            ->where('status', 'approved')
+            ->sum('days_requested');
+
+        $leaveBalance = max(0, (float) ($employee->leave_balance ?: 28) - (float) $approvedLeaveDays);
+
+        $leaveRequests = $employee->selfServiceRequests()
+            ->where('request_type', 'leave')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // Attendance for the current calendar month
+        $monthStart = $now->copy()->startOfMonth()->toDateString();
+        $monthAttendance = Attendance::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->where('attendance_date', '>=', $monthStart)
+            ->orderBy('attendance_date', 'desc')
+            ->get();
+
+        $attendanceSummary = [
+            'present' => $monthAttendance->where('status', 'present')->count(),
+            'late' => $monthAttendance->where('status', 'late')->count(),
+            'absent' => $monthAttendance->where('status', 'absent')->count(),
+            'half_day' => $monthAttendance->where('status', 'half_day')->count(),
+            'on_leave' => $monthAttendance->where('status', 'on_leave')->count(),
+            'total_hours' => (float) $monthAttendance->sum('total_hours'),
+            'overtime_hours' => (float) $monthAttendance->sum('overtime_hours'),
+        ];
+
+        // Payslips / payroll history
+        $payslips = Payroll::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->orderByDesc('payroll_period')
+            ->take(6)
+            ->get();
+
+        $recentRequests = $employee->selfServiceRequests()
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        $activeContract = $employee->contracts()
+            ->whereIn('status', ['active', 'probation'])
+            ->orderByDesc('start_date')
+            ->first();
+
+        $performanceReviews = $employee->performanceReviews()
+            ->orderByDesc('created_at')
+            ->take(3)
+            ->get();
+
+        $trainings = $employee->inductionTrainings()
+            ->orderByDesc('training_date')
+            ->take(3)
+            ->get();
+
+        $alerts = $this->getPersonalAlerts($employee, $currentClient);
+
+        return [
+            'dashboardType' => 'employee',
+            'employee' => $employee,
+            'profile' => $employee,
+            'leave_balance' => $leaveBalance,
+            'leave_requests' => $leaveRequests,
+            'attendance_summary' => $attendanceSummary,
+            'month_attendance' => $monthAttendance,
+            'payslips' => $payslips,
+            'recent_requests' => $recentRequests,
+            'personal_alerts' => $alerts,
+            'contract' => $activeContract,
+            'performance_reviews' => $performanceReviews,
+            'trainings' => $trainings,
+            'quickActions' => $this->getEmployeeQuickActions(),
+        ];
+    }
+
+    /**
+     * Gather team data for the line-manager dashboard.
+     */
+    private function getManagerDashboardData($user, Client $currentClient): array
+    {
+        $clientId = $currentClient->id;
+
+        $me = Employee::where('client_id', $clientId)
+            ->where('email', $user->email)
+            ->first();
+
+        $team = collect();
+
+        if ($me) {
+            $team = Employee::where('client_id', $clientId)
+                ->where('manager_id', $me->id)
+                ->get();
+        }
+
+        $today = now()->toDateString();
+
+        $teamIds = $team->pluck('id');
+
+        $presentToday = $teamIds->isNotEmpty()
+            ? Attendance::where('client_id', $clientId)->whereIn('employee_id', $teamIds)->whereDate('attendance_date', $today)->where('status', 'present')->count()
+            : 0;
+        $lateToday = $teamIds->isNotEmpty()
+            ? Attendance::where('client_id', $clientId)->whereIn('employee_id', $teamIds)->whereDate('attendance_date', $today)->where('status', 'late')->count()
+            : 0;
+        $absentToday = $teamIds->isNotEmpty()
+            ? Attendance::where('client_id', $clientId)->whereIn('employee_id', $teamIds)->whereDate('attendance_date', $today)->where('status', 'absent')->count()
+            : 0;
+
+        $pendingApprovals = SelfService::where('client_id', $clientId)
+            ->whereIn('employee_id', $teamIds)
+            ->where('status', 'pending')
+            ->where('request_type', 'leave')
+            ->count();
+
+        $monthStart = now()->startOfMonth()->toDateString();
+        $teamHours = $teamIds->isNotEmpty()
+            ? (float) Attendance::where('client_id', $clientId)->whereIn('employee_id', $teamIds)->where('attendance_date', '>=', $monthStart)->sum('total_hours')
+            : 0;
+        $teamOvertime = $teamIds->isNotEmpty()
+            ? (float) Attendance::where('client_id', $clientId)->whereIn('employee_id', $teamIds)->where('attendance_date', '>=', $monthStart)->sum('overtime_hours')
+            : 0;
+
+        $teamLeave = LeaveRequest::where('client_id', $clientId)
+            ->whereIn('employee_id', $teamIds)
+            ->where('status', 'pending')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $teamAttendanceToday = $team->map(function ($member) use ($today) {
+            $record = Attendance::where('client_id', $member->client_id)
+                ->where('employee_id', $member->id)
+                ->whereDate('attendance_date', $today)
+                ->first();
+
+            return [
+                'employee' => $member,
+                'status' => $record?->status ?? 'not_marked',
+                'clock_in' => $record?->clock_in,
+                'hours' => $record?->total_hours,
+            ];
+        })->values();
+
+        return [
+            'dashboardType' => 'manager',
+            'manager' => $me,
+            'team' => $team,
+            'team_count' => $team->count(),
+            'team_active' => $team->where('status', 'active')->count(),
+            'present_today' => $presentToday,
+            'late_today' => $lateToday,
+            'absent_today' => $absentToday,
+            'team_hours' => $teamHours,
+            'team_overtime' => $teamOvertime,
+            'pending_approvals' => $pendingApprovals,
+            'team_leave_requests' => $teamLeave,
+            'team_attendance_today' => $teamAttendanceToday,
+        ];
+    }
+
+    /**
+     * Personal alerts relevant to a single employee.
+     */
+    private function getPersonalAlerts(Employee $employee, Client $currentClient): array
+    {
+        $alerts = [];
+        $today = now();
+
+        // Expiring active contract
+        $contract = $employee->contracts()
+            ->whereIn('status', ['active', 'probation'])
+            ->whereNotNull('end_date')
+            ->where('end_date', '>=', $today->toDateString())
+            ->where('end_date', '<=', $today->copy()->addDays(30)->toDateString())
+            ->first();
+
+        if ($contract) {
+            $daysLeft = (int) $today->diffInDays($contract->end_date);
+            $alerts[] = [
+                'title' => 'Contract Expiring Soon',
+                'description' => 'Your employment contract expires in ' . $daysLeft . ' days ('
+                    . $contract->end_date->format('d M Y') . ').',
+                'severity' => $daysLeft <= 7 ? 'critical' : 'warning',
+                'icon' => 'file-text',
+                'color' => $daysLeft <= 7 ? 'red' : 'yellow',
+                'link' => route('selfservice.contract'),
+                'action_label' => 'View Contract',
+            ];
+        }
+
+        // Pending self-service requests from the employee
+        $pendingCount = $employee->selfServiceRequests()
+            ->where('status', 'pending')
+            ->count();
+
+        if ($pendingCount > 0) {
+            $alerts[] = [
+                'title' => 'Pending Requests',
+                'description' => 'You have ' . $pendingCount . ' pending request'
+                    . ($pendingCount > 1 ? 's' : '') . ' waiting for review.',
+                'severity' => 'warning',
+                'icon' => 'clock',
+                'color' => 'yellow',
+                'link' => route('selfservice.index'),
+                'action_label' => 'Track Requests',
+            ];
+        }
+
+        // Probation ending soon
+        if ($employee->isOnProbation() && $employee->probation_end_date >= $today
+            && $employee->probation_end_date <= $today->copy()->addDays(30)) {
+            $daysLeft = (int) $today->diffInDays($employee->probation_end_date);
+            $alerts[] = [
+                'title' => 'Probation Review Upcoming',
+                'description' => 'Your probation period ends in ' . $daysLeft . ' day'
+                    . ($daysLeft > 1 ? 's' : '') . ' (' . $employee->probation_end_date->format('d M Y') . ').',
+                'severity' => 'info',
+                'icon' => 'award',
+                'color' => 'blue',
+                'link' => route('selfservice.profile'),
+                'action_label' => 'View Profile',
+            ];
+        }
+
+        // Missing statutory IDs
+        $missing = [];
+
+        if (empty($employee->nssf_number)) {
+            $missing[] = 'NSSF';
+        }
+        if (empty($employee->tin_number)) {
+            $missing[] = 'TIN';
+        }
+        if (empty($employee->nhif_number)) {
+            $missing[] = 'NHIF';
+        }
+
+        if (! empty($missing)) {
+            $alerts[] = [
+                'title' => 'Update Statutory Details',
+                'description' => 'Your records are missing: ' . implode(', ', $missing) . '. Please provide details to HR.',
+                'severity' => 'info',
+                'icon' => 'shield',
+                'color' => 'blue',
+                'link' => route('selfservice.profile'),
+                'action_label' => 'Update Profile',
+            ];
+        }
+
+        // On leave today flag
+        if ($employee->status === 'on_leave') {
+            $alerts[] = [
+                'title' => 'You are On Leave',
+                'description' => 'Your employee record is currently marked as on leave.',
+                'severity' => 'info',
+                'icon' => 'calendar',
+                'color' => 'green',
+                'link' => route('selfservice.leave'),
+                'action_label' => 'View Leave',
+            ];
+        }
+
+        $severityRank = ['critical' => 2, 'warning' => 1, 'info' => 0];
+
+        usort($alerts, function ($a, $b) use ($severityRank) {
+            return ($severityRank[$b['severity']] ?? 0) <=> ($severityRank[$a['severity']] ?? 0);
+        });
+
+        return array_slice($alerts, 0, 5);
+    }
+
+    /**
+     * Empty attendance summary structure.
+     */
+    private function emptyAttendanceSummary(): array
+    {
+        return [
+            'present' => 0,
+            'late' => 0,
+            'absent' => 0,
+            'half_day' => 0,
+            'on_leave' => 0,
+            'total_hours' => 0,
+            'overtime_hours' => 0,
+        ];
+    }
+
+    /**
+     * Quick actions for the employee self-service dashboard.
+     */
+    private function getEmployeeQuickActions(): array
+    {
+        return [
+            [
+                'label' => 'Request Leave',
+                'description' => 'Submit a new leave request.',
+                'href' => route('selfservice.leave'),
+                'icon' => 'calendar',
+                'color' => 'indigo',
+                'badge' => 'Leave',
+            ],
+            [
+                'label' => 'View Payslips',
+                'description' => 'Review your recent salary slips.',
+                'href' => route('selfservice.payslip'),
+                'icon' => 'credit-card',
+                'color' => 'green',
+                'badge' => 'Payroll',
+            ],
+            [
+                'label' => 'Update Profile',
+                'description' => 'Keep your personal details up to date.',
+                'href' => route('selfservice.profile'),
+                'icon' => 'user',
+                'color' => 'blue',
+                'badge' => 'Profile',
+            ],
+            [
+                'label' => 'Request Contract',
+                'description' => 'Request a copy of your employment contract.',
+                'href' => route('selfservice.contract'),
+                'icon' => 'file-text',
+                'color' => 'purple',
+                'badge' => 'Contract',
+            ],
+            [
+                'label' => 'File Complaint',
+                'description' => 'Submit a confidential complaint.',
+                'href' => route('selfservice.complaint'),
+                'icon' => 'alert-triangle',
+                'color' => 'red',
+                'badge' => 'Support',
+            ],
+            [
+                'label' => 'Expense Claim',
+                'description' => 'Submit an expense claim for reimbursement.',
+                'href' => route('selfservice.expense'),
+                'icon' => 'dollar-sign',
+                'color' => 'yellow',
+                'badge' => 'Finance',
+            ],
+        ];
     }
 
     /**
@@ -518,6 +978,7 @@ class DashboardController extends Controller
                 'color' => 'red',
                 'link' => route('attendance.index', ['date' => $today]),
                 'action_label' => 'Record Attendance',
+                'permission' => 'attendance.view',
             ];
         } elseif ($activeEmployees > 0 && $markedToday < $activeEmployees) {
             $alerts[] = [
@@ -529,6 +990,7 @@ class DashboardController extends Controller
                 'color' => 'yellow',
                 'link' => route('attendance.index', ['date' => $today]),
                 'action_label' => 'Complete Attendance',
+                'permission' => 'attendance.view',
             ];
         }
 
@@ -546,6 +1008,7 @@ class DashboardController extends Controller
                 'color' => 'red',
                 'link' => route('payroll.index'),
                 'action_label' => 'Process Payroll',
+                'permission' => 'payroll.view',
             ];
         }
         
@@ -569,6 +1032,7 @@ class DashboardController extends Controller
                 'color' => $daysLeft <= 7 ? 'red' : 'yellow',
                 'link' => route('contracts.index'),
                 'action_label' => 'Review Contract',
+                'permission' => 'employment_contract.view',
             ];
         }
 
@@ -588,6 +1052,7 @@ class DashboardController extends Controller
                 'color' => 'yellow',
                 'link' => route('selfservice.index'),
                 'action_label' => 'Review Request',
+                'permission' => 'selfservice.view',
             ];
         }
 
@@ -613,6 +1078,7 @@ class DashboardController extends Controller
                 'icon' => 'user-plus',
                 'color' => 'blue',
                 'badge' => 'HR',
+                'permission' => 'employees.create',
             ],
             [
                 'label' => 'Record Attendance',
@@ -621,6 +1087,7 @@ class DashboardController extends Controller
                 'icon' => 'calendar',
                 'color' => 'purple',
                 'badge' => $stats['present_today'] . '/' . max(1, $stats['total_employees']),
+                'permission' => 'attendance.manage',
             ],
             [
                 'label' => 'Review Leave Requests',
@@ -629,6 +1096,7 @@ class DashboardController extends Controller
                 'icon' => 'clipboard',
                 'color' => 'yellow',
                 'badge' => $pendingRequests . ' pending',
+                'permission' => 'selfservice.view',
             ],
             [
                 'label' => 'Process Payroll',
@@ -637,6 +1105,7 @@ class DashboardController extends Controller
                 'icon' => 'credit-card',
                 'color' => 'green',
                 'badge' => now()->format('M Y'),
+                'permission' => 'payroll.manage',
             ],
             [
                 'label' => 'Create Case File',
@@ -645,6 +1114,7 @@ class DashboardController extends Controller
                 'icon' => 'folder-plus',
                 'color' => 'red',
                 'badge' => 'Legal',
+                'permission' => 'casemanagement.view',
             ],
             [
                 'label' => 'Compliance Reports',
@@ -653,6 +1123,7 @@ class DashboardController extends Controller
                 'icon' => 'trending-up',
                 'color' => 'indigo',
                 'badge' => 'Reports',
+                'permission' => 'compliance.view',
             ],
         ];
     }

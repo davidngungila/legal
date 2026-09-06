@@ -20,7 +20,7 @@
 
     <!-- User Creation Form -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form id="userForm" class="space-y-8">
+        <form id="userForm" data-no-transition class="space-y-8">
             <!-- User Type Selection -->
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">User Type</h2>

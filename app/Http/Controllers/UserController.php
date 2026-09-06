@@ -150,8 +150,26 @@ class UserController
         
         try {
             $userType = $request->get('user_type', 'client');
-            $clientId = $request->get('client_id');
+            $clientId = $userType === 'client' ? $this->getCurrentClientId() : null;
             $roleName = $request->get('role');
+
+            // Client users must be created under the active (switched-to) client.
+            if ($userType === 'client') {
+                if (!$clientId) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No active client context available. Please select a client first.'
+                    ], 422);
+                }
+
+                $requestedClientId = (int) $request->get('client_id');
+                if ($requestedClientId && $requestedClientId !== (int) $clientId) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'User must be created under the active client context.'
+                    ], 403);
+                }
+            }
 
             // Create user
             $user = User::create([
@@ -162,7 +180,7 @@ class UserController
                 'password' => Hash::make($request->get('password')),
                 'is_active' => $userType === 'client' ? $request->get('is_active', 1) : 1,
                 'email_verified_at' => now(),
-                'current_client_id' => $userType === 'client' ? ($clientId ?? $this->getCurrentClientId()) : null,
+                'current_client_id' => $userType === 'client' ? $clientId : null,
                 'employee_id' => $userType === 'client' ? $request->get('employee_id') : null,
                 'department' => $userType === 'client' ? $request->get('department') : null,
                 'position' => $userType === 'client' ? $request->get('position') : null,
@@ -467,8 +485,12 @@ class UserController
         $roles = Role::with('permissions')->whereIn('name', $allowedRoles)->get();
         $permissions = Permission::all();
 
-        // Get all clients for selection
-        $clients = \App\Models\Client::orderBy('name')->get();
+        // Get all clients for selection (always the active client context)
+        $clients = [];
+        $activeClientId = $this->getCurrentClientId();
+        if ($activeClientId) {
+            $clients = \App\Models\Client::where('id', $activeClientId)->get();
+        }
         
         return response()->json([
             'success' => true,

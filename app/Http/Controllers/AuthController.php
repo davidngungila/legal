@@ -221,15 +221,25 @@ class AuthController
         $client = null;
 
         if ($user->current_client_id) {
-            $client = Client::find($user->current_client_id);
+            $stored = Client::find($user->current_client_id);
+
+            // Super admins can be left attached to the system placeholder client
+            // ("Orvion"), which has no tenant employees. Fall back to a real tenant
+            // client so listing pages (e.g. /employees) are not empty by default.
+            if ($stored) {
+                $storedHasStaff = \App\Models\Employee::query()
+                    ->withoutGlobalScopes()
+                    ->where('client_id', $stored->id)
+                    ->exists();
+
+                if ($storedHasStaff || !$user->hasRole('super_admin')) {
+                    $client = $stored;
+                }
+            }
         }
 
         if (!$client) {
-            if ($user->hasRole('super_admin')) {
-                $client = Client::orderBy('name')->first();
-            } else {
-                $client = $user->clients()->orderBy('name')->first();
-            }
+            $client = $user->resolveDefaultClient();
         }
 
         if (!$client) {

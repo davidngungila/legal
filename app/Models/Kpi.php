@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToCurrentClient;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Kpi extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
 
     protected $fillable = [
         'goal_id',
@@ -27,5 +29,15 @@ class Kpi extends Model
     public function goal(): BelongsTo
     {
         return $this->belongsTo(EmployeeGoal::class);
+    }
+
+    /**
+     * KPIs inherit their client from the parent goal.
+     */
+    protected static function filterByClient(Builder $builder, $clientId)
+    {
+        $builder->whereHas('goal', function ($q) use ($clientId) {
+            $q->where('client_id', $clientId);
+        });
     }
 }

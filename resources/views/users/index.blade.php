@@ -159,7 +159,7 @@
 
     <!-- Edit User Modal -->
     <x-advanced-modal id="editUserModal" title="Edit User" icon="edit" color="indigo" size="2xl">
-        <form id="editUserForm" class="space-y-6">
+        <form id="editUserForm" data-no-transition class="space-y-6">
                 <input type="hidden" id="editUserId">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>

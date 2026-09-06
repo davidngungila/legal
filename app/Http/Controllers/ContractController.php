@@ -53,10 +53,10 @@ class ContractController extends Controller
     /**
      * Store a newly created contract in storage.
      */
-    public function store(Request $request)
+public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'employee_id' => 'required|exists:employees,id',
             'contract_type' => 'required|in:unspecified,fixed_term,specific_task,commission,internship',
             'start_date' => 'required|date',
@@ -73,6 +73,12 @@ class ContractController extends Controller
             'status' => 'required|in:draft,pending_signature,active,probation,suspended,terminated,expired,renewed',
             'auto_renewal' => 'boolean',
         ]);
+
+        // Always stamp the active (switched-to) client, never a value from the form.
+        $validated['client_id'] = session('current_client_id');
+
+        // The employee must belong to the active client (global scope enforces this).
+        $employee = \App\Models\Employee::findOrFail($validated['employee_id']);
 
         // Add created by user
         $validated['created_by'] = Auth::id();

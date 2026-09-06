@@ -183,10 +183,10 @@ class ClientSwitchController extends Controller
         // If user is authenticated, try to get their first assigned client
         if (auth()->check()) {
             $user = auth()->user();
-            
+
             // If user is super admin, they can see all clients
             if ($user->hasRole('super_admin')) {
-                return Client::orderBy('name')->first();
+                return $user->resolveDefaultClient() ?? Client::orderBy('name')->first();
             }
             
             $firstClient = $user->clients()->orderBy('name')->first();

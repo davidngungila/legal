@@ -44,6 +44,24 @@ class SetCurrentClient
                 $this->setDefaultClient();
                 $clientId = Session::get('current_client_id');
                 $currentClient = $clientId ? Client::find($clientId) : null;
+            } else {
+                // Super admins attached to an employee-less placeholder client
+                // ("Orvion") should be moved to a real tenant client so listing
+                // pages such as /employees are not silently empty. Deliberate
+                // switches to other clients are left untouched.
+                if ($currentClient->isSystemPlaceholder()
+                    && auth()->check()
+                    && auth()->user()->hasRole('super_admin')) {
+                    $better = auth()->user()->resolveDefaultClient();
+                    if ($better && $better->id !== $currentClient->id) {
+                        $currentClient = $better;
+                        $clientId = $better->id;
+                        Session::put('current_client_id', $clientId);
+                        Session::put('current_client_name', $currentClient->name);
+                        Session::put('current_client', $currentClient);
+                        auth()->user()->update(['current_client_id' => $clientId]);
+                    }
+                }
             }
             
             // Only super_admin is auto-synced into clients they visit
@@ -90,11 +108,7 @@ class SetCurrentClient
             }
 
             // Only super_admin can access all clients; admin/lead_hr_admin restricted to assigned clients
-            if ($user->hasRole('super_admin')) {
-                $firstClient = Client::orderBy('name')->first();
-            } else {
-                $firstClient = $user->clients()->orderBy('name')->first();
-            }
+            $firstClient = $user->resolveDefaultClient();
 
             if ($firstClient) {
                 Session::put('current_client_id', $firstClient->id);

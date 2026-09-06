@@ -208,4 +208,60 @@ class User extends Authenticatable
                 });
         });
     }
+
+    /**
+     * Active clients that already have registered employees.
+     *
+     * The current-client global scope on models is intentionally ignored so the
+     * result is always accurate, regardless of the client active in the session.
+     */
+    public static function clientsWithEmployees()
+    {
+        $employeeClientIds = \App\Models\Employee::query()
+            ->withoutGlobalScopes()
+            ->whereHas('client', function ($q) {
+                $q->where('status', 'active');
+            })
+            ->distinct()
+            ->pluck('client_id');
+
+        return Client::where('status', 'active')
+            ->whereIn('id', $employeeClientIds)
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Resolve the best default client context for this user.
+     *
+     * Prefers an active tenant client that already has registered employees so
+     * listing pages such as /employees are not empty just because the account
+     * got defaulted to the system placeholder client.
+     */
+    public function resolveDefaultClient(): ?Client
+    {
+        $tenantClients = static::clientsWithEmployees();
+
+        if ($this->hasRole('super_admin')) {
+            return $tenantClients->first()
+                ?? Client::where('status', 'active')->orderBy('name')->first()
+                ?? Client::orderBy('name')->first();
+        }
+
+        $assigned = $this->clients()
+            ->wherePivot('is_active', true)
+            ->where('clients.status', 'active')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('id');
+
+        $assignedWithStaff = $tenantClients->first(function (Client $client) use ($assigned) {
+            return $assigned->has($client->id);
+        });
+
+        return $assignedWithStaff
+            ?? $assigned->first()
+            ?? $tenantClients->first()
+            ?? Client::where('status', 'active')->orderBy('name')->first();
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToCurrentClient;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,7 +21,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Hidden([])]
 class SupportTicketResponse extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCurrentClient;
+
+    /**
+     * Responses inherit their client from the parent ticket.
+     */
+    protected static function filterByClient(Builder $builder, $clientId)
+    {
+        $builder->whereHas('ticket', function ($q) use ($clientId) {
+            $q->where('client_id', $clientId);
+        });
+    }
 
     protected $casts = [
         'is_internal' => 'boolean',

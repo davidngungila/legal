@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToCurrentClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OnboardingChecklistTemplate extends Model
 {
+    use BelongsToCurrentClient;
+
     protected $fillable = [
         'client_id',
         'task_key',
