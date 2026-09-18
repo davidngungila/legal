@@ -37,6 +37,7 @@ class Payroll extends Model
         'tax_deductions',
         'nssf_employee',
         'nssf_employer',
+        'social_security',
         'wcf',
         'sdl',
         'heslb',
@@ -363,11 +364,10 @@ class Payroll extends Model
      */
     public function calculateTotalDeductions()
     {
-        $this->total_deductions = $this->tax_deductions 
-            + $this->nssf_employee 
-            + $this->heslb 
-            + $this->trade_union 
-            + $this->pension 
+        // other_deductions already aggregates HESLB, trade union, loans and
+        // other voluntary deductions (see PayrollController computation).
+        $this->total_deductions = $this->tax_deductions
+            + $this->nssf_employee
             + $this->other_deductions;
         return $this;
     }

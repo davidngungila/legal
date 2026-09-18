@@ -592,7 +592,76 @@
         </x-slot:footer>
 </x-advanced-modal>
 
-<!-- Bulk Actions Modal -->
+<x-advanced-modal id="deductionsModal" title="Configure Deductions" icon="sliders" color="indigo" size="3xl">
+    <form id="deductionsForm" class="space-y-6">
+        <input type="hidden" id="deductPayrollId">
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p class="text-sm text-gray-700">Employee: <span id="deductEmployeeName" class="font-semibold text-gray-900"></span></p>
+            <p class="text-sm text-gray-700 mt-1">Gross Pay: <span id="deductGrossPay" class="font-semibold text-gray-900">TZS 0</span></p>
+        </div>
+
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-200 pb-2">Voluntary & Statutory Deductions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">HESLB Loan (TZS)</label>
+                    <input type="number" id="deductHeslb" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" min="0" step="0.01">
+                </div>
+                <div class="flex items-center space-x-3 pt-7">
+                    <input type="checkbox" id="deductHeslbApplicable" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                    <label for="deductHeslbApplicable" class="text-sm text-gray-700">HESLB applicable (default 15% of taxable income)</label>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Trade Union (TZS)</label>
+                    <input type="number" id="deductTradeUnion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" min="0" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Trade Union Rate (%)</label>
+                    <input type="number" id="deductTradeUnionRate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" min="0" max="100" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Loan Deductions (TZS)</label>
+                    <input type="number" id="deductLoan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" min="0" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Other Deductions (TZS)</label>
+                    <input type="number" id="deductOther" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" min="0" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">SDL (TZS)</label>
+                    <input type="number" id="deductSdl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" min="0" step="0.01">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-200 pb-2">Salary Hold</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="deductSalaryHold" class="h-4 w-4 text-red-600 border-gray-300 rounded">
+                    <label for="deductSalaryHold" class="text-sm text-gray-700">Apply salary hold</label>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                    <input type="text" id="deductSalaryHoldReason" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" maxlength="500">
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <x-slot:footer>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeModal('deductionsModal')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="saveDeductionsBtn" onclick="saveDeductions()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i data-feather="save" class="w-4 h-4 inline mr-2"></i>
+                Save Deductions
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
+
 <x-advanced-modal id="bulkActionsModal" title="Bulk Payslip Actions" icon="layers" color="purple" size="2xl">
     <div class="space-y-6">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -1053,7 +1122,7 @@ function processImportedData(rawData, fileName) {
             const grossPay = parseFloat(row['Gross Pay'] || row['grossPay'] || (basicSalary + otPay + holidayPay));
             
             // Calculate deductions
-            const nssf = parseFloat(row['NSSF (10%)'] || row['nssf'] || Math.min(grossPay * 0.10, 10000));
+            const nssf = parseFloat(row['NSSF (10%)'] || row['nssf'] || (grossPay * 0.10));
             const taxablePay = parseFloat(row['Taxable Pay'] || row['taxablePay'] || (grossPay - nssf));
             const paye = parseFloat(row['PAYE'] || row['paye'] || calculatePAYE(taxablePay));
             const heslb = parseFloat(row['HESLB (15%)'] || row['heslb'] || 0);
@@ -1061,10 +1130,10 @@ function processImportedData(rawData, fileName) {
             const totalDeduction = parseFloat(row['Total Deduction'] || row['totalDeduction'] || (nssf + paye + heslb + otherDed));
             const netPay = parseFloat(row['Net Pay'] || row['netPay'] || (grossPay - totalDeduction));
             
-            // Employer contributions
-            const employerNSSF = parseFloat(row['Employer NSSF'] || row['employerNssf'] || Math.min(grossPay * 0.10, 10000));
-            const sdl = parseFloat(row['SDL'] || row['sdl'] || (grossPay * 0.01));
-            const wcf = parseFloat(row['WCF'] || row['wcf'] || (grossPay * 0.02));
+            // Employer contributions (employee NSSF is uncapped at 10%; SDL 4.5%; WCF 0.5%)
+            const employerNSSF = parseFloat(row['Employer NSSF'] || row['employerNssf'] || (grossPay * 0.10));
+            const sdl = parseFloat(row['SDL'] || row['sdl'] || (grossPay * 0.045));
+            const wcf = parseFloat(row['WCF'] || row['wcf'] || (grossPay * 0.005));
             const totalCost = parseFloat(row['Total Cost'] || row['totalCost'] || (grossPay + employerNSSF + sdl + wcf));
             
             return {
@@ -1113,15 +1182,17 @@ function processImportedData(rawData, fileName) {
 }
 
 function calculatePAYE(taxablePay) {
-    // Tanzania PAYE calculation
+    // Tanzania PAYE calculation (TRA monthly bands: 0/8/20/25/30%)
     if (taxablePay <= 270000) {
-        return taxablePay * 0.09;
+        return 0;
     } else if (taxablePay <= 520000) {
-        return 24300 + ((taxablePay - 270000) * 0.20);
+        return (taxablePay - 270000) * 0.08;
     } else if (taxablePay <= 760000) {
-        return 74300 + ((taxablePay - 520000) * 0.25);
+        return 20000 + ((taxablePay - 520000) * 0.20);
+    } else if (taxablePay <= 1000000) {
+        return 68000 + ((taxablePay - 760000) * 0.25);
     } else {
-        return 134300 + ((taxablePay - 760000) * 0.30);
+        return 128000 + ((taxablePay - 1000000) * 0.30);
     }
 }
 
@@ -1655,6 +1726,10 @@ function renderPayrollTable() {
                         <i data-feather="edit-2" class="w-4 h-4 mr-1.5"></i>
                         Update
                     </button>
+                    <button onclick="openDeductionsModal('${emp.empId}')" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100" title="Configure Deductions">
+                        <i data-feather="sliders" class="w-4 h-4 mr-1.5"></i>
+                        Deductions
+                    </button>
                 </div>
             </td>
         </tr>
@@ -1905,6 +1980,91 @@ function closeEditModal() {
     closeModal('editEmployeeModal');
 }
 
+function openDeductionsModal(empId) {
+    const employee = payrollData.find(emp => emp.empId === empId);
+    if (!employee) return;
+
+    document.getElementById('deductPayrollId').value = employee.payrollId || '';
+    document.getElementById('deductEmployeeName').textContent = employee.name || '';
+    document.getElementById('deductGrossPay').textContent = formatCurrency(employee.grossPay || 0);
+    document.getElementById('deductHeslb').value = employee.heslb || 0;
+    document.getElementById('deductHeslbApplicable').checked = !!employee.heslbApplicable;
+    document.getElementById('deductTradeUnion').value = employee.tradeUnion || 0;
+    document.getElementById('deductTradeUnionRate').value = employee.tradeUnionRate || 0;
+    document.getElementById('deductLoan').value = employee.loanDeductions || 0;
+    document.getElementById('deductOther').value = employee.otherDed || 0;
+    document.getElementById('deductSdl').value = employee.sdl || 0;
+    document.getElementById('deductSalaryHold').checked = !!employee.salaryHold;
+    document.getElementById('deductSalaryHoldReason').value = employee.salaryHoldReason || '';
+
+    window.currentDeductionEmployee = employee;
+    openModal('deductionsModal');
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+async function saveDeductions() {
+    const employee = window.currentDeductionEmployee;
+    if (!employee || !employee.payrollId) {
+        showNotification('Cannot save: payroll record id is missing.', 'error');
+        return;
+    }
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const saveBtn = document.getElementById('saveDeductionsBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.classList.add('opacity-60', 'cursor-not-allowed');
+    }
+
+    try {
+        const response = await fetch(`/payroll/${employee.payrollId}/deductions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+            body: JSON.stringify({
+                heslb: parseFloat(document.getElementById('deductHeslb').value) || 0,
+                heslb_applicable: document.getElementById('deductHeslbApplicable').checked ? 1 : 0,
+                trade_union: parseFloat(document.getElementById('deductTradeUnion').value) || 0,
+                trade_union_rate: parseFloat(document.getElementById('deductTradeUnionRate').value) || 0,
+                loan_deductions: parseFloat(document.getElementById('deductLoan').value) || 0,
+                other_deductions: parseFloat(document.getElementById('deductOther').value) || 0,
+                sdl: parseFloat(document.getElementById('deductSdl').value) || 0,
+                salary_hold: document.getElementById('deductSalaryHold').checked ? 1 : 0,
+                salary_hold_reason: document.getElementById('deductSalaryHoldReason').value || null,
+            })
+        });
+
+        if (response.status === 401) {
+            window.location.href = '{{ route('login') }}';
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : null;
+
+        if (!response.ok || !result?.success) {
+            showNotification(result?.message || 'Failed to update deductions.', 'error');
+            return;
+        }
+
+        showNotification('Deductions updated successfully', 'success');
+        closeModal('deductionsModal');
+        await loadPayrollData();
+    } catch (e) {
+        showNotification('Network error while saving deductions.', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+    }
+}
+
 function calculatePayroll() {
     const basicSalary = parseFloat(document.getElementById('editBasicSalary').value) || 0;
     const otHours = parseFloat(document.getElementById('editOtHours').value) || 0;
@@ -1923,29 +2083,29 @@ function calculatePayroll() {
     const grossPay = basicSalary + otPay + holidayPay + allowances + bonuses;
     document.getElementById('editGrossPay').value = grossPay;
     
-    // Calculate NSSF (10% of gross pay, capped at TZS 10,000)
-    const nssf = Math.min(grossPay * 0.10, 10000);
+    // Calculate NSSF (10% of gross pay)
+    const nssf = grossPay * 0.10;
     document.getElementById('editNssf').value = nssf;
     
     // Calculate Taxable Pay
     const taxablePay = grossPay - nssf;
     
-    // Calculate PAYE (simplified Tanzania tax calculation)
+    // Calculate PAYE (TRA monthly bands: 0/8/20/25/30%)
     let paye = 0;
-    if (taxablePay > 0) {
-        if (taxablePay <= 270000) {
-            paye = taxablePay * 0.09;
-        } else if (taxablePay <= 520000) {
-            paye = 24300 + ((taxablePay - 270000) * 0.20);
+    if (taxablePay > 270000) {
+        if (taxablePay <= 520000) {
+            paye = (taxablePay - 270000) * 0.08;
         } else if (taxablePay <= 760000) {
-            paye = 74300 + ((taxablePay - 520000) * 0.25);
+            paye = 20000 + ((taxablePay - 520000) * 0.20);
+        } else if (taxablePay <= 1000000) {
+            paye = 68000 + ((taxablePay - 760000) * 0.25);
         } else {
-            paye = 134300 + ((taxablePay - 760000) * 0.30);
+            paye = 128000 + ((taxablePay - 1000000) * 0.30);
         }
     }
     document.getElementById('editPaye').value = Math.round(paye);
     
-    // Calculate Total Deductions
+    // Calculate Total Deductions (WCF is employer-borne and excluded)
     const totalDeduction = nssf + paye + heslb + otherDed;
     document.getElementById('editTotalDeduction').value = totalDeduction;
     
@@ -1954,13 +2114,13 @@ function calculatePayroll() {
     document.getElementById('editNetPay').value = netPay;
     
     // Calculate Employer Contributions
-    const employerNssf = Math.min(grossPay * 0.10, 10000);
+    const employerNssf = grossPay * 0.10;
     document.getElementById('editEmployerNssf').value = employerNssf;
     
-    const sdl = grossPay * 0.01; // 1% Skills Development Levy
+    const sdl = grossPay * 0.045; // 4.5% Skills & Development Levy (employer)
     document.getElementById('editSdl').value = sdl;
     
-    const wcf = grossPay * 0.02; // 2% Workers Compensation Fund
+    const wcf = grossPay * 0.005; // 0.5% Workers Compensation Fund (employer)
     document.getElementById('editWcf').value = wcf;
     
     // Calculate Total Cost to Company

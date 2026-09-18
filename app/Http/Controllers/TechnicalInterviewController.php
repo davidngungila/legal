@@ -59,15 +59,30 @@ class TechnicalInterviewController extends Controller
 
         try {
             $status = $request->input('status', 'draft');
-            $interviewNumber = TechnicalInterview::generateInterviewNumber();
 
-            $interview = TechnicalInterview::create(array_merge($validated, [
-                'client_id' => session('current_client_id'),
-                'interview_number' => $interviewNumber,
-                'interviewer_id' => auth()->id(),
-                'status' => $status,
-                'interviewer_completed_at' => $status === 'submitted' ? now() : null,
-            ]));
+            // Generate a unique interview number. If another request grabbed the
+            // same number between generation and insert, retry with the next one.
+            $interview = null;
+            $interviewNumber = null;
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                $interviewNumber = TechnicalInterview::generateInterviewNumber();
+
+                try {
+                    $interview = TechnicalInterview::create(array_merge($validated, [
+                        'client_id' => session('current_client_id'),
+                        'interview_number' => $interviewNumber,
+                        'interviewer_id' => auth()->id(),
+                        'status' => $status,
+                        'interviewer_completed_at' => $status === 'submitted' ? now() : null,
+                    ]));
+                    break;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($attempt < 4 && TechnicalInterview::isDuplicateKey($e, 'interview_number')) {
+                        continue;
+                    }
+                    throw $e;
+                }
+            }
 
             // Handle base64 signature
             if ($request->filled('interviewer_signature')) {
@@ -92,9 +107,14 @@ class TechnicalInterviewController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Technical interview creation failed: ' . $e->getMessage());
+
+            $message = TechnicalInterview::isDuplicateKey($e, 'interview_number')
+                ? 'This interview number is already in use. Please try again.'
+                : 'Sorry! Operation failed - ' . $e->getMessage();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry! Operation failed - ' . $e->getMessage()
+                'message' => $message
             ], 500);
         }
     }

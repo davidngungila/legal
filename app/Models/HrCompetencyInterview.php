@@ -140,10 +140,33 @@ class HrCompetencyInterview extends Model
 
     public static function generateInterviewNumber()
     {
-        $prefix = 'HRINT';
-        $year = date('Y');
-        $sequence = str_pad(static::count() + 1, 4, '0', STR_PAD_LEFT);
-        return "{$prefix}{$year}{$sequence}";
+        $prefix = 'HRINT' . date('Y');
+
+        // interview_number has a global unique index, so build the next
+        // sequence from every client's records (bypass the client scope).
+        $lastNumber = static::withoutClientFilter()
+            ->where('interview_number', 'like', $prefix . '%')
+            ->orderByDesc('interview_number')
+            ->value('interview_number');
+
+        $sequence = $lastNumber ? (int)substr($lastNumber, strlen($prefix)) + 1 : 1;
+
+        return $prefix . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Whether the given throwable is a duplicate-key error for $key.
+     */
+    public static function isDuplicateKey(\Throwable $e, string $key): bool
+    {
+        if (!$e instanceof \Illuminate\Database\QueryException) {
+            return false;
+        }
+
+        $isDuplicate = ($e->errorInfo[1] ?? null) === 1062
+            || (string) $e->getCode() === '23000';
+
+        return $isDuplicate && str_contains($e->getMessage(), $key);
     }
 
     public function getCompetencyScore($competency)

@@ -239,30 +239,47 @@ class PositionsController extends Controller
                 ], 400);
             }
 
-            $headers = array_map('strtolower', $data[0]);
+            // Normalize header names (lowercase, trim, strip UTF-8 BOM)
+            $headers = array_map(function ($header) {
+                $header = strtolower(trim((string)$header));
+                return ltrim($header, "\xEF\xBB\xBF");
+            }, $data[0]);
             $rows = array_slice($data, 1);
+            $expectedColumns = count($headers);
             
             $imported = 0;
             $skipped = 0;
             $errors = [];
+            $line = 1;
 
             foreach ($rows as $row) {
+                $line++;
+
                 // Skip empty rows
-                if (empty($row) || (count($row) === 1 && empty($row[0]))) {
+                if (empty($row) || (count($row) === 1 && trim((string)$row[0]) === '')) {
                     continue;
                 }
-                
-                $rowData = array_combine($headers, $row);
-                
-                // Check if array_combine failed (headers and row count mismatch)
-                if ($rowData === false) {
-                    $errors[] = "Row " . ($imported + $skipped + 1) . ": Column count mismatch";
+
+                $row = array_map(function ($value) {
+                    return trim((string)$value);
+                }, $row);
+
+                // Column count mismatch: report a clear message instead of a PHP error
+                if (count($row) !== $expectedColumns) {
+                    $errors[] = "Row {$line}: column count mismatch ({$expectedColumns} expected, " . count($row) . " found). Open the CSV template and make sure every field in this row is separated by a comma.";
+                    continue;
+                }
+
+                try {
+                    $rowData = array_combine($headers, $row);
+                } catch (\ValueError $e) {
+                    $errors[] = "Row {$line}: column count mismatch ({$expectedColumns} expected, " . count($row) . " found). Open the CSV template and make sure every field in this row is separated by a comma.";
                     continue;
                 }
                 
                 // Check if position title is provided
                 if (empty($rowData['title'])) {
-                    $errors[] = "Row " . ($imported + $skipped + 1) . ": Position title is required";
+                    $errors[] = "Row {$line}: Position title is required";
                     continue;
                 }
                 
@@ -273,7 +290,7 @@ class PositionsController extends Controller
                 
                 if ($existingPosition) {
                     $skipped++;
-                    $errors[] = "Row " . ($imported + $skipped) . ": Position '{$rowData['title']}' already exists";
+                    $errors[] = "Row {$line}: Position '{$rowData['title']}' already exists";
                     continue;
                 }
                 
@@ -292,7 +309,7 @@ class PositionsController extends Controller
                     ]);
                     $imported++;
                 } catch (\Exception $e) {
-                    $errors[] = "Row " . ($imported + $skipped + 1) . ": " . $e->getMessage();
+                    $errors[] = "Row {$line}: " . $e->getMessage();
                 }
             }
 
@@ -303,7 +320,7 @@ class PositionsController extends Controller
                 'errors' => implode(', ', $errors)
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Import failed: ' . $e->getMessage()

@@ -8,10 +8,17 @@ use App\Models\Permission;
 use App\Models\Client;
 use App\Models\Department;
 use App\Models\Position;
+use App\Helpers\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserController
 {
@@ -262,7 +269,135 @@ class UserController
             'user' => $user
         ]);
     }
-    
+
+    /**
+     * Reset a user's password (administrative, advanced flow).
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $currentUser = auth()->user();
+
+        // Only a Super Admin may reset another Super Admin's password.
+        if ($user->hasRole('super_admin') && !$currentUser->hasRole('super_admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to reset a Super Admin password.',
+            ], 403);
+        }
+
+        $mode = $request->input('mode', 'generate');
+
+        $rules = [
+            'mode' => ['required', Rule::in(['generate', 'manual'])],
+            'revoke_sessions' => ['nullable', 'boolean'],
+            'notify_email' => ['nullable', 'boolean'],
+        ];
+
+        if ($mode === 'manual') {
+            $rules['password'] = [
+                'required',
+                'confirmed',
+                Password::min(10)->letters()->mixedCase()->numbers()->symbols(),
+            ];
+        }
+
+        $validated = Validator::make($request->all(), $rules);
+
+        if ($validated->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validated->errors(),
+            ], 422);
+        }
+
+        $plainPassword = $mode === 'generate'
+            ? Str::password(14, true, true, true, false)
+            : $request->input('password');
+
+        try {
+            DB::transaction(function () use ($user, $plainPassword) {
+                // The `hashed` cast on the model hashes the plain value.
+                $user->password = $plainPassword;
+                $user->save();
+            });
+
+            $sessionsRevoked = false;
+            if ($request->boolean('revoke_sessions')) {
+                $user->setRememberToken(Str::random(60));
+                $user->save();
+
+                if (Schema::hasTable('sessions')) {
+                    $query = DB::table('sessions')->where('user_id', $user->id);
+                    // Never terminate the current admin's own active session.
+                    if ($currentUser->id === $user->id) {
+                        $query->where('id', '!=', $request->session()->getId());
+                    }
+                    $query->delete();
+                }
+
+                $sessionsRevoked = true;
+            }
+
+            $emailSent = false;
+            if ($request->boolean('notify_email')) {
+                try {
+                    Mail::raw(
+                        "Hello {$user->first_name},\n\n"
+                        ."Your account password has been reset by an administrator.\n\n"
+                        .($mode === 'generate'
+                            ? "Temporary password: {$plainPassword}\n\n"
+                            : '')
+                        ."Please sign in and change your password immediately.\n\n"
+                        .config('app.name'),
+                        function ($message) use ($user) {
+                            $message->to($user->email)->subject('Your password has been reset');
+                        }
+                    );
+                    $emailSent = true;
+                } catch (\Throwable $e) {
+                    Log::error('Password reset email failed: '.$e->getMessage());
+                }
+            }
+
+            AuditLogger::log(
+                'user.password_reset',
+                $user,
+                'users',
+                "Password reset for {$user->email} ({$mode} mode)",
+                ['email' => $user->email],
+                [
+                    'mode' => $mode,
+                    'sessions_revoked' => $sessionsRevoked,
+                    'email_sent' => $emailSent,
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset successfully.',
+                'password' => $mode === 'generate' ? $plainPassword : null,
+                'email_sent' => $emailSent,
+                'sessions_revoked' => $sessionsRevoked,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Password reset failed: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset password: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
     /**
      * Update the specified user in storage.
      */

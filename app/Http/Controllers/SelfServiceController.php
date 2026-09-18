@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\SelfService;
 use App\Models\Employee;
 use App\Models\Payroll;
+use App\Models\Client;
 use App\Models\User;
+use App\Services\PayslipService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -19,6 +22,7 @@ class SelfServiceController extends Controller
     {
         $user = Auth::user();
         $clientId = session('current_client_id');
+        $canViewPayslips = $user->hasRole('super_admin') || $user->hasPermission('selfservice.payslip');
         
         // Get employee data for current user and client
         $employee = null;
@@ -38,17 +42,19 @@ class SelfServiceController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->take(5)
                     ->get();
-                
-                // Get recent payslips
-                $recentPayslips = Payroll::where('client_id', $clientId)
-                    ->where('employee_id', $employee->id)
-                    ->orderBy('pay_date', 'desc')
-                    ->take(3)
-                    ->get();
+
+                // Only expose payslip data to users holding the payslip permission.
+                if ($canViewPayslips) {
+                    $recentPayslips = Payroll::where('client_id', $clientId)
+                        ->where('employee_id', $employee->id)
+                        ->orderBy('pay_date', 'desc')
+                        ->take(3)
+                        ->get();
+                }
             }
         }
         
-        return view('selfservice.index', compact('employee', 'recentRequests', 'recentPayslips'));
+        return view('selfservice.index', compact('employee', 'recentRequests', 'recentPayslips', 'canViewPayslips'));
     }
     
     /**
@@ -120,36 +126,185 @@ class SelfServiceController extends Controller
     /**
      * Show payslip download page.
      */
-    public function payslip()
+    public function payslip(Request $request, PayslipService $service)
+    {
+        $clientId = $clientId = session('current_client_id');
+        $employee = $this->resolveEmployee($clientId);
+
+        $payslips = collect();
+        $breakdowns = [];
+        $years = collect();
+        $statuses = collect();
+        $stats = [
+            'count' => 0,
+            'gross' => 0.0,
+            'net' => 0.0,
+            'deductions' => 0.0,
+            'paye' => 0.0,
+            'average_net' => 0.0,
+            'latest_net' => 0.0,
+            'latest_period' => null,
+        ];
+
+        if ($clientId && $employee) {
+            $allPayslips = Payroll::where('client_id', $clientId)
+                ->where('employee_id', $employee->id)
+                ->orderBy('pay_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->get();
+
+            $years = $allPayslips
+                ->map(fn ($p) => substr((string) $p->payroll_period, 0, 4))
+                ->filter(fn ($y) => preg_match('/^\d{4}$/', (string) $y))
+                ->unique()
+                ->sortDesc()
+                ->values();
+
+            $statuses = $allPayslips->pluck('status')->filter()->unique()->values();
+
+            $year = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year)
+                ? (string) $request->year
+                : null;
+            $month = $request->filled('month') && preg_match('/^(0?[1-9]|1[0-2])$/', (string) $request->month)
+                ? str_pad((string) $request->month, 2, '0', STR_PAD_LEFT)
+                : null;
+            $status = $request->filled('status') && $statuses->contains($request->status)
+                ? (string) $request->status
+                : null;
+
+            $payslips = $allPayslips
+                ->filter(function (Payroll $p) use ($year, $month, $status) {
+                    if ($year && substr((string) $p->payroll_period, 0, 4) !== $year) {
+                        return false;
+                    }
+                    if ($month && substr((string) $p->payroll_period, 5, 2) !== $month) {
+                        return false;
+                    }
+                    if ($status && $p->status !== $status) {
+                        return false;
+                    }
+                    return true;
+                })
+                ->values();
+
+            foreach ($payslips as $payslip) {
+                $breakdowns[$payslip->id] = $service->build($payslip, $employee, $clientId ? Client::find($clientId) : null);
+            }
+
+            $stats = [
+                'count' => $payslips->count(),
+                'gross' => (float) $payslips->sum('gross_pay'),
+                'net' => (float) $payslips->sum('net_pay'),
+                'deductions' => (float) $payslips->sum('total_deductions'),
+                'paye' => (float) $payslips->sum('tax_deductions'),
+                'average_net' => $payslips->count() ? round((float) $payslips->avg('net_pay'), 2) : 0.0,
+                'latest_net' => (float) ($payslips->first()->net_pay ?? 0),
+                'latest_period' => $payslips->first()->payroll_period ?? null,
+            ];
+        }
+
+        $currentClient = $clientId ? Client::find($clientId) : null;
+
+        return view('selfservice.payslip', [
+            'employee' => $employee,
+            'currentClient' => $currentClient,
+            'payslips' => $payslips,
+            'breakdowns' => $breakdowns,
+            'years' => $years,
+            'statuses' => $statuses,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Display a single payslip as a printable document.
+     */
+    public function showPayslip(Request $request, Payroll $payroll, PayslipService $service)
+    {
+        [$employee, $client] = $this->authorizePayslip($payroll);
+
+        $data = $service->build($payroll, $employee, $client);
+
+        return view('selfservice.payslip-print', [
+            'data' => $data,
+            'employee' => $employee,
+            'client' => $client,
+            'labels' => $service->labels(),
+            'forPdf' => false,
+        ]);
+    }
+
+    /**
+     * Download a single payslip as a PDF.
+     */
+    public function downloadPayslip(Request $request, Payroll $payroll, PayslipService $service)
+    {
+        [$employee, $client] = $this->authorizePayslip($payroll);
+
+        $data = $service->build($payroll, $employee, $client);
+
+        $pdf = Pdf::loadView('selfservice.payslip-print', [
+            'data' => $data,
+            'employee' => $employee,
+            'client' => $client,
+            'labels' => $service->labels(),
+            'forPdf' => true,
+        ])->setPaper('a4');
+
+        $filename = 'Payslip_' . $employee->employee_id . '_' . $payroll->payroll_period . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Download every available payslip for the logged-in employee as one PDF.
+     */
+    public function downloadAllPayslips(Request $request, PayslipService $service)
     {
         $clientId = session('current_client_id');
-        $employee = null;
-        $payslips = collect(); // Initialize as empty collection
-        
-        if ($clientId) {
-            $user = Auth::user();
-            $employee = Employee::where('client_id', $clientId)
-                ->where('email', $user->email)
-                ->first();
-            
-            if ($employee) {
-                $payslips = Payroll::where('client_id', $clientId)
-                    ->where('employee_id', $employee->id)
-                    ->orderBy('pay_date', 'desc')
-                    ->get();
-            }
+        $employee = $this->resolveEmployee($clientId);
+
+        if (!$employee) {
+            return back()->with('error', 'Employee record not found for current client.');
         }
-        
-        return view('selfservice.payslip', compact('employee', 'payslips'));
+
+        $payrolls = Payroll::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->orderBy('pay_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if ($payrolls->isEmpty()) {
+            return back()->with('error', 'No payslips are available to download yet.');
+        }
+
+        $client = Client::find($clientId);
+        $rows = $payrolls
+            ->map(fn (Payroll $p) => $service->build($p, $employee, $client))
+            ->all();
+
+        $pdf = Pdf::loadView('selfservice.payslip-batch', [
+            'rows' => $rows,
+            'client' => $client,
+            'employee' => $employee,
+            'labels' => $service->labels(),
+            'forPdf' => true,
+        ])->setPaper('a4');
+
+        $filename = 'Payslips_' . $employee->employee_id . '_' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
     }
-    
+
     /**
      * Request payslip.
      */
     public function requestPayslip(Request $request)
     {
-        $request->validate([
-            'payroll_period' => 'required|string',
+        $validated = $request->validate([
+            'payroll_period' => ['required', 'regex:/^\d{4}-\d{2}$/'],
+        ], [
+            'payroll_period.regex' => 'Please select a valid payroll period.',
         ]);
         
         $clientId = session('current_client_id');
@@ -157,22 +312,20 @@ class SelfServiceController extends Controller
             return back()->with('error', 'Please select a client first.');
         }
 
-        $user = Auth::user();
-        
-        $employee = Employee::where('client_id', $clientId)
-            ->where('email', $user->email)
-            ->first();
+        $employee = $this->resolveEmployee($clientId);
         
         if (!$employee) {
             return back()->with('error', 'Employee record not found for current client.');
         }
+
+        $periodLabel = Carbon::createFromFormat('Y-m', $validated['payroll_period'])->format('F Y');
         
         SelfService::create([
             'client_id' => $clientId,
             'employee_id' => $employee->id,
             'request_type' => 'payslip',
-            'title' => 'Payslip Request - ' . $request->payroll_period,
-            'description' => 'Request for payslip for ' . $request->payroll_period,
+            'title' => 'Payslip Request - ' . $periodLabel,
+            'description' => 'Request for payslip for ' . $periodLabel,
             'status' => 'pending',
             'request_date' => now(),
         ]);
@@ -405,5 +558,50 @@ class SelfServiceController extends Controller
         ]);
         
         return back()->with('success', 'Expense claim submitted successfully!');
+    }
+
+    /**
+     * Resolve the employee linked to the authenticated user for a client.
+     */
+    private function resolveEmployee(?int $clientId): ?Employee
+    {
+        if (!$clientId) {
+            return null;
+        }
+
+        $user = Auth::user();
+        if (!$user) {
+            return null;
+        }
+
+        return Employee::where('client_id', $clientId)
+            ->where('email', $user->email)
+            ->first();
+    }
+
+    /**
+     * Ensure a payroll record belongs to the logged-in employee. Aborts with a
+     * 404 for anything else so payslips can never leak across tenants/users.
+     *
+     * @return array{0: Employee, 1: ?Client}
+     */
+    private function authorizePayslip(Payroll $payroll): array
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            abort(403, 'Please select a client first.');
+        }
+
+        $employee = $this->resolveEmployee((int) $clientId);
+        if (!$employee) {
+            abort(404, 'Employee record not found for current client.');
+        }
+
+        if ((int) $payroll->client_id !== (int) $clientId
+            || (int) $payroll->employee_id !== (int) $employee->id) {
+            abort(404, 'Payslip not found.');
+        }
+
+        return [$employee, Client::find($clientId)];
     }
 }

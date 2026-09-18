@@ -622,6 +622,7 @@
                             <span class="text-xs">Overview</span>
                         </a>
                     </li>
+                    @hasPermission('selfservice.leave')
                     <li class="sidebar-dropdown">
                         <button type="button" class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 group">
                             <div class="flex items-center space-x-3">
@@ -659,30 +660,39 @@
                             @endhasPermission
                         </ul>
                     </li>
+                    @endhasPermission
+                    @hasPermission('selfservice.payslip')
                     <li>
-                        <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.payslip') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
+                        <a href="{{ route('selfservice.payslip') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.payslip*') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="file" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Payslip</span>
                         </a>
                     </li>
+                    @endhasPermission
+                    @hasPermission('selfservice.contract')
                     <li>
                         <a href="{{ route('selfservice.contract') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.contract') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="file-text" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Contract</span>
                         </a>
                     </li>
+                    @endhasPermission
+                    @hasPermission('selfservice.complaint')
                     <li>
                         <a href="{{ route('selfservice.complaint') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.complaint') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="alert-triangle" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Complaint</span>
                         </a>
                     </li>
+                    @endhasPermission
+                    @hasPermission('selfservice.profile')
                     <li>
                         <a href="{{ route('selfservice.profile') }}" class="flex items-center space-x-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300 {{ request()->routeIs('selfservice.profile') ? 'text-white font-medium bg-white/5' : 'text-indigo-200' }}">
                             <i data-feather="settings" class="w-3.5 h-3.5"></i>
                             <span class="text-xs">Profile</span>
                         </a>
                     </li>
+                    @endhasPermission
                 </ul>
             </li>
             @endhasPermission

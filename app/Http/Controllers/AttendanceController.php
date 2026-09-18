@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceMonthlySummary;
 use App\Models\AttendanceViolation;
 use App\Models\Client;
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeShift;
 use App\Models\PublicHoliday;
@@ -19,6 +20,72 @@ use Illuminate\Support\Facades\Storage;
 
 class AttendanceController extends Controller
 {
+    private const WORKED_STATUS_CODES = ['9', '12', 'M'];
+
+    private const LEAVE_STATUS_CODES = ['AL', 'SLF', 'SLH', 'UL'];
+
+    /** Legacy `status` values that mean the employee worked that day. */
+    private const WORKED_LEGACY_STATUSES = ['present', 'late', 'holiday', 'half_day', 'mission'];
+
+    /** Legacy `status` values that mean the employee was absent that day. */
+    private const ABSENT_LEGACY_STATUSES = ['absent'];
+
+    /** Legacy `status` values that mean the employee was on leave that day. */
+    private const LEAVE_LEGACY_STATUSES = ['on_leave'];
+
+    private function dayIsWorked(Attendance $record): bool
+    {
+        if (in_array($record->status_code, self::WORKED_STATUS_CODES, true)) {
+            return true;
+        }
+
+        $legacy = (string) $record->status;
+
+        if (in_array($legacy, self::ABSENT_LEGACY_STATUSES, true)
+            || in_array($legacy, self::LEAVE_LEGACY_STATUSES, true)) {
+            return false;
+        }
+
+        if ($record->status_code === 'A' || in_array($record->status_code, self::LEAVE_STATUS_CODES, true)) {
+            return false;
+        }
+
+        return in_array($legacy, self::WORKED_LEGACY_STATUSES, true) || (float) $record->total_hours > 0;
+    }
+
+    private function dayIsAbsent(Attendance $record): bool
+    {
+        return $record->status_code === 'A'
+            || ($record->status_code === null && in_array((string) $record->status, self::ABSENT_LEGACY_STATUSES, true));
+    }
+
+    private function dayIsLeave(Attendance $record): bool
+    {
+        return in_array($record->status_code, self::LEAVE_STATUS_CODES, true)
+            || ($record->status_code === null && in_array((string) $record->status, self::LEAVE_LEGACY_STATUSES, true));
+    }
+
+    private function dayIsLate(Attendance $record): bool
+    {
+        return (int) $record->late_minutes > 0 || (string) $record->status === 'late';
+    }
+
+    private function statusColor(Attendance $record): string
+    {
+        if ($record->status_code === 'A' || $this->dayIsAbsent($record)) {
+            return 'red';
+        }
+
+        if ($this->dayIsLeave($record)) {
+            return 'blue';
+        }
+
+        if ($this->dayIsWorked($record)) {
+            return 'green';
+        }
+
+        return 'gray';
+    }
     public function index(Request $request)
     {
         $clientId = session('current_client_id');
@@ -469,88 +536,398 @@ class AttendanceController extends Controller
 
     public function timesheets(Request $request)
     {
-        $clientId = session('current_client_id');
+        $clientId = (int) session('current_client_id');
         if (!$clientId) {
             return redirect()->route('dashboard')->with('error', 'Please select a client first.');
         }
 
-        $currentClient = \App\Models\Client::find($clientId);
-        
-        // Get selected month/year from request, default to current
-        $monthDate = $request->filled('month') 
-            ? \Carbon\Carbon::parse($request->get('month'))->startOfMonth()
-            : now()->startOfMonth();
-        
-        $monthStart = $monthDate->copy()->startOfMonth();
-        $monthEnd = $monthDate->copy()->endOfMonth();
-        
-        // Get employees with their positions/departments
-        $employees = \App\Models\Employee::where('client_id', $clientId)
+        $data = $this->loadTimesheetData($clientId, $request);
+
+        return view('attendance.timesheets', [
+            'currentClient' => $data['currentClient'],
+            'timesheetData' => $data['timesheetData'],
+            'employees' => $data['employees'],
+            'departments' => $data['departments'],
+            'monthDate' => $data['monthStart']->copy(),
+            'monthLabel' => $data['monthStart']->format('F Y'),
+            'prevMonth' => $data['monthStart']->copy()->subMonth()->format('Y-m'),
+            'nextMonth' => $data['monthStart']->copy()->addMonth()->format('Y-m'),
+            'stats' => $data['stats'],
+        ]);
+    }
+
+    /**
+     * Load every employee with live per-month metrics in a single batched
+     * attendance query (no N+1), then apply the requested filters.
+     *
+     * Multi-tenant safe: everything is scoped to the active client.
+     */
+    private function loadTimesheetData(int $clientId, Request $request): array
+    {
+        $currentClient = Client::find($clientId);
+        if (!$currentClient) {
+            abort(404, 'Selected client not found.');
+        }
+
+        $monthStart = $this->resolveMonthDate($request, 'month');
+        $monthEnd = $monthStart->copy()->endOfMonth();
+
+        $employees = Employee::where('client_id', $clientId)
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
-            
-        // Get departments for filter
-        $departments = \App\Models\Department::where('client_id', $clientId)
+
+        $departments = Department::where('client_id', $clientId)
             ->orderBy('name')
             ->get();
-            
-        // Get monthly summaries
-        $monthlySummaries = \App\Models\AttendanceMonthlySummary::with(['employee'])
-            ->where('client_id', $clientId)
-            ->where('month', $monthStart->month)
-            ->where('year', $monthStart->year)
-            ->get()
-            ->keyBy('employee_id');
-            
-        // Prepare final data - include all employees even if no summary
-        $timesheetData = $employees->map(function ($employee) use ($monthlySummaries, $clientId, $monthStart, $monthEnd) {
-            $summary = $monthlySummaries->get($employee->id);
-            
-            // If no summary exists, calculate basic stats
-            if (!$summary) {
-                $attendance = \App\Models\Attendance::where('client_id', $clientId)
-                    ->where('employee_id', $employee->id)
-                    ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-                    ->get();
-                    
-                $summary = (object)[
-                    'total_days' => $monthStart->daysInMonth,
-                    'worked_days' => $attendance->whereIn('status_code', ['9', '12', 'M'])->count(),
-                    'absent_days' => $attendance->where('status_code', 'A')->count(),
-                    'leave_days' => $attendance->whereIn('status_code', ['AL', 'SLF', 'SLH', 'UL'])->count(),
-                    'overtime_hours' => round((float) $attendance->sum('overtime_hours'), 2),
-                    'night_hours' => round((float) $attendance->sum('night_hours'), 2),
-                ];
-            }
-            
-            return [
-                'employee' => $employee,
-                'summary' => $summary,
-            ];
-        });
-        
-        // Calculate overall stats
-        $totalEmployees = $employees->count();
-        $totalWorkedDays = $timesheetData->sum(fn($d) => $d['summary']->worked_days);
-        $totalAbsentDays = $timesheetData->sum(fn($d) => $d['summary']->absent_days);
-        $totalLeaveDays = $timesheetData->sum(fn($d) => $d['summary']->leave_days);
-        $totalOvertimeHours = $timesheetData->sum(fn($d) => $d['summary']->overtime_hours);
 
-        return view('attendance.timesheets', [
+        $attendance = Attendance::where('client_id', $clientId)
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->orderBy('attendance_date')
+            ->get()
+            ->groupBy('employee_id');
+
+        $rows = $employees->map(function (Employee $employee) use ($attendance, $monthStart) {
+            return $this->buildTimesheetRow($employee, $attendance->get($employee->id, collect()), $monthStart);
+        });
+
+        $rows = $this->filterTimesheetRows($rows, $request);
+
+        return [
             'currentClient' => $currentClient,
-            'timesheetData' => $timesheetData,
+            'monthStart' => $monthStart->copy()->startOfMonth(),
+            'monthEnd' => $monthEnd,
             'employees' => $employees,
             'departments' => $departments,
-            'monthDate' => $monthDate,
-            'stats' => [
-                'total_employees' => $totalEmployees,
-                'total_worked_days' => $totalWorkedDays,
-                'total_absent_days' => $totalAbsentDays,
-                'total_leave_days' => $totalLeaveDays,
-                'total_overtime_hours' => $totalOvertimeHours,
+            'timesheetData' => $rows,
+            'stats' => $this->summarizeTimesheetStats($rows),
+        ];
+    }
+
+    /**
+     * Compute per-employee monthly metrics from live attendance records,
+     * using the exact same status-code semantics as payroll.
+     */
+    private function buildTimesheetRow(Employee $employee, Collection $records, Carbon $monthStart): array
+    {
+        $workedDays = $records->filter(fn (Attendance $r) => $this->dayIsWorked($r))->count();
+        $absentDays = $records->filter(fn (Attendance $r) => $this->dayIsAbsent($r))->count();
+        $leaveDays = $records->filter(fn (Attendance $r) => $this->dayIsLeave($r))->count();
+        $lateDays = $records->filter(fn (Attendance $r) => $this->dayIsLate($r))->count();
+
+        $ordinaryHours = round((float) $records->sum('ordinary_hours'), 2);
+        $restDayHours = round((float) $records->sum('rest_day_hours'), 2);
+        $phHours = round((float) $records->sum('ph_hours'), 2);
+        $overtimeHours = round((float) $records->sum('overtime_hours'), 2);
+        $nightHours = round((float) $records->sum('night_hours'), 2);
+
+        $accounted = $workedDays + $absentDays + $leaveDays;
+        $attendanceRate = $accounted > 0 ? round(($workedDays / $accounted) * 100, 1) : null;
+
+        return [
+            'employee' => $employee,
+            'total_days' => $monthStart->daysInMonth,
+            'recorded_days' => $records->count(),
+            'worked_days' => $workedDays,
+            'absent_days' => $absentDays,
+            'late_days' => $lateDays,
+            'leave_days' => $leaveDays,
+            'leave_breakdown' => [
+                'AL' => $records->filter(fn (Attendance $r) => $r->status_code === 'AL' || $r->status_code === null && $r->status === 'on_leave')->count(),
+                'SLF' => $records->where('status_code', 'SLF')->count(),
+                'SLH' => $records->where('status_code', 'SLH')->count(),
+                'UL' => $records->where('status_code', 'UL')->count(),
             ],
+            'attendance_rate' => $attendanceRate,
+            'ordinary_hours' => $ordinaryHours,
+            'rest_day_hours' => $restDayHours,
+            'ph_hours' => $phHours,
+            'overtime_hours' => $overtimeHours,
+            'night_hours' => $nightHours,
+            'total_paid_hours' => round($ordinaryHours + $restDayHours + $phHours + $overtimeHours, 2),
+            'has_absence' => $absentDays > 0,
+            'has_leave' => $leaveDays > 0,
+            'has_late' => $lateDays > 0,
+            'has_overtime' => $overtimeHours > 0,
+            'low_attendance' => $accounted > 0 && $attendanceRate < 90,
+            'no_records' => $records->isEmpty(),
+        ];
+    }
+
+    private function summarizeTimesheetStats(Collection $rows): array
+    {
+        $worked = $rows->sum('worked_days');
+        $absent = $rows->sum('absent_days');
+        $leave = $rows->sum('leave_days');
+        $accounted = $worked + $absent + $leave;
+
+        return [
+            'total_employees' => $rows->count(),
+            'total_worked_days' => $worked,
+            'total_absent_days' => $absent,
+            'total_leave_days' => $leave,
+            'total_late_days' => $rows->sum('late_days'),
+            'attendance_rate' => $accounted > 0 ? round(($worked / $accounted) * 100, 1) : 0,
+            'total_overtime_hours' => round((float) $rows->sum('overtime_hours'), 2),
+            'total_night_hours' => round((float) $rows->sum('night_hours'), 2),
+            'total_paid_hours' => round((float) $rows->sum('total_paid_hours'), 2),
+            'employees_with_absence' => $rows->where('has_absence', true)->count(),
+            'employees_with_low_attendance' => $rows->where('low_attendance', true)->count(),
+        ];
+    }
+
+    private function filterTimesheetRows(Collection $rows, Request $request): Collection
+    {
+        $search = strtolower(trim((string) $request->query('search')));
+        $department = trim((string) $request->query('department'));
+        $employeeStatus = trim((string) $request->query('employment_status'));
+        $status = (string) $request->query('status');
+
+        return $rows->filter(function (array $row) use ($search, $department, $employeeStatus, $status) {
+            $employee = $row['employee'];
+
+            if ($department !== '' && ($employee->department ?? '') !== $department) {
+                return false;
+            }
+
+            if ($employeeStatus !== '' && ($employee->status ?? '') !== $employeeStatus) {
+                return false;
+            }
+
+            if ($search !== '') {
+                $name = strtolower(trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')));
+                $empId = strtolower((string) ($employee->employee_id ?? ''));
+                if (!str_contains($name, $search) && !str_contains($empId, $search)) {
+                    return false;
+                }
+            }
+
+            return match ($status) {
+                'has_absence' => (bool) $row['has_absence'],
+                'has_leave' => (bool) $row['has_leave'],
+                'has_overtime' => (bool) $row['has_overtime'],
+                'has_late' => (bool) $row['has_late'],
+                'low_attendance' => (bool) $row['low_attendance'],
+                'no_records' => (bool) $row['no_records'],
+                default => true,
+            };
+        })->values();
+    }
+
+    /**
+     * Safely resolve the "?month=YYYY-MM" query value; falls back to the
+     * current month for missing or out-of-range values.
+     */
+    private function resolveMonthDate(Request $request, string $key): Carbon
+    {
+        $raw = trim((string) $request->query($key));
+
+        if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $raw)) {
+            try {
+                $date = Carbon::createFromFormat('Y-m', $raw)->startOfMonth();
+                if ($date->year >= 2000 && $date->lte(now()->addMonths(12)->endOfMonth())) {
+                    return $date;
+                }
+            } catch (\Throwable $e) {
+                // fall through to default
+            }
+        }
+
+        return now()->startOfMonth();
+    }
+
+    /**
+     * Stream a filtered CSV export of the month's timesheet summary.
+     */
+    public function timesheetExport(Request $request)
+    {
+        $clientId = (int) session('current_client_id');
+        if (!$clientId) {
+            return redirect()->route('dashboard')->with('error', 'Please select a client first.');
+        }
+
+        $data = $this->loadTimesheetData($clientId, $request);
+        $filename = 'timesheets_' . $data['monthStart']->format('Y-m') . '.csv';
+
+        $callback = function () use ($data) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['Monthly Timesheet - ' . $data['monthStart']->format('F Y')]);
+            fputcsv($handle, ['Generated: ' . now()->format('Y-m-d H:i')]);
+            fputcsv($handle, []);
+
+            fputcsv($handle, [
+                'Employee ID', 'Name', 'Department', 'Position', 'Employee Status',
+                'Worked Days', 'Absent Days', 'Annual Leave', 'Sick Full Pay',
+                'Sick Half Pay', 'Unpaid Leave', 'Late Days', 'Attendance Rate %',
+                'Ordinary Hrs', 'Rest Day Hrs', 'Public Holiday Hrs',
+                'Overtime Hrs', 'Night Hrs', 'Total Paid Hrs',
+            ]);
+
+            foreach ($data['timesheetData'] as $row) {
+                $e = $row['employee'];
+                $lb = $row['leave_breakdown'];
+
+                fputcsv($handle, [
+                    $e->employee_id ?: $e->id,
+                    trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')),
+                    $e->department ?? '',
+                    $e->position ?? '',
+                    $e->status ?? '',
+                    $row['worked_days'],
+                    $row['absent_days'],
+                    $lb['AL'],
+                    $lb['SLF'],
+                    $lb['SLH'],
+                    $lb['UL'],
+                    $row['late_days'],
+                    $row['attendance_rate'] !== null ? number_format($row['attendance_rate'], 1) : 'N/A',
+                    number_format($row['ordinary_hours'], 2),
+                    number_format($row['rest_day_hours'], 2),
+                    number_format($row['ph_hours'], 2),
+                    number_format($row['overtime_hours'], 2),
+                    number_format($row['night_hours'], 2),
+                    number_format($row['total_paid_hours'], 2),
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    /**
+     * JSON endpoint powering the per-employee daily breakdown modal.
+     * Every day of the month is returned so the front-end can render an
+     * accurate calendar even when a day has no attendance record.
+     */
+    public function timesheetDetail(Request $request, Employee $employee)
+    {
+        $clientId = (int) session('current_client_id');
+        if (!$clientId) {
+            return response()->json(['error' => 'Please select a client first.'], 403);
+        }
+
+        if ((int) $employee->client_id !== $clientId) {
+            abort(403);
+        }
+
+        $monthStart = $this->resolveMonthDate($request, 'month');
+        $monthEnd = $monthStart->copy()->endOfMonth();
+
+        $records = Attendance::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->orderBy('attendance_date')
+            ->get()
+            ->keyBy(fn (Attendance $r) => $r->attendance_date->toDateString());
+
+        $days = [];
+        for ($d = 1; $d <= $monthStart->daysInMonth; $d++) {
+            $date = $monthStart->copy()->day($d);
+            $record = $records->get($date->toDateString());
+
+            $days[] = $record
+                ? $this->serializeAttendanceDay($record, $date)
+                : $this->emptyAttendanceDay($date);
+        }
+
+        $raw = $this->buildTimesheetRow($employee, collect($records->all()), $monthStart);
+
+        return response()->json([
+            'employee' => [
+                'id' => $employee->id,
+                'employee_id' => $employee->employee_id,
+                'name' => trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')),
+                'department' => $employee->department,
+                'position' => $employee->position,
+                'status' => $employee->status,
+                'hire_date' => $employee->hire_date?->toDateString(),
+            ],
+            'month_label' => $monthStart->format('F Y'),
+            'summary' => [
+                'total_days' => $raw['total_days'],
+                'recorded_days' => $raw['recorded_days'],
+                'worked_days' => $raw['worked_days'],
+                'absent_days' => $raw['absent_days'],
+                'leave_days' => $raw['leave_days'],
+                'late_days' => $raw['late_days'],
+                'attendance_rate' => $raw['attendance_rate'],
+                'overtime_hours' => $raw['overtime_hours'],
+                'night_hours' => $raw['night_hours'],
+                'total_paid_hours' => $raw['total_paid_hours'],
+            ],
+            'days' => $days,
+        ]);
+    }
+
+    private function serializeAttendanceDay(Attendance $record, Carbon $date): array
+    {
+        $statusLabel = $record->status_code
+            ? $record->getStatusCodeLabelAttribute()
+            : (self::LEGACY_STATUS_LABELS[$record->status] ?? 'Present');
+
+        return [
+            'date' => $date->toDateString(),
+            'day' => (int) $date->format('j'),
+            'weekday' => $date->format('l'),
+            'is_weekend' => $date->isWeekend(),
+            'status_code' => $record->status_code,
+            'status_label' => $statusLabel,
+            'color' => $this->statusColor($record),
+            'clock_in' => $record->clock_in ? $record->clock_in->format('H:i') : null,
+            'clock_out' => $record->clock_out ? $record->clock_out->format('H:i') : null,
+            'total_hours' => round((float) $record->total_hours, 2),
+            'ordinary_hours' => round((float) $record->ordinary_hours, 2),
+            'overtime_hours' => round((float) $record->overtime_hours, 2),
+            'rest_day_hours' => round((float) $record->rest_day_hours, 2),
+            'ph_hours' => round((float) $record->ph_hours, 2),
+            'night_hours' => round((float) $record->night_hours, 2),
+            'late_minutes' => (int) $record->late_minutes,
+            'early_departure_minutes' => (int) $record->early_departure_minutes,
+            'source' => $record->source,
+            'notes' => $record->notes,
+        ];
+    }
+
+    private const LEGACY_STATUS_LABELS = [
+        'present' => 'Present',
+        'late' => 'Late',
+        'holiday' => 'Holiday',
+        'half_day' => 'Half Day',
+        'mission' => 'Official Mission',
+        'on_leave' => 'On Leave',
+        'absent' => 'Absent',
+    ];
+
+    private function emptyAttendanceDay(Carbon $date): array
+    {
+        return [
+            'date' => $date->toDateString(),
+            'day' => (int) $date->format('j'),
+            'weekday' => $date->format('l'),
+            'is_weekend' => $date->isWeekend(),
+            'status_code' => null,
+            'status_label' => 'No Record',
+            'color' => 'gray',
+            'clock_in' => null,
+            'clock_out' => null,
+            'total_hours' => 0,
+            'ordinary_hours' => 0,
+            'overtime_hours' => 0,
+            'rest_day_hours' => 0,
+            'ph_hours' => 0,
+            'night_hours' => 0,
+            'late_minutes' => 0,
+            'early_departure_minutes' => 0,
+            'source' => null,
+            'notes' => null,
+        ];
     }
 
     public function shifts()
@@ -917,7 +1294,9 @@ class AttendanceController extends Controller
 
         $workflowStatus = trim((string) ($input['workflow_status'] ?? ''));
         if ($workflowStatus === '') {
-            $workflowStatus = $manualEntry ? 'pending_approval' : 'approved';
+            // P0: manual and imported entries are treated as approved so they
+            // flow into payroll. A dedicated approval workflow is a later phase.
+            $workflowStatus = 'approved';
         }
 
         $attendance = Attendance::updateOrCreate(

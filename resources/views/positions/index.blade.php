@@ -461,7 +461,14 @@ function importPositions() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            resultsContent.innerHTML = `
+            const failed = data.errors && (data.imported === 0);
+            resultsContent.innerHTML = failed ? `
+                <div class="text-red-600 font-medium mb-2">Import failed</div>
+                <div class="text-sm text-gray-700">
+                    <p>No positions were imported. Please fix the errors below and try again.</p>
+                    <p class="text-red-600 mt-2">Errors: ${data.errors}</p>
+                </div>
+            ` : `
                 <div class="text-green-600 font-medium mb-2">Import completed successfully!</div>
                 <div class="text-sm text-gray-700">
                     <p>Imported: ${data.imported} positions</p>
@@ -469,10 +476,12 @@ function importPositions() {
                     ${data.errors ? `<p class="text-red-600 mt-2">Errors: ${data.errors}</p>` : ''}
                 </div>
             `;
-            showNotification('Positions imported successfully!', 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
+            showNotification(failed ? 'Import failed' : 'Positions imported successfully!', failed ? 'error' : 'success');
+            if (!failed) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
         } else {
             resultsContent.innerHTML = `
                 <div class="text-red-600 font-medium mb-2">Import failed</div>

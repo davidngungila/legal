@@ -8,8 +8,10 @@ use App\Models\LeaveEntitlement;
 use App\Models\LeaveRequest;
 use App\Models\Employee;
 use App\Models\Client;
+use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LeaveController extends Controller
 {
@@ -162,11 +164,22 @@ class LeaveController extends Controller
             'comments' => 'nullable|string',
         ]);
 
-        $leaveRequest->update([
-            'status' => $validated['status'],
-            'workflow_status' => $validated['status'],
-            'days_approved' => $validated['days_approved'] ?? $leaveRequest->days,
-        ]);
+        try {
+            DB::transaction(function () use ($leaveRequest, $validated) {
+                $leaveRequest->update([
+                    'status' => $validated['status'],
+                    'workflow_status' => $validated['status'],
+                    'days_approved' => $validated['days_approved'] ?? $leaveRequest->days,
+                ]);
+
+                if ($validated['status'] === 'approved') {
+                    $this->syncLeaveToAttendanceAndBalance($leaveRequest);
+                }
+            });
+        } catch (\Throwable $e) {
+            \Log::error('Leave status update failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update leave request: ' . $e->getMessage());
+        }
 
         return back()->with('success', 'Leave request updated!');
     }
@@ -208,12 +221,30 @@ class LeaveController extends Controller
             ], 400);
         }
 
-        $leaveRequest->update([
-            'status' => 'approved',
-            'workflow_status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($leaveRequest) {
+                $daysApproved = (float) $leaveRequest->days_approved;
+                if ($daysApproved <= 0) {
+                    $daysApproved = (float) $leaveRequest->days;
+                }
+
+                $leaveRequest->update([
+                    'status' => 'approved',
+                    'workflow_status' => 'approved',
+                    'days_approved' => $daysApproved,
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+
+                $this->syncLeaveToAttendanceAndBalance($leaveRequest);
+            });
+        } catch (\Throwable $e) {
+            \Log::error('Leave approval failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve leave request: ' . $e->getMessage(),
+            ], 500);
+        }
 
         \App\Helpers\AuditLogger::log(
             'approved',
@@ -226,6 +257,103 @@ class LeaveController extends Controller
             'success' => true,
             'message' => 'Leave request approved successfully!'
         ]);
+    }
+
+    /**
+     * Propagate an approved leave request into attendance records and update the
+     * employee's leave entitlement balance. Must run inside a DB transaction.
+     */
+    private function syncLeaveToAttendanceAndBalance(LeaveRequest $leaveRequest): void
+    {
+        $clientId = (int) $leaveRequest->client_id;
+        $employee = $leaveRequest->employee;
+
+        if (!$employee) {
+            return;
+        }
+
+        $statusCode = $this->resolveLeaveStatusCode($leaveRequest);
+        $hoursPerDay = match ($statusCode) {
+            'UL' => 0.0,
+            'SLH' => 4.0,
+            default => 8.0,
+        };
+
+        $cursor = Carbon::parse($leaveRequest->start_date)->startOfDay();
+        $end = Carbon::parse($leaveRequest->end_date)->startOfDay();
+
+        while ($cursor->lte($end)) {
+            if ($cursor->isWeekend()) {
+                $cursor->addDay();
+                continue;
+            }
+
+            Attendance::updateOrCreate(
+                [
+                    'client_id' => $clientId,
+                    'employee_id' => $employee->id,
+                    'attendance_date' => $cursor->toDateString(),
+                ],
+                [
+                    'status' => 'on_leave',
+                    'status_code' => $statusCode,
+                    'total_hours' => $hoursPerDay,
+                    'ordinary_hours' => $hoursPerDay,
+                    'overtime_hours' => 0,
+                    'rest_day_hours' => 0,
+                    'ph_hours' => 0,
+                    'night_hours' => 0,
+                    'source' => 'leave',
+                    'manual_entry' => false,
+                    'workflow_status' => 'approved',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                    'notes' => 'Auto-generated from approved leave request #' . $leaveRequest->id,
+                ]
+            );
+
+            $cursor->addDay();
+        }
+
+        $days = (float) $leaveRequest->days_approved;
+        if ($days <= 0) {
+            $days = (float) $leaveRequest->days;
+        }
+        if ($days <= 0) {
+            return;
+        }
+
+        $entitlement = LeaveEntitlement::where('client_id', $clientId)
+            ->where('employee_id', $employee->id)
+            ->where('leave_type_id', $leaveRequest->leave_type_id)
+            ->first();
+
+        if ($entitlement) {
+            $entitlement->taken_days = round(((float) $entitlement->taken_days) + $days, 2);
+            $entitlement->balance_days = max(0, round(((float) $entitlement->balance_days) - $days, 2));
+            $entitlement->save();
+        }
+    }
+
+    /**
+     * Map a leave type to the SRS attendance status code used by payroll.
+     */
+    private function resolveLeaveStatusCode(LeaveRequest $leaveRequest): string
+    {
+        $type = $leaveRequest->leaveType;
+        $name = strtolower((string) ($type->type_name ?? $leaveRequest->leave_type ?? ''));
+        $isPaid = (bool) ($type->is_paid ?? true);
+        $payRate = (float) ($type->pay_rate ?? 100);
+
+        if (!$isPaid || $payRate <= 0) {
+            return 'UL';
+        }
+
+        if (str_contains($name, 'sick')) {
+            return $payRate >= 100 ? 'SLF' : 'SLH';
+        }
+
+        return 'AL';
     }
 
     public function reject(Request $request, $id)

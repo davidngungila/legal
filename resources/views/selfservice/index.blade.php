@@ -21,10 +21,12 @@
                 <i data-feather="help-circle" class="w-4 h-4 inline mr-2"></i>
                 Help & Support
             </button>
+            @hasPermission('selfservice.profile')
             <a href="{{ route('selfservice.profile') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <i data-feather="user-plus" class="w-4 h-4 inline mr-2"></i>
                 Update Profile
             </a>
+            @endhasPermission
         </div>
     </div>
 
@@ -76,6 +78,7 @@
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        @hasPermission('selfservice.leave')
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <i data-feather="calendar" class="w-6 h-6 text-green-600"></i>
@@ -84,7 +87,9 @@
             <p class="text-sm text-gray-600 mb-4">Request annual, sick, or emergency leave</p>
             <a href="{{ route('selfservice.leave') }}" class="text-green-600 hover:text-green-800 text-sm font-medium">Apply Now →</a>
         </div>
+        @endhasPermission
 
+        @hasPermission('selfservice.payslip')
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <i data-feather="download" class="w-6 h-6 text-blue-600"></i>
@@ -93,7 +98,9 @@
             <p class="text-sm text-gray-600 mb-4">Access your monthly salary statements</p>
             <a href="{{ route('selfservice.payslip') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Download →</a>
         </div>
+        @endhasPermission
 
+        @hasPermission('selfservice.contract')
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <i data-feather="file-text" class="w-6 h-6 text-purple-600"></i>
@@ -102,7 +109,9 @@
             <p class="text-sm text-gray-600 mb-4">Review your employment contract details</p>
             <a href="{{ route('selfservice.contract') }}" class="text-purple-600 hover:text-purple-800 text-sm font-medium">View →</a>
         </div>
+        @endhasPermission
 
+        @hasPermission('selfservice.complaint')
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
                 <i data-feather="alert-circle" class="w-6 h-6 text-orange-600"></i>
@@ -111,6 +120,7 @@
             <p class="text-sm text-gray-600 mb-4">Submit grievances or concerns</p>
             <a href="{{ route('selfservice.complaint') }}" class="text-orange-600 hover:text-orange-800 text-sm font-medium">File Now →</a>
         </div>
+        @endhasPermission
     </div>
 
     <!-- Leave Balance & Requests -->
@@ -229,6 +239,7 @@
     </div>
 
     <!-- Recent Payslips -->
+    @hasPermission('selfservice.payslip')
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900">Recent Payslips</h3>
@@ -287,6 +298,7 @@
             </table>
         </div>
     </div>
+    @endhasPermission
 
     <!-- Performance & Training -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

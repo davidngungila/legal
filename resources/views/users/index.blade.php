@@ -260,9 +260,148 @@
                     </div>
                 </div>
     <x-slot:footer>
-        <div class="flex justify-end">
+        <div class="flex items-center justify-between gap-3">
+            <div>
+                @hasPermission('users.edit')
+                <button type="button" onclick="openResetPasswordModal()"
+                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm">
+                    <i data-feather="key" class="w-4 h-4 mr-2"></i>
+                    Reset Password
+                </button>
+                @endhasPermission
+            </div>
             <button onclick="closeViewUserModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
+
+<!-- Advanced Reset Password Modal -->
+<x-advanced-modal id="resetPasswordModal" title="Reset Password" icon="key" color="orange" size="lg"
+    description="Administratively reset this user's account password">
+    <div class="space-y-6">
+        <!-- Target user -->
+        <div class="flex items-center gap-3 bg-orange-50 border border-orange-100 rounded-xl p-4">
+            <div class="w-11 h-11 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span id="resetPasswordInitials" class="text-orange-600 font-bold">--</span>
+            </div>
+            <div class="min-w-0">
+                <p id="resetPasswordName" class="font-semibold text-gray-900 truncate">--</p>
+                <p id="resetPasswordEmail" class="text-sm text-gray-500 truncate">--</p>
+            </div>
+        </div>
+
+        <!-- Mode selector -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Password mode</label>
+            <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
+                <button type="button" id="resetModeGenerateBtn" onclick="setResetPasswordMode('generate')"
+                    class="py-2 text-sm font-medium rounded-lg transition-all bg-white shadow-sm text-indigo-700">
+                    <i data-feather="zap" class="w-3.5 h-3.5 inline mr-1"></i> Generate secure
+                </button>
+                <button type="button" id="resetModeManualBtn" onclick="setResetPasswordMode('manual')"
+                    class="py-2 text-sm font-medium rounded-lg transition-all text-gray-500">
+                    <i data-feather="edit-3" class="w-3.5 h-3.5 inline mr-1"></i> Set manually
+                </button>
+            </div>
+        </div>
+
+        <!-- Generated password -->
+        <div id="resetGeneratePanel">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Generated password</label>
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <input type="text" id="resetGeneratedPassword" readonly
+                        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm text-gray-900 focus:outline-none">
+                    <button type="button" onclick="copyResetPassword('resetGeneratedPassword')"
+                        class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-indigo-600" title="Copy">
+                        <i data-feather="copy" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <button type="button" onclick="regenerateResetPassword()"
+                    class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600" title="Regenerate">
+                    <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Shown only once — copy and share it securely. The user should change it after signing in.</p>
+        </div>
+
+        <!-- Manual password -->
+        <div id="resetManualPanel" class="hidden space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">New password</label>
+                <div class="relative">
+                    <input type="password" id="resetManualPassword" oninput="evaluateResetStrength(this.value)"
+                        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Enter a strong password">
+                    <button type="button" onclick="toggleResetVisibility('resetManualPassword', this)"
+                        class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-indigo-600">
+                        <i data-feather="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Confirm password</label>
+                <div class="relative">
+                    <input type="password" id="resetManualPasswordConfirm"
+                        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Re-enter the password">
+                    <button type="button" onclick="toggleResetVisibility('resetManualPasswordConfirm', this)"
+                        class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-indigo-600">
+                        <i data-feather="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-gray-500">Password strength</span>
+                    <span id="resetStrengthLabel" class="text-xs font-semibold text-gray-400">—</span>
+                </div>
+                <div class="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div id="resetStrengthBar" class="h-full w-0 bg-red-500 transition-all duration-300"></div>
+                </div>
+                <ul class="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-xs">
+                    <li id="req-length" class="flex items-center text-gray-400"><i data-feather="circle" class="w-3 h-3 mr-1"></i> 10+ characters</li>
+                    <li id="req-upper" class="flex items-center text-gray-400"><i data-feather="circle" class="w-3 h-3 mr-1"></i> Uppercase letter</li>
+                    <li id="req-lower" class="flex items-center text-gray-400"><i data-feather="circle" class="w-3 h-3 mr-1"></i> Lowercase letter</li>
+                    <li id="req-number" class="flex items-center text-gray-400"><i data-feather="circle" class="w-3 h-3 mr-1"></i> Number</li>
+                    <li id="req-symbol" class="flex items-center text-gray-400"><i data-feather="circle" class="w-3 h-3 mr-1"></i> Symbol</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Options -->
+        <div class="space-y-3 pt-2 border-t border-gray-100">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" id="resetRevokeSessions" checked class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span>
+                    <span class="block text-sm font-medium text-gray-700">Revoke active sessions</span>
+                    <span class="block text-xs text-gray-500">Immediately sign the user out of all devices.</span>
+                </span>
+            </label>
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" id="resetNotifyEmail" class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span>
+                    <span class="block text-sm font-medium text-gray-700">Email the new password</span>
+                    <span class="block text-xs text-gray-500">Send the credentials to <span id="resetNotifyEmailTarget">the user</span>.</span>
+                </span>
+            </label>
+        </div>
+
+        <!-- Result -->
+        <div id="resetPasswordResult" class="hidden rounded-xl border p-4"></div>
+    </div>
+
+    <x-slot:footer>
+        <div class="flex items-center justify-end gap-3">
+            <button type="button" onclick="closeResetPasswordModal()"
+                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                Cancel
+            </button>
+            <button type="button" id="resetPasswordSubmitBtn" onclick="submitResetPassword()"
+                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
+                <i data-feather="key" class="w-4 h-4 mr-2"></i>
+                Reset Password
             </button>
         </div>
     </x-slot:footer>
@@ -280,6 +419,8 @@
     let users = [];
     let currentPage = 1;
     let filteredUsers = [];
+    let currentViewUser = null;
+    let resetPasswordMode = 'generate';
 
     // Global functions (must be defined outside DOMContentLoaded)
 // Client switching function is now defined in layouts/app.blade.php
@@ -686,6 +827,7 @@ function updateNotificationBadge() {
         }
 
         const user = data.user;
+        currentViewUser = user;
         
         // Safely get user details with fallbacks
         const firstName = (user.first_name || '').toString();
@@ -760,6 +902,284 @@ function updateNotificationBadge() {
         }
 
         openViewUserModal();
+    }
+
+    // ----- Advanced reset password -----
+    function openResetPasswordModal() {
+        if (!currentViewUser) {
+            showNotification('No user selected.', 'error');
+            return;
+        }
+
+        const first = (currentViewUser.first_name || '').toString();
+        const last = (currentViewUser.last_name || '').toString();
+        const initials = `${(first.charAt(0) || '?')}${(last.charAt(0) || '?')}`.toUpperCase();
+
+        document.getElementById('resetPasswordInitials').textContent = initials;
+        document.getElementById('resetPasswordName').textContent = `${first} ${last}`.trim() || 'Unknown User';
+        document.getElementById('resetPasswordEmail').textContent = currentViewUser.email || 'N/A';
+        document.getElementById('resetNotifyEmailTarget').textContent = currentViewUser.email || 'the user';
+
+        document.getElementById('resetRevokeSessions').checked = true;
+        document.getElementById('resetNotifyEmail').checked = false;
+        document.getElementById('resetManualPassword').value = '';
+        document.getElementById('resetManualPasswordConfirm').value = '';
+
+        const result = document.getElementById('resetPasswordResult');
+        result.classList.add('hidden');
+        result.innerHTML = '';
+
+        setResetPasswordMode('generate');
+        evaluateResetStrength('');
+        regenerateResetPassword();
+
+        openModal('resetPasswordModal');
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    function closeResetPasswordModal() {
+        closeModal('resetPasswordModal');
+
+        ['resetGeneratedPassword', 'resetManualPassword', 'resetManualPasswordConfirm'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+
+        const result = document.getElementById('resetPasswordResult');
+        if (result) {
+            result.classList.add('hidden');
+            result.innerHTML = '';
+        }
+    }
+
+    function setResetPasswordMode(mode) {
+        resetPasswordMode = mode === 'manual' ? 'manual' : 'generate';
+
+        const genPanel = document.getElementById('resetGeneratePanel');
+        const manPanel = document.getElementById('resetManualPanel');
+        const genBtn = document.getElementById('resetModeGenerateBtn');
+        const manBtn = document.getElementById('resetModeManualBtn');
+
+        const active = ['bg-white', 'shadow-sm', 'text-indigo-700'];
+        const inactive = ['text-gray-500'];
+
+        if (resetPasswordMode === 'generate') {
+            genPanel.classList.remove('hidden');
+            manPanel.classList.add('hidden');
+            genBtn.classList.add(...active);
+            genBtn.classList.remove(...inactive);
+            manBtn.classList.remove(...active);
+            manBtn.classList.add(...inactive);
+        } else {
+            genPanel.classList.add('hidden');
+            manPanel.classList.remove('hidden');
+            manBtn.classList.add(...active);
+            manBtn.classList.remove(...inactive);
+            genBtn.classList.remove(...active);
+            genBtn.classList.add(...inactive);
+        }
+    }
+
+    function generateStrongPassword(length = 14) {
+        const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lower = 'abcdefghijkmnopqrstuvwxyz';
+        const numbers = '23456789';
+        const symbols = '!@#$%^&*()-_=+[]{}';
+        const all = upper + lower + numbers + symbols;
+
+        const rnd = (max) => {
+            if (window.crypto && window.crypto.getRandomValues) {
+                const buffer = new Uint32Array(1);
+                window.crypto.getRandomValues(buffer);
+                return buffer[0] % max;
+            }
+            return Math.floor(Math.random() * max);
+        };
+
+        const chars = [
+            upper[rnd(upper.length)],
+            lower[rnd(lower.length)],
+            numbers[rnd(numbers.length)],
+            symbols[rnd(symbols.length)],
+        ];
+
+        for (let i = chars.length; i < length; i++) {
+            chars.push(all[rnd(all.length)]);
+        }
+
+        for (let i = chars.length - 1; i > 0; i--) {
+            const j = rnd(i + 1);
+            [chars[i], chars[j]] = [chars[j], chars[i]];
+        }
+
+        return chars.join('');
+    }
+
+    function regenerateResetPassword() {
+        const input = document.getElementById('resetGeneratedPassword');
+        if (input) input.value = generateStrongPassword(14);
+    }
+
+    async function copyResetPassword(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input || !input.value) return;
+
+        try {
+            await navigator.clipboard.writeText(input.value);
+            showNotification('Password copied to clipboard.', 'success');
+        } catch (e) {
+            input.removeAttribute('readonly');
+            input.select();
+            document.execCommand('copy');
+            input.setAttribute('readonly', 'readonly');
+            showNotification('Password copied to clipboard.', 'success');
+        }
+    }
+
+    function toggleResetVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        const reveal = input.type === 'password';
+        input.type = reveal ? 'text' : 'password';
+
+        const icon = btn.querySelector('i');
+        if (icon) icon.setAttribute('data-feather', reveal ? 'eye-off' : 'eye');
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    function evaluateResetStrength(value) {
+        const checks = {
+            length: value.length >= 10,
+            upper: /[A-Z]/.test(value),
+            lower: /[a-z]/.test(value),
+            number: /[0-9]/.test(value),
+            symbol: /[^A-Za-z0-9]/.test(value),
+        };
+
+        const score = Object.values(checks).filter(Boolean).length;
+
+        Object.entries(checks).forEach(([key, ok]) => {
+            const el = document.getElementById(`req-${key}`);
+            if (!el) return;
+            el.classList.toggle('text-green-600', ok);
+            el.classList.toggle('text-gray-400', !ok);
+            const icon = el.querySelector('i');
+            if (icon) icon.setAttribute('data-feather', ok ? 'check-circle' : 'circle');
+        });
+
+        const bar = document.getElementById('resetStrengthBar');
+        const label = document.getElementById('resetStrengthLabel');
+        const meta = [
+            { text: '—', color: 'text-gray-400', bar: 'bg-red-500', width: '0%' },
+            { text: 'Very weak', color: 'text-red-600', bar: 'bg-red-500', width: '20%' },
+            { text: 'Weak', color: 'text-red-500', bar: 'bg-red-500', width: '40%' },
+            { text: 'Fair', color: 'text-amber-500', bar: 'bg-amber-500', width: '60%' },
+            { text: 'Strong', color: 'text-blue-600', bar: 'bg-blue-500', width: '80%' },
+            { text: 'Very strong', color: 'text-green-600', bar: 'bg-green-500', width: '100%' },
+        ][value ? score : 0];
+
+        if (bar) {
+            bar.className = `h-full transition-all duration-300 ${meta.bar}`;
+            bar.style.width = meta.width;
+        }
+        if (label) {
+            label.textContent = meta.text;
+            label.className = `text-xs font-semibold ${meta.color}`;
+        }
+
+        if (typeof feather !== 'undefined') feather.replace();
+        return score;
+    }
+
+    async function submitResetPassword() {
+        if (!currentViewUser) return;
+
+        const payload = {
+            mode: resetPasswordMode,
+            revoke_sessions: document.getElementById('resetRevokeSessions').checked,
+            notify_email: document.getElementById('resetNotifyEmail').checked,
+        };
+
+        if (resetPasswordMode === 'manual') {
+            const password = document.getElementById('resetManualPassword').value;
+            const confirmation = document.getElementById('resetManualPasswordConfirm').value;
+
+            if (evaluateResetStrength(password) < 5) {
+                showNotification('Password must meet all strength requirements.', 'error');
+                return;
+            }
+            if (password !== confirmation) {
+                showNotification('Passwords do not match.', 'error');
+                return;
+            }
+
+            payload.password = password;
+            payload.password_confirmation = confirmation;
+        }
+
+        const btn = document.getElementById('resetPasswordSubmitBtn');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i> Resetting...';
+        if (typeof feather !== 'undefined') feather.replace();
+
+        try {
+            const data = await requestJson(`${API_BASE}/${currentViewUser.id}/reset-password`, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            if (!data || !data.success) {
+                const firstError = data && data.errors ? Object.values(data.errors)[0]?.[0] : null;
+                showNotification(firstError || (data && data.message) || 'Failed to reset password', 'error');
+                return;
+            }
+
+            renderResetPasswordResult(data);
+            showNotification('Password reset successfully.', 'success');
+        } catch (e) {
+            showNotification('Something went wrong while resetting the password.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+    }
+
+    function renderResetPasswordResult(data) {
+        const box = document.getElementById('resetPasswordResult');
+        if (!box) return;
+
+        const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        }[c]));
+
+        const bits = [];
+        if (data.sessions_revoked) bits.push('active sessions revoked');
+        if (data.email_sent) bits.push('credentials emailed');
+
+        const generated = data.password
+            ? `<div class="mt-3 flex gap-2">
+                    <input type="text" id="resetResultPassword" readonly value="${escapeHtml(data.password)}"
+                        class="flex-1 px-3 py-2 border border-green-200 rounded-lg bg-white font-mono text-sm text-gray-900">
+                    <button type="button" onclick="copyResetPassword('resetResultPassword')"
+                        class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700" title="Copy">
+                        <i data-feather="copy" class="w-4 h-4"></i>
+                    </button>
+               </div>
+               <p class="text-xs text-green-700 mt-2">Copy this password now — it will not be shown again.</p>`
+            : '<p class="text-sm text-green-700 mt-1">The new password has been applied.</p>';
+
+        box.className = 'rounded-xl border border-green-200 bg-green-50 p-4';
+        box.innerHTML = `<p class="font-semibold text-green-800"><i data-feather="check-circle" class="w-4 h-4 inline mr-1"></i>Password reset complete</p>
+            ${generated}
+            ${bits.length ? `<p class="text-xs text-green-700 mt-2">Also: ${bits.join(', ')}.</p>` : ''}`;
+        box.classList.remove('hidden');
+
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     async function loadRolesAndPermissions(retryCount = 0) {

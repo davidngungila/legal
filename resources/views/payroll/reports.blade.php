@@ -102,6 +102,32 @@
             <p class="text-sm text-gray-600">Total employer pension contributions</p>
         </div>
     </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">SDL (4.5%)</h3>
+            <div class="text-2xl font-bold text-indigo-600">TZS {{ number_format($totalSDL, 2) }}</div>
+            <p class="text-xs text-gray-600 mt-1">Skills & Development Levy (employer)</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">WCF (0.5%)</h3>
+            <div class="text-2xl font-bold text-teal-600">TZS {{ number_format($totalWCF, 2) }}</div>
+            <p class="text-xs text-gray-600 mt-1">Workers Compensation Fund (employer)</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">HESLB</h3>
+            <div class="text-2xl font-bold text-amber-600">TZS {{ number_format($totalHESLB, 2) }}</div>
+            <p class="text-xs text-gray-600 mt-1">Higher education loan repayments</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">Trade Union</h3>
+            <div class="text-2xl font-bold text-rose-600">TZS {{ number_format($totalTradeUnion, 2) }}</div>
+            <p class="text-xs text-gray-600 mt-1">Trade union deductions</p>
+        </div>
+    </div>
     @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

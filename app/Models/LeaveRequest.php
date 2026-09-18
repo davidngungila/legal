@@ -20,6 +20,7 @@ class LeaveRequest extends Model
         'start_date',
         'end_date',
         'days',
+        'days_approved',
         'reason',
         'status',
         'approved_by',
@@ -36,6 +37,7 @@ class LeaveRequest extends Model
         'applied_at' => 'datetime',
         'approved_at' => 'datetime',
         'days' => 'integer',
+        'days_approved' => 'decimal:2',
     ];
 
     /**

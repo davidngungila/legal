@@ -481,6 +481,63 @@
     </div>
 </div>
 
+<!-- Audit Results Modal -->
+<x-advanced-modal id="auditResultsModal" title="Audit Results" icon="shield" color="indigo" size="lg"
+    description="Compliance audit outcome for the current client">
+    <div class="space-y-6">
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Audit ID</p>
+                <p id="auditId" class="font-mono text-sm font-semibold text-gray-900 break-all">--</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Date</p>
+                <p id="auditDate" class="font-medium text-gray-900">--</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Next Review</p>
+                <p id="auditNextReview" class="font-medium text-gray-900">--</p>
+            </div>
+        </div>
+
+        <div id="auditScoreCard" class="rounded-xl border border-gray-200 bg-gray-50 p-6 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Overall Compliance Score</p>
+                <p id="auditOverallScore" class="text-4xl font-bold mt-1 text-gray-900">--</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-medium text-gray-500">Risk Level</p>
+                <span id="auditRiskBadge" class="inline-flex px-3 py-1 mt-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-700">--</span>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-gray-700">Areas Assessed</h4>
+                <span id="auditAreasCount" class="text-xs font-medium text-gray-400">0 areas assessed</span>
+            </div>
+            <div id="auditAreas" class="space-y-2"></div>
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-gray-700">Recommendations</h4>
+                <span id="auditRecsCount" class="text-xs font-medium text-gray-400">0</span>
+            </div>
+            <div id="auditRecommendations" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <x-slot:footer>
+        <div class="flex justify-end">
+            <button type="button" onclick="closeModal('auditResultsModal')"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                Close
+            </button>
+        </div>
+    </x-slot:footer>
+</x-advanced-modal>
+
 @push('scripts')
 <script>
 // Compliance Management System
@@ -1032,6 +1089,95 @@ async function downloadReports() {
     }
 }
 
+// Audit results (system modal)
+function escapeAuditHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+}
+
+function formatAuditDate(value) {
+    if (!value) return '--';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return escapeAuditHtml(value);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function showAuditResults(results) {
+    const auditId = document.getElementById('auditId');
+    const auditDate = document.getElementById('auditDate');
+    const auditNextReview = document.getElementById('auditNextReview');
+    const scoreCard = document.getElementById('auditScoreCard');
+    const scoreEl = document.getElementById('auditOverallScore');
+    const riskBadge = document.getElementById('auditRiskBadge');
+    const areasEl = document.getElementById('auditAreas');
+    const areasCount = document.getElementById('auditAreasCount');
+    const recsEl = document.getElementById('auditRecommendations');
+    const recsCount = document.getElementById('auditRecsCount');
+
+    if (!auditId || !scoreCard) return;
+
+    auditId.textContent = results.audit_id || '--';
+    auditDate.textContent = formatAuditDate(results.date);
+    auditNextReview.textContent = formatAuditDate(results.next_review_date);
+    scoreEl.textContent = `${results.overall_score}%`;
+
+    const risk = String(results.risk_level || '').toUpperCase();
+    const riskStyles = {
+        LOW: { card: 'border-green-200 bg-green-50', badge: 'bg-green-100 text-green-800', text: 'text-green-700' },
+        MEDIUM: { card: 'border-amber-200 bg-amber-50', badge: 'bg-amber-100 text-amber-800', text: 'text-amber-700' },
+        HIGH: { card: 'border-red-200 bg-red-50', badge: 'bg-red-100 text-red-800', text: 'text-red-700' },
+    };
+    const style = riskStyles[risk] || riskStyles.HIGH;
+
+    scoreCard.className = `rounded-xl border p-6 flex items-center justify-between ${style.card}`;
+    scoreEl.className = `text-4xl font-bold mt-1 ${style.text}`;
+    riskBadge.textContent = risk || '--';
+    riskBadge.className = `inline-flex px-3 py-1 mt-1 text-sm font-semibold rounded-full ${style.badge}`;
+
+    const areas = results.areas_assessed || [];
+    areasCount.textContent = `${areas.length} area${areas.length === 1 ? '' : 's'} assessed`;
+    areasEl.innerHTML = areas.length
+        ? areas.map((area) => {
+            const status = String(area.status || '').toLowerCase();
+            const scoreColor = area.score >= 90 ? 'text-green-600' : area.score >= 70 ? 'text-amber-600' : 'text-red-600';
+            const icon = status === 'compliant' ? 'check-circle' : status === 'review' ? 'clock' : 'alert-triangle';
+            const iconColor = status === 'compliant' ? 'text-green-600' : status === 'review' ? 'text-amber-600' : 'text-red-600';
+            return `<div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <i data-feather="${icon}" class="w-4 h-4 ${iconColor} flex-shrink-0"></i>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">${escapeAuditHtml(area.name)}</p>
+                                ${area.description ? `<p class="text-xs text-gray-500 truncate">${escapeAuditHtml(area.description)}</p>` : ''}
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold ${scoreColor} flex-shrink-0">${area.score}%</span>
+                    </div>`;
+        }).join('')
+        : '<p class="text-sm text-gray-500">No areas were assessed.</p>';
+
+    const recs = results.recommendations || [];
+    recsCount.textContent = `${recs.length} recommendation${recs.length === 1 ? '' : 's'}`;
+    recsEl.innerHTML = recs.length
+        ? recs.map((rec) => {
+            const priority = String(rec.priority || '').toLowerCase();
+            const priorityColor = priority === 'high' ? 'bg-orange-50 border-orange-100' : 'bg-amber-50 border-amber-100';
+            const badgeColor = priority === 'high' ? 'text-red-600' : 'text-amber-600';
+            return `<div class="flex items-start gap-3 ${priorityColor} border rounded-lg px-4 py-3">
+                        <i data-feather="alert-triangle" class="w-4 h-4 ${badgeColor} mt-0.5 flex-shrink-0"></i>
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold uppercase tracking-wide ${badgeColor}">${escapeAuditHtml(rec.area)} · ${escapeAuditHtml(rec.priority)} priority</p>
+                            <p class="text-sm text-gray-700 mt-0.5">${escapeAuditHtml(rec.action)}</p>
+                        </div>
+                    </div>`;
+        }).join('')
+        : '<p class="text-sm text-gray-500">No recommendations were generated.</p>';
+
+    if (typeof feather !== 'undefined') feather.replace();
+
+    openModal('auditResultsModal');
+}
+
 // Run Audit
 async function runAudit() {
     try {
@@ -1047,8 +1193,8 @@ async function runAudit() {
         
         if (result.success) {
             showNotification('Compliance audit completed successfully!', 'success');
-            // Display audit results
-            alert(`Audit Results:\n\nAudit ID: ${result.results.audit_id}\nDate: ${result.results.date}\nOverall Score: ${result.results.overall_score}%\nRisk Level: ${result.results.risk_level}\n\nAreas Assessed: ${result.results.areas_assessed.length}\nRecommendations: ${result.results.recommendations.length}`);
+            // Display audit results in the system modal
+            showAuditResults(result.results);
         } else {
             showNotification('Error: ' + result.error, 'error');
         }

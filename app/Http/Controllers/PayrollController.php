@@ -6,6 +6,8 @@ use App\Models\Payroll;
 use App\Models\Employee;
 use App\Models\Client;
 use App\Models\Attendance;
+use App\Models\Allowance;
+use App\Models\Loan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -56,7 +58,7 @@ class PayrollController extends Controller
             $holidayPay = (float) ($meta['holidayPay'] ?? 0);
             $heslb = (float) ($meta['heslb'] ?? 0);
             $otherDed = (float) ($meta['otherDed'] ?? 0);
-            $taxablePay = (float) ($meta['taxablePay'] ?? max(0, ($p->gross_pay ?? 0) - ($p->social_security ?? 0)));
+            $taxablePay = (float) ($meta['taxablePay'] ?? max(0, ($p->gross_pay ?? 0) - ($p->nssf_employee ?: $p->social_security ?? 0)));
             $sdl = (float) ($meta['sdl'] ?? 0);
             $wcf = (float) ($meta['wcf'] ?? 0);
             $totalCost = (float) ($meta['totalCost'] ?? (($p->gross_pay ?? 0) + ($p->pension ?? 0) + $sdl + $wcf));
@@ -94,14 +96,18 @@ class PayrollController extends Controller
                 'grossPay' => (float) $p->gross_pay,
                 'taxablePay' => $taxablePay,
                 'paye' => (float) $p->tax_deductions,
-                'nssf' => (float) $p->social_security,
+                'nssf' => (float) ($p->nssf_employee ?: $p->social_security),
                 'heslb' => $heslb,
                 'tradeUnion' => $tradeUnion,
+                'tradeUnionRate' => (float) ($meta['tradeUnionRate'] ?? 0),
                 'loanDeductions' => $loanDeductions,
+                'heslbApplicable' => (bool) ($meta['heslbApplicable'] ?? ($employee?->heslb_applicable ?? false)),
+                'salaryHold' => (bool) ($p->salary_hold ?? ($meta['salaryHold'] ?? false)),
+                'salaryHoldReason' => (string) ($p->salary_hold_reason ?? ($meta['salaryHoldReason'] ?? '')),
                 'otherDed' => $otherDed,
                 'totalDeduction' => (float) ($p->total_deductions ?? 0),
                 'netPay' => (float) $p->net_pay,
-                'employerNSSF' => (float) ($p->pension ?? 0),
+                'employerNSSF' => (float) ($p->nssf_employer ?: $p->pension ?? 0),
                 'sdl' => $sdl,
                 'wcf' => $wcf,
                 'totalCost' => $totalCost,
@@ -150,22 +156,32 @@ class PayrollController extends Controller
                 $attendance = Attendance::where('client_id', $clientId)
                     ->where('employee_id', $employee->id)
                     ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
+                    ->where(function ($query) {
+                        $query->whereNull('workflow_status')
+                            ->orWhere('workflow_status', 'approved');
+                    })
                     ->get();
 
                 $metrics = $this->summarizeAttendanceMetrics($attendance);
+                $tradeUnion = $this->resolveTradeUnionInput($employee);
+
                 $computation = $this->buildPayrollComputation($employee, [
-                    'allowances' => $this->calculateAllowancesFromBenefits($employee->benefits ?? []),
+                    'basic_salary' => (float) ($employee->salary ?? 0),
+                    'allowances' => $this->calculateAllowancesForEmployee($employee),
                     'bonuses' => 0,
                     'overtime_hours' => $metrics['overtime_hours'],
                     'rest_day_hours' => $metrics['rest_day_hours'],
                     'public_holiday_hours' => $metrics['public_holiday_hours'],
                     'night_hours' => $metrics['night_hours'],
                     'unpaid_leave_days' => $metrics['unpaid_leave_days'],
-                    'trade_union' => 0,
-                    'loan_deductions' => 0,
+                    'trade_union' => $tradeUnion['amount'],
+                    'trade_union_rate' => $tradeUnion['rate'],
+                    'loan_deductions' => $this->calculateLoanDeduction($employee),
                     'other_deductions' => 0,
                     'heslb' => 0,
+                    'heslb_applicable' => (bool) ($employee->heslb_applicable ?? false),
                     'workflow_state' => 'prepared',
+                    'salary_hold' => false,
                     'salary_hold_recommended' => false,
                 ], $period, $payDate);
 
@@ -233,33 +249,25 @@ class PayrollController extends Controller
         }
 
         $employee = $payroll->employee;
-        $input = [
-            'basic_salary' => $validated['basic_salary'] ?? $payroll->basic_salary,
-            'allowances' => $validated['allowances'] ?? $payroll->allowances,
-            'bonuses' => $validated['bonuses'] ?? $payroll->bonuses,
-            'overtime_hours' => $validated['overtime_hours'] ?? $payroll->overtime_hours,
-            'overtime_rate' => $validated['overtime_rate'] ?? ($meta['overtimeRate'] ?? $payroll->overtime_rate),
-            'overtime_pay' => $validated['overtime_pay'] ?? $payroll->overtime_pay,
-            'rest_day_hours' => $meta['restDayHours'] ?? 0,
-            'public_holiday_hours' => $meta['publicHolidayHours'] ?? 0,
-            'night_hours' => $meta['nightShiftHours'] ?? 0,
-            'unpaid_leave_days' => $meta['unpaidLeaveDays'] ?? 0,
-            'trade_union' => $meta['tradeUnion'] ?? 0,
-            'loan_deductions' => $meta['loanDeductions'] ?? 0,
-            'other_deductions' => $meta['otherDed'] ?? 0,
-            'heslb' => $meta['heslb'] ?? 0,
-            'workflow_state' => $meta['workflowState'] ?? $this->mapLegacyStatusToWorkflow($payroll->status),
-            'salary_hold_recommended' => $meta['salaryHoldRecommended'] ?? false,
-            'holiday_pay' => $meta['holidayPay'] ?? 0,
-            'rest_day_pay' => $meta['restDayPay'] ?? 0,
-            'night_shift_allowance' => $meta['nightShiftAllowance'] ?? 0,
-        ];
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => 'Employee not found for this payroll.'], 422);
+        }
 
         if (array_key_exists('notes', $validated) && $validated['notes']) {
             $meta = array_merge($meta, $this->extractPayrollMeta($validated['notes']));
         }
 
-        $computation = $this->buildPayrollComputation($employee, array_merge($meta, $input), $payroll->payroll_period, optional($payroll->pay_date)->format('Y-m-d'));
+        $input = $this->payrollInputFromRecord($payroll, $meta);
+
+        // The edit modal may override the core salary components; statutory
+        // deductions are always recomputed by the payroll engine.
+        foreach (['basic_salary', 'allowances', 'bonuses', 'overtime_hours', 'overtime_rate', 'overtime_pay'] as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] !== null) {
+                $input[$field] = $validated[$field];
+            }
+        }
+
+        $computation = $this->buildPayrollComputation($employee, $input, $payroll->payroll_period, optional($payroll->pay_date)->format('Y-m-d'));
 
         if (isset($validated['status'])) {
             $computation['payload']['status'] = $validated['status'];
@@ -272,6 +280,111 @@ class PayrollController extends Controller
             'success' => true,
             'message' => 'Payroll updated successfully.',
         ]);
+    }
+
+    /**
+     * Update the statutory and voluntary deduction configuration for a payroll record.
+     */
+    public function configureDeductions(Request $request, Payroll $payroll)
+    {
+        $clientId = session('current_client_id');
+        if (!$clientId) {
+            return response()->json(['success' => false, 'message' => 'Please select a client first.'], 400);
+        }
+
+        if ((int) $payroll->client_id !== (int) $clientId) {
+            return response()->json(['success' => false, 'message' => 'Payroll record not found.'], 404);
+        }
+
+        $meta = $this->extractPayrollMeta($payroll->notes);
+        if (($meta['workflowState'] ?? '') === 'locked') {
+            return response()->json(['success' => false, 'message' => 'Locked payroll cannot be edited.'], 422);
+        }
+
+        $validated = $request->validate([
+            'heslb' => 'nullable|numeric|min:0',
+            'heslb_applicable' => 'nullable|boolean',
+            'trade_union' => 'nullable|numeric|min:0',
+            'trade_union_rate' => 'nullable|numeric|min:0|max:100',
+            'loan_deductions' => 'nullable|numeric|min:0',
+            'other_deductions' => 'nullable|numeric|min:0',
+            'sdl' => 'nullable|numeric|min:0',
+            'salary_hold' => 'nullable|boolean',
+            'salary_hold_reason' => 'nullable|string|max:500',
+        ]);
+
+        $employee = $payroll->employee;
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => 'Employee not found for this payroll.'], 422);
+        }
+
+        return DB::transaction(function () use ($payroll, $employee, $meta, $validated) {
+            $input = $this->payrollInputFromRecord($payroll, $meta);
+
+            foreach (['heslb', 'heslb_applicable', 'trade_union', 'trade_union_rate', 'loan_deductions', 'other_deductions', 'sdl', 'salary_hold'] as $field) {
+                if (array_key_exists($field, $validated) && $validated[$field] !== null) {
+                    $input[$field] = $validated[$field];
+                }
+            }
+
+            if (array_key_exists('salary_hold_reason', $validated)) {
+                $input['salary_hold_reason'] = $validated['salary_hold_reason'];
+            }
+
+            $input['workflow_state'] = $meta['workflowState'] ?? $this->mapLegacyStatusToWorkflow($payroll->status);
+
+            $computation = $this->buildPayrollComputation($employee, $input, $payroll->payroll_period, optional($payroll->pay_date)->format('Y-m-d'));
+
+            $payroll->fill($computation['payload']);
+            $payroll->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Deductions updated successfully.',
+                'payroll' => [
+                    'id' => $payroll->id,
+                    'gross_pay' => (float) $payroll->gross_pay,
+                    'tax_deductions' => (float) $payroll->tax_deductions,
+                    'social_security' => (float) ($payroll->nssf_employee ?: $payroll->social_security),
+                    'heslb' => (float) $payroll->heslb,
+                    'trade_union' => (float) $payroll->trade_union,
+                    'loan_deductions' => (float) ($input['loan_deductions'] ?? 0),
+                    'other_deductions' => (float) $payroll->other_deductions,
+                    'total_deductions' => (float) $payroll->total_deductions,
+                    'net_pay' => (float) $payroll->net_pay,
+                    'sdl' => (float) $payroll->sdl,
+                    'wcf' => (float) $payroll->wcf,
+                ],
+            ]);
+        });
+    }
+
+    /**
+     * Build a payroll computation input array from a persisted record and its stored meta.
+     */
+    private function payrollInputFromRecord(Payroll $payroll, array $meta): array
+    {
+        return [
+            'basic_salary' => (float) ($payroll->basic_salary ?? 0),
+            'allowances' => (float) ($payroll->allowances ?? 0),
+            'bonuses' => (float) ($payroll->bonuses ?? 0),
+            'overtime_hours' => (float) ($payroll->overtime_hours ?? 0),
+            'overtime_rate' => (float) ($payroll->overtime_rate ?? 0),
+            'overtime_pay' => (float) ($payroll->overtime_pay ?? 0),
+            'rest_day_hours' => (float) ($meta['restDayHours'] ?? $payroll->rest_day_hours ?? 0),
+            'public_holiday_hours' => (float) ($meta['publicHolidayHours'] ?? $payroll->ph_hours ?? 0),
+            'night_hours' => (float) ($meta['nightShiftHours'] ?? $payroll->night_hours ?? 0),
+            'unpaid_leave_days' => (float) ($meta['unpaidLeaveDays'] ?? $payroll->unpaid_leave_days ?? 0),
+            'heslb' => (float) ($meta['heslb'] ?? $payroll->heslb ?? 0),
+            'heslb_applicable' => (bool) ($meta['heslbApplicable'] ?? $payroll->employee?->heslb_applicable ?? false),
+            'trade_union' => (float) ($meta['tradeUnion'] ?? $payroll->trade_union ?? 0),
+            'trade_union_rate' => (float) ($meta['tradeUnionRate'] ?? 0),
+            'loan_deductions' => (float) ($meta['loanDeductions'] ?? 0),
+            'other_deductions' => (float) ($meta['otherDed'] ?? 0),
+            'workflow_state' => $meta['workflowState'] ?? $this->mapLegacyStatusToWorkflow($payroll->status),
+            'salary_hold' => (bool) ($payroll->salary_hold ?? ($meta['salaryHold'] ?? false)),
+            'salary_hold_reason' => $payroll->salary_hold_reason ?? ($meta['salaryHoldReason'] ?? null),
+        ];
     }
 
     private function formatPayrollPeriod(?string $period): string
@@ -319,6 +432,85 @@ class PayrollController extends Controller
         return (float) $total;
     }
 
+    /**
+     * Sum the recurring allowances configured for an employee (compensation module).
+     */
+    private function calculateAllowancesForEmployee(Employee $employee): float
+    {
+        $base = (float) ($employee->salary ?? 0);
+
+        $allowances = Allowance::where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->get();
+
+        $total = 0.0;
+        foreach ($allowances as $allowance) {
+            $value = strtolower((string) $allowance->type) === 'percentage'
+                ? $base * ((float) $allowance->percentage / 100)
+                : (float) $allowance->amount;
+
+            // Normalise the configured frequency to a monthly amount.
+            $value = match (strtolower((string) $allowance->frequency)) {
+                'annual', 'yearly' => $value / 12,
+                'quarterly' => $value / 3,
+                'weekly' => $value * 4.333,
+                'daily' => $value * 26,
+                default => $value,
+            };
+
+            $total += $value;
+        }
+
+        return round($total, 2);
+    }
+
+    /**
+     * Sum the active loan installments due for an employee, capped at the outstanding balance.
+     */
+    private function calculateLoanDeduction(Employee $employee): float
+    {
+        $loans = Loan::where('employee_id', $employee->id)
+            ->where('remaining_balance', '>', 0)
+            ->whereNotIn('status', ['completed', 'cancelled', 'rejected', 'settled'])
+            ->get();
+
+        $total = 0.0;
+        foreach ($loans as $loan) {
+            $installment = (float) $loan->installment_amount;
+            if ($installment <= 0) {
+                continue;
+            }
+
+            $total += min($installment, (float) $loan->remaining_balance);
+        }
+
+        return round($total, 2);
+    }
+
+    /**
+     * Resolve the trade union deduction for an employee as a fixed amount and/or rate.
+     */
+    private function resolveTradeUnionInput(Employee $employee): array
+    {
+        $membership = DB::table('employee_union_memberships as m')
+            ->join('trade_unions as u', 'u.id', '=', 'm.trade_union_id')
+            ->where('m.employee_id', $employee->id)
+            ->where('m.status', 'active')
+            ->where('u.is_active', true)
+            ->select('u.deduction_type', 'u.deduction_rate', 'u.fixed_amount')
+            ->first();
+
+        if (!$membership) {
+            return ['amount' => 0.0, 'rate' => 0.0];
+        }
+
+        if ($membership->deduction_type === 'fixed') {
+            return ['amount' => round((float) $membership->fixed_amount, 2), 'rate' => 0.0];
+        }
+
+        return ['amount' => 0.0, 'rate' => (float) $membership->deduction_rate];
+    }
+
     private function extractPayrollMeta(?string $notes): array
     {
         if (!$notes) {
@@ -345,33 +537,28 @@ class PayrollController extends Controller
         ];
 
         foreach ($attendance as $record) {
-            $hours = (float) ($record->total_hours ?? 0);
-            if ($hours <= 0) {
-                $hours = match ($record->status) {
-                    'half_day' => 4.0,
-                    'holiday', 'present', 'late' => 8.0,
-                    default => 0.0,
-                };
+            // Use the metrics captured by the attendance engine. These already
+            // exclude break time and distinguish rest day / public holiday hours.
+            $metrics['overtime_hours'] += (float) ($record->overtime_hours ?? 0);
+            $metrics['rest_day_hours'] += (float) ($record->rest_day_hours ?? 0);
+            $metrics['public_holiday_hours'] += (float) ($record->ph_hours ?? 0);
+            $metrics['night_hours'] += (float) ($record->night_hours ?? 0);
+
+            $code = strtoupper(trim((string) ($record->status_code ?? '')));
+            if ($code === '' && $record->status === 'absent') {
+                $code = 'A';
             }
 
-            $metrics['overtime_hours'] += min(50, (float) ($record->overtime_hours ?? 0));
-
-            if ($record->status === 'holiday') {
-                $metrics['public_holiday_hours'] += $hours;
-            }
-
-            if (in_array($record->status, ['present', 'late', 'half_day'], true) && $record->attendance_date?->isWeekend()) {
-                $metrics['rest_day_hours'] += $hours;
-            }
-
-            if ($record->status === 'absent') {
+            // SRS §E.4: absence and unpaid leave are unpaid; half-pay sick
+            // leave is deducted at 50%. Annual / full-pay sick / mission are paid.
+            if ($code === 'UL' || $code === 'A') {
                 $metrics['unpaid_leave_days'] += 1;
+            } elseif ($code === 'SLH') {
+                $metrics['unpaid_leave_days'] += 0.5;
             }
-
-            $metrics['night_hours'] += $this->calculateNightShiftHours($record->clock_in, $record->clock_out, $hours, (string) $record->notes);
         }
 
-        $metrics['overtime_hours'] = min(50, $metrics['overtime_hours']);
+        $metrics['overtime_hours'] = min(50.0, $metrics['overtime_hours']);
 
         return $metrics;
     }
@@ -439,7 +626,8 @@ class PayrollController extends Controller
         $taxableIncome = round(max(0, $grossPay - $employeeNssf), 2);
         $paye = $this->calculatePaye($taxableIncome);
         $wcf = round($grossPay * 0.005, 2);
-        $sdl = round((float) ($input['sdl'] ?? ($grossPay * 0.035)), 2);
+        // SRS §E.4: Skills & Development Levy is 4.5% of the gross wage bill (employer-borne).
+        $sdl = round((float) ($input['sdl'] ?? ($grossPay * 0.045)), 2);
 
         $heslb = round((float) ($input['heslb'] ?? 0), 2);
         if ($heslb <= 0 && filter_var($input['heslb_applicable'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
@@ -454,11 +642,13 @@ class PayrollController extends Controller
         $loanDeductions = round((float) ($input['loan_deductions'] ?? 0), 2);
         $otherDed = round((float) ($input['other_deductions'] ?? 0), 2);
         $otherDeductions = round($heslb + $tradeUnion + $loanDeductions + $otherDed, 2);
-        $totalDeductions = round($paye + $employeeNssf + $wcf + $otherDeductions, 2);
+        // WCF is an employer contribution and must never reduce the employee's net pay.
+        $totalDeductions = round($paye + $employeeNssf + $otherDeductions, 2);
         $netPay = round(max(0, $grossPay - $totalDeductions), 2);
 
         $workflowState = $this->normalizeWorkflowState((string) ($input['workflow_state'] ?? 'prepared'));
-        $salaryHoldRecommended = filter_var($input['salary_hold_recommended'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $salaryHold = filter_var($input['salary_hold'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $salaryHoldRecommended = filter_var($input['salary_hold_recommended'] ?? $salaryHold, FILTER_VALIDATE_BOOLEAN);
         $alerts = [];
         if (($input['overtime_hours'] ?? 0) > 50) {
             $alerts[] = 'Overtime exceeded 50 hours and was capped automatically.';
@@ -488,6 +678,8 @@ class PayrollController extends Controller
             'sdl' => $sdl,
             'workflowState' => $workflowState,
             'salaryHoldRecommended' => $salaryHoldRecommended,
+            'salaryHold' => $salaryHold,
+            'salaryHoldReason' => $input['salary_hold_reason'] ?? null,
             'alerts' => $alerts,
             'monthOfPayment' => $this->formatPayrollPeriod($payrollPeriod),
             'totalCost' => round($grossPay + $employerNssf + $wcf + $sdl, 2),
@@ -500,18 +692,38 @@ class PayrollController extends Controller
                 'payroll_period' => $payrollPeriod,
                 'pay_date' => $payDate ?: Carbon::createFromFormat('Y-m', $payrollPeriod)->endOfMonth()->toDateString(),
                 'basic_salary' => $baseSalary,
+                'hourly_rate' => $hourlyRate,
+                'daily_rate' => $dailyRate,
                 'overtime_hours' => $overtimeHours,
                 'overtime_rate' => $overtimeRate,
                 'overtime_pay' => $overtimePay,
+                'rest_day_hours' => $restDayHours,
+                'rest_day_pay' => $restDayPay,
+                'ph_hours' => $publicHolidayHours,
+                'ph_pay' => $holidayPay,
+                'night_hours' => $nightShiftHours,
+                'night_allowance' => $nightShiftAllowance,
+                'unpaid_leave_days' => $unpaidLeaveDays,
+                'unpaid_leave_deduction' => $unpaidLeaveDeduction,
                 'allowances' => $allowances,
                 'bonuses' => $bonuses,
                 'gross_pay' => $grossPay,
+                'taxable_income' => $taxableIncome,
                 'tax_deductions' => $paye,
+                'nssf_employee' => $employeeNssf,
+                'nssf_employer' => $employerNssf,
                 'social_security' => $employeeNssf,
                 'pension' => $employerNssf,
+                'wcf' => $wcf,
+                'sdl' => $sdl,
+                'heslb' => $heslb,
+                'trade_union' => $tradeUnion,
                 'other_deductions' => $otherDeductions,
                 'total_deductions' => $totalDeductions,
                 'net_pay' => $netPay,
+                'salary_hold' => $salaryHold,
+                'salary_hold_reason' => $input['salary_hold_reason'] ?? null,
+                'workflow_state' => $workflowState,
                 'status' => $this->mapWorkflowToLegacyStatus($workflowState),
                 'notes' => json_encode(['payroll_meta' => $meta], JSON_UNESCAPED_SLASHES),
             ],
@@ -520,6 +732,64 @@ class PayrollController extends Controller
     }
 
     private function calculatePaye(float $taxableIncome): float
+    {
+        if ($taxableIncome <= 0) {
+            return 0.0;
+        }
+
+        $clientId = session('current_client_id');
+        $bands = DB::table('paye_tax_bands')
+            ->where('is_active', true)
+            ->where(function ($query) use ($clientId) {
+                $query->whereNull('client_id');
+                if ($clientId) {
+                    $query->orWhere('client_id', $clientId);
+                }
+            })
+            ->where(function ($query) {
+                $query->whereNull('effective_date')
+                    ->orWhere('effective_date', '<=', now()->toDateString());
+            })
+            ->orderBy('lower_limit')
+            ->get();
+
+        if ($bands->isEmpty()) {
+            return $this->calculatePayeFromConstants($taxableIncome);
+        }
+
+        // Prefer client-specific bands when the client has configured their own.
+        if ($bands->contains(fn ($band) => (int) $band->client_id === (int) $clientId)) {
+            $bands = $bands->filter(fn ($band) => (int) $band->client_id === (int) $clientId)->values();
+        }
+
+        $paye = 0.0;
+        foreach ($bands as $band) {
+            // Bands are stored with an inclusive lower bound (e.g. 270001); the
+            // preceding band's upper limit (270000) is the effective base.
+            $lower = (float) $band->lower_limit;
+            if ($lower > 0) {
+                $lower -= 1;
+            }
+
+            if ($taxableIncome <= $lower) {
+                continue;
+            }
+
+            $upper = $band->upper_limit === null ? $taxableIncome : min($taxableIncome, (float) $band->upper_limit);
+            if ($upper <= $lower) {
+                continue;
+            }
+
+            $paye += ($upper - $lower) * ((float) $band->rate / 100);
+        }
+
+        return round($paye, 2);
+    }
+
+    /**
+     * Fallback PAYE calculation using the statutory TRA monthly bands.
+     */
+    private function calculatePayeFromConstants(float $taxableIncome): float
     {
         if ($taxableIncome <= 270000) {
             return 0.0;
@@ -632,7 +902,7 @@ class PayrollController extends Controller
                 'errors' => $result['errors']
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error processing CSV file: ' . $e->getMessage()
@@ -658,14 +928,38 @@ class PayrollController extends Controller
                     continue;
                 }
 
+                $row = array_map(function ($value) {
+                    return trim((string)$value);
+                }, $row);
+
                 // First row is header
                 if (empty($header)) {
-                    $header = array_map('strtolower', array_map('trim', $row));
+                    $header = array_map('strtolower', $row);
+                    // Strip UTF-8 BOM from the first header name
+                    $header[0] = ltrim($header[0], "\xEF\xBB\xBF");
+                    continue;
+                }
+
+                // Rows whose column count does not match the header are reported
+                // instead of throwing an array_combine() ValueError.
+                if (count($row) !== count($header)) {
+                    $csvData[] = [
+                        '_row_number' => $rowNumber,
+                        '_error' => "Row {$rowNumber}: column count mismatch (" . count($header) . " expected, " . count($row) . " found). Make sure every field is separated by a comma."
+                    ];
                     continue;
                 }
 
                 // Combine header with row data
-                $rowData = array_combine($header, $row);
+                try {
+                    $rowData = array_combine($header, $row);
+                } catch (\ValueError $e) {
+                    $csvData[] = [
+                        '_row_number' => $rowNumber,
+                        '_error' => "Row {$rowNumber}: column count mismatch (" . count($header) . " expected, " . count($row) . " found). Make sure every field is separated by a comma."
+                    ];
+                    continue;
+                }
                 $rowData['_row_number'] = $rowNumber;
                 $csvData[] = $rowData;
             }
@@ -690,6 +984,13 @@ class PayrollController extends Controller
         try {
             foreach ($csvData as $row) {
                 try {
+                    // Rows flagged during CSV parsing (e.g. column count mismatch)
+                    if (!empty($row['_error'])) {
+                        $errors[] = $row['_error'];
+                        $skipped++;
+                        continue;
+                    }
+
                     // Validate required fields
                     if (empty($row['employee_id']) && empty($row['email'])) {
                         $errors[] = "Row {$row['_row_number']}: Employee ID or Email is required";
@@ -1029,8 +1330,12 @@ class PayrollController extends Controller
         $totalNetPay = $payrolls->sum('net_pay');
         $totalDeductions = $payrolls->sum('total_deductions');
         $totalPAYE = $payrolls->sum('tax_deductions');
-        $totalNSSF = $payrolls->sum('social_security');
-        $totalPension = $payrolls->sum('pension');
+        $totalNSSF = $payrolls->sum('nssf_employee') ?: $payrolls->sum('social_security');
+        $totalPension = $payrolls->sum('nssf_employer') ?: $payrolls->sum('pension');
+        $totalSDL = $payrolls->sum('sdl');
+        $totalWCF = $payrolls->sum('wcf');
+        $totalHESLB = $payrolls->sum('heslb');
+        $totalTradeUnion = $payrolls->sum('trade_union');
         
         // Get payroll periods
         $periods = $payrolls->pluck('payroll_period')->unique()->sort()->values();
@@ -1084,6 +1389,10 @@ class PayrollController extends Controller
             'totalPAYE' => $totalPAYE,
             'totalNSSF' => $totalNSSF,
             'totalPension' => $totalPension,
+            'totalSDL' => $totalSDL,
+            'totalWCF' => $totalWCF,
+            'totalHESLB' => $totalHESLB,
+            'totalTradeUnion' => $totalTradeUnion,
             'periods' => $periods,
             'departmentSummary' => $departmentSummary,
             'latestPeriod' => $latestPeriod,

@@ -18,7 +18,8 @@ class EnsureClientScope
         }
 
         // Client switching intentionally changes the active context.
-        if ($request->is('client-switch/*')) {
+        // The switch endpoint is served at /client-switch (web) and /api/client-switch (API).
+        if ($request->is('client-switch/*') || str_starts_with($request->path(), 'api/client-switch/')) {
             return $next($request);
         }
 

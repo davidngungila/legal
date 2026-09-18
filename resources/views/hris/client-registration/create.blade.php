@@ -465,6 +465,15 @@ class ClientRegistrationManager {
             console.log('Response status:', response.status);
             console.log('Response ok:', response.ok);
 
+            const contentType = response.headers.get('content-type') || '';
+
+            if (!contentType.includes('application/json')) {
+                // An HTML page came back (expired session redirect or a server
+                // error page) - show a clear message instead of a cryptic
+                // "Unexpected token '<' ... is not valid JSON" error.
+                throw new Error(`The server returned an unexpected response (HTTP ${response.status}). Please refresh the page and try again.`);
+            }
+
             const result = await response.json();
             console.log('Response data:', result);
             console.log('Validation errors:', result.errors);

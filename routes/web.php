@@ -130,6 +130,9 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
             Route::get('/{id}', [UserController::class, 'show'])->name('users.data.show');
             Route::put('/{id}', [UserController::class, 'update'])->name('users.data.update');
             Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.data.destroy');
+            Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])
+                ->middleware('permission:users.edit')
+                ->name('users.data.reset-password');
         });
 
         Route::get('/export', [UserController::class, 'export'])->name('users.export');
@@ -170,6 +173,8 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
         Route::post('/import', [AttendanceController::class, 'importTimesheet'])->name('attendance.import');
         Route::get('/calendar', [AttendanceController::class, 'calendar'])->name('attendance.calendar');
         Route::get('/timesheets', [AttendanceController::class, 'timesheets'])->name('attendance.timesheets');
+        Route::get('/timesheets/export', [AttendanceController::class, 'timesheetExport'])->name('attendance.timesheets.export');
+        Route::get('/timesheets/employee/{employee}', [AttendanceController::class, 'timesheetDetail'])->name('attendance.timesheets.employee');
         Route::get('/shifts', [AttendanceController::class, 'shifts'])->name('attendance.shifts');
         Route::post('/shifts', [AttendanceController::class, 'storeShift'])->name('attendance.shifts.store');
         Route::put('/shifts/{shift}', [AttendanceController::class, 'updateShift'])->name('attendance.shifts.update');
@@ -184,6 +189,7 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
                 Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
                 Route::get('/data', [PayrollController::class, 'data'])->name('payroll.data');
                 Route::post('/generate-from-attendance', [PayrollController::class, 'generateFromAttendance'])->name('payroll.generate.from.attendance');
+                Route::put('/{payroll}/deductions', [PayrollController::class, 'configureDeductions'])->name('payroll.configure.deductions');
                 Route::get('/upload', [PayrollController::class, 'showUploadForm'])->name('payroll.upload');
                 Route::post('/upload', [PayrollController::class, 'uploadCsv'])->name('payroll.upload.csv');
                 Route::get('/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
@@ -664,16 +670,35 @@ Route::middleware(['web', 'auth', \App\Http\Middleware\ShareCurrentUser::class, 
     // Employee Self Service Routes
     Route::prefix('selfservice')->middleware('permission:selfservice.view')->group(function () {
         Route::get('/', [SelfServiceController::class, 'index'])->name('selfservice.index');
-        Route::get('/leave', [SelfServiceController::class, 'leave'])->name('selfservice.leave');
-        Route::post('/leave', [SelfServiceController::class, 'storeLeave'])->name('selfservice.leave.store');
-        Route::get('/payslip', [SelfServiceController::class, 'payslip'])->name('selfservice.payslip');
-        Route::post('/payslip', [SelfServiceController::class, 'requestPayslip'])->name('selfservice.payslip.request');
-        Route::get('/contract', [SelfServiceController::class, 'contract'])->name('selfservice.contract');
-        Route::post('/contract', [SelfServiceController::class, 'requestContract'])->name('selfservice.contract.request');
-        Route::get('/complaint', [SelfServiceController::class, 'complaint'])->name('selfservice.complaint');
-        Route::post('/complaint', [SelfServiceController::class, 'storeComplaint'])->name('selfservice.complaint.store');
-        Route::get('/profile', [SelfServiceController::class, 'profile'])->name('selfservice.profile');
-        Route::post('/profile', [SelfServiceController::class, 'updateProfile'])->name('selfservice.profile.update');
+
+        Route::middleware('permission:selfservice.leave')->group(function () {
+            Route::get('/leave', [SelfServiceController::class, 'leave'])->name('selfservice.leave');
+            Route::post('/leave', [SelfServiceController::class, 'storeLeave'])->name('selfservice.leave.store');
+        });
+
+        Route::middleware('permission:selfservice.payslip')->group(function () {
+            Route::get('/payslip', [SelfServiceController::class, 'payslip'])->name('selfservice.payslip');
+            Route::post('/payslip', [SelfServiceController::class, 'requestPayslip'])->name('selfservice.payslip.request');
+            Route::get('/payslips/download-all', [SelfServiceController::class, 'downloadAllPayslips'])->name('selfservice.payslip.download-all');
+            Route::get('/payslip/{payroll}', [SelfServiceController::class, 'showPayslip'])->name('selfservice.payslip.show');
+            Route::get('/payslip/{payroll}/download', [SelfServiceController::class, 'downloadPayslip'])->name('selfservice.payslip.download');
+        });
+
+        Route::middleware('permission:selfservice.contract')->group(function () {
+            Route::get('/contract', [SelfServiceController::class, 'contract'])->name('selfservice.contract');
+            Route::post('/contract', [SelfServiceController::class, 'requestContract'])->name('selfservice.contract.request');
+        });
+
+        Route::middleware('permission:selfservice.complaint')->group(function () {
+            Route::get('/complaint', [SelfServiceController::class, 'complaint'])->name('selfservice.complaint');
+            Route::post('/complaint', [SelfServiceController::class, 'storeComplaint'])->name('selfservice.complaint.store');
+        });
+
+        Route::middleware('permission:selfservice.profile')->group(function () {
+            Route::get('/profile', [SelfServiceController::class, 'profile'])->name('selfservice.profile');
+            Route::post('/profile', [SelfServiceController::class, 'updateProfile'])->name('selfservice.profile.update');
+        });
+
         Route::get('/expense', [SelfServiceController::class, 'expense'])->name('selfservice.expense');
         Route::post('/expense', [SelfServiceController::class, 'storeExpense'])->name('selfservice.expense.store');
     });
